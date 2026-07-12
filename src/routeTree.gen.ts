@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUploadResultsRouteImport } from './routes/_authenticated.upload-results'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 
@@ -29,6 +30,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedUploadResultsRoute =
+  AuthenticatedUploadResultsRouteImport.update({
+    id: '/upload-results',
+    path: '/upload-results',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   id: '/results',
   path: '/results',
@@ -45,12 +52,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/upload-results': typeof AuthenticatedUploadResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/upload-results': typeof AuthenticatedUploadResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +68,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/upload-results': typeof AuthenticatedUploadResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/results'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/results' | '/upload-results'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/results'
+  to: '/' | '/auth' | '/dashboard' | '/results' | '/upload-results'
   id:
     | '__root__'
     | '/'
@@ -72,6 +82,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/results'
+    | '/_authenticated/upload-results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -103,6 +114,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/upload-results': {
+      id: '/_authenticated/upload-results'
+      path: '/upload-results'
+      fullPath: '/upload-results'
+      preLoaderRoute: typeof AuthenticatedUploadResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/results': {
       id: '/_authenticated/results'
       path: '/results'
@@ -123,11 +141,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedUploadResultsRoute: typeof AuthenticatedUploadResultsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedUploadResultsRoute: AuthenticatedUploadResultsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

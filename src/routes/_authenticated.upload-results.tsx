@@ -108,7 +108,7 @@ function RosterEditor({ offeringId }: { offeringId: string }) {
               {data?.map((row: any) => {
                 const r = row.result?.[0];
                 return (
-                  <ScoreRow key={row.id} row={row} existing={r} offeringId={offeringId} onSave={(v) => upsertMut.mutate(v)} />
+                  <ScoreRow key={row.id} row={row} existing={r} offeringId={offeringId} onSave={(v: any) => upsertMut.mutate(v)} />
                 );
               })}
             </TableBody>
