@@ -12,10 +12,19 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated.users'
 import { Route as AuthenticatedUploadResultsRouteImport } from './routes/_authenticated.upload-results'
+import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
+import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
+import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
+import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated.fees'
+import { Route as AuthenticatedDepartmentsRouteImport } from './routes/_authenticated.departments'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
+import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated.courses'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated.approvals'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -31,20 +40,62 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedUploadResultsRoute =
   AuthenticatedUploadResultsRouteImport.update({
     id: '/upload-results',
     path: '/upload-results',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTeachingRoute = AuthenticatedTeachingRouteImport.update({
+  id: '/teaching',
+  path: '/teaching',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   id: '/results',
   path: '/results',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedRegistrationRoute =
+  AuthenticatedRegistrationRouteImport.update({
+    id: '/registration',
+    path: '/registration',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
+  id: '/fees',
+  path: '/fees',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDepartmentsRoute =
+  AuthenticatedDepartmentsRouteImport.update({
+    id: '/departments',
+    path: '/departments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCoursesRoute = AuthenticatedCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
@@ -52,59 +103,118 @@ const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/departments': typeof AuthenticatedDepartmentsRoute
+  '/fees': typeof AuthenticatedFeesRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/registration': typeof AuthenticatedRegistrationRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/students': typeof AuthenticatedStudentsRoute
+  '/teaching': typeof AuthenticatedTeachingRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
+  '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/departments': typeof AuthenticatedDepartmentsRoute
+  '/fees': typeof AuthenticatedFeesRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/registration': typeof AuthenticatedRegistrationRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/students': typeof AuthenticatedStudentsRoute
+  '/teaching': typeof AuthenticatedTeachingRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
+  '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
+  '/_authenticated/courses': typeof AuthenticatedCoursesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/departments': typeof AuthenticatedDepartmentsRoute
+  '/_authenticated/fees': typeof AuthenticatedFeesRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/students': typeof AuthenticatedStudentsRoute
+  '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
   '/_authenticated/upload-results': typeof AuthenticatedUploadResultsRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/approvals'
+    | '/courses'
     | '/dashboard'
+    | '/departments'
+    | '/fees'
+    | '/profile'
+    | '/registration'
     | '/results'
+    | '/students'
+    | '/teaching'
     | '/upload-results'
+    | '/users'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/approvals'
+    | '/courses'
     | '/dashboard'
+    | '/departments'
+    | '/fees'
+    | '/profile'
+    | '/registration'
     | '/results'
+    | '/students'
+    | '/teaching'
     | '/upload-results'
+    | '/users'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/approvals'
+    | '/_authenticated/courses'
     | '/_authenticated/dashboard'
+    | '/_authenticated/departments'
+    | '/_authenticated/fees'
+    | '/_authenticated/profile'
+    | '/_authenticated/registration'
     | '/_authenticated/results'
+    | '/_authenticated/students'
+    | '/_authenticated/teaching'
     | '/_authenticated/upload-results'
+    | '/_authenticated/users'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,11 +246,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/upload-results': {
       id: '/_authenticated/upload-results'
       path: '/upload-results'
       fullPath: '/upload-results'
       preLoaderRoute: typeof AuthenticatedUploadResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/teaching': {
+      id: '/_authenticated/teaching'
+      path: '/teaching'
+      fullPath: '/teaching'
+      preLoaderRoute: typeof AuthenticatedTeachingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students': {
+      id: '/_authenticated/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof AuthenticatedStudentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/results': {
@@ -150,11 +281,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResultsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/registration': {
+      id: '/_authenticated/registration'
+      path: '/registration'
+      fullPath: '/registration'
+      preLoaderRoute: typeof AuthenticatedRegistrationRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fees': {
+      id: '/_authenticated/fees'
+      path: '/fees'
+      fullPath: '/fees'
+      preLoaderRoute: typeof AuthenticatedFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/departments': {
+      id: '/_authenticated/departments'
+      path: '/departments'
+      fullPath: '/departments'
+      preLoaderRoute: typeof AuthenticatedDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/courses': {
+      id: '/_authenticated/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof AuthenticatedCoursesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/approvals': {
@@ -164,21 +330,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovalsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
+  AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDepartmentsRoute: typeof AuthenticatedDepartmentsRoute
+  AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
+  AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
   AuthenticatedUploadResultsRoute: typeof AuthenticatedUploadResultsRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
+  AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDepartmentsRoute: AuthenticatedDepartmentsRoute,
+  AuthenticatedFeesRoute: AuthenticatedFeesRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
+  AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,
   AuthenticatedUploadResultsRoute: AuthenticatedUploadResultsRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
