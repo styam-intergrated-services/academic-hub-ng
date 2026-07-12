@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getPendingApprovals, decideApproval, getPortalUser } from "@/lib/results.functions";
+import { getPendingApprovals, decideApproval } from "@/lib/results.functions";
 import { getPortalUser as getPortalUserFn } from "@/lib/portal.functions";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
