@@ -150,16 +150,23 @@ export const decideApproval = createServerFn({ method: "POST" })
     const target = nextStatus[key];
     if (!target) throw new Error("Invalid action");
 
-    const update: Record<string, any> = { status: target };
+    type ResultUpdate = {
+      status: string; rejection_reason?: string;
+      hod_approved_by?: string; hod_approved_at?: string;
+      dean_approved_by?: string; dean_approved_at?: string;
+      registry_approved_by?: string; registry_approved_at?: string;
+    };
+    const update: ResultUpdate = { status: target };
     if (data.reason) update.rejection_reason = data.reason;
     if (data.level === "hod" && data.action === "approve") { update.hod_approved_by = userId; update.hod_approved_at = now; }
     if (data.level === "dean" && data.action === "approve") { update.dean_approved_by = userId; update.dean_approved_at = now; }
     if (data.level === "registry" && data.action === "approve") { update.registry_approved_by = userId; update.registry_approved_at = now; }
 
     const { error } = await supabase.from("results")
-      .update(update)
+      .update(update as never)
       .eq("offering_id", data.offering_id)
-      .in("status", requiredCurrent[key] as any);
+      .in("status", requiredCurrent[key] as never);
+
     if (error) throw error;
     return { ok: true, target };
   });
