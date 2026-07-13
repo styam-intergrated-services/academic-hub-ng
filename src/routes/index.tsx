@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GraduationCap, ShieldCheck, BookOpen, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import akceLogo from "@/assets/akce-logo.asset.json";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -18,7 +19,7 @@ function Landing() {
       <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-md bg-primary text-primary-foreground grid place-items-center font-serif font-bold">AK</div>
+            <img src={akceLogo.url} alt="AKCOE" className="h-11 w-11 rounded-md object-cover bg-white p-0.5 shadow-sm" />
             <div className="leading-tight">
               <div className="font-serif font-bold text-primary">AKCOE Portal</div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Aminu Kano College of Education</div>
