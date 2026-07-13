@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import akceLogo from "@/assets/akce-logo.asset.json";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; roles?: AppRole[] };
 
@@ -64,7 +65,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-md bg-gold text-gold-foreground grid place-items-center font-serif font-bold">AK</div>
+            <img src={akceLogo.url} alt="AKCOE" className="h-10 w-10 rounded-md object-cover bg-white p-0.5" />
             <div className="leading-tight">
               <div className="font-serif font-bold text-sm">AKCOE Portal</div>
               <div className="text-[10px] uppercase tracking-widest opacity-70">Academic System</div>
