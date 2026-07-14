@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon } from "@/components/portal/ComingSoon";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/students")({
-  component: () => <ComingSoon title="Students" description="Manage student records within your scope." />,
+  component: () => <Outlet />,
 });
