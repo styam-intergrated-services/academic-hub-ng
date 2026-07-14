@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated.users'
 import { Route as AuthenticatedUploadResultsRouteImport } from './routes/_authenticated.upload-results'
 import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
+import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
@@ -55,6 +56,11 @@ const AuthenticatedUploadResultsRoute =
 const AuthenticatedTeachingRoute = AuthenticatedTeachingRouteImport.update({
   id: '/teaching',
   path: '/teaching',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
@@ -106,14 +112,14 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 } as any)
 const AuthenticatedStudentsIndexRoute =
   AuthenticatedStudentsIndexRouteImport.update({
-    id: '/students/',
-    path: '/students/',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedStudentsRoute,
   } as any)
 const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
-  id: '/students/$id',
-  path: '/students/$id',
-  getParentRoute: () => AuthenticatedRoute,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedStudentsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/teaching': typeof AuthenticatedTeachingRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
   '/users': typeof AuthenticatedUsersRoute
@@ -166,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
   '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
   '/_authenticated/upload-results': typeof AuthenticatedUploadResultsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
@@ -186,6 +194,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/registration'
     | '/results'
+    | '/students'
     | '/teaching'
     | '/upload-results'
     | '/users'
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/registration'
     | '/_authenticated/results'
+    | '/_authenticated/students'
     | '/_authenticated/teaching'
     | '/_authenticated/upload-results'
     | '/_authenticated/users'
@@ -278,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/teaching'
       fullPath: '/teaching'
       preLoaderRoute: typeof AuthenticatedTeachingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students': {
+      id: '/_authenticated/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof AuthenticatedStudentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/results': {
@@ -345,20 +362,35 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/students/': {
       id: '/_authenticated/students/'
-      path: '/students'
+      path: '/'
       fullPath: '/students/'
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedStudentsRoute
     }
     '/_authenticated/students/$id': {
       id: '/_authenticated/students/$id'
-      path: '/students/$id'
+      path: '/$id'
       fullPath: '/students/$id'
       preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedStudentsRoute
     }
   }
 }
+
+interface AuthenticatedStudentsRouteChildren {
+  AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
+  AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
+}
+
+const AuthenticatedStudentsRouteChildren: AuthenticatedStudentsRouteChildren = {
+  AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
+  AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
+}
+
+const AuthenticatedStudentsRouteWithChildren =
+  AuthenticatedStudentsRoute._addFileChildren(
+    AuthenticatedStudentsRouteChildren,
+  )
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
@@ -370,11 +402,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
   AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
   AuthenticatedUploadResultsRoute: typeof AuthenticatedUploadResultsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
-  AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
-  AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -387,11 +418,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
   AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,
   AuthenticatedUploadResultsRoute: AuthenticatedUploadResultsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
-  AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
-  AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
