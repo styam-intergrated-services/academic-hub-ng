@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StandingBadge } from "./_authenticated.students";
+import { StandingBadge } from "./_authenticated.students.index";
 import { ChevronLeft, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
