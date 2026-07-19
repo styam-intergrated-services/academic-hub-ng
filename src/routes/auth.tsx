@@ -11,9 +11,18 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: AuthPage,
   head: () => ({ meta: [{ title: "Sign in — AKCOE Portal" }, { name: "robots", content: "noindex" }] }),
 });
+
+function safeNext(next: string | undefined): string {
+  if (!next) return "/dashboard";
+  if (!next.startsWith("/") || next.startsWith("//")) return "/dashboard";
+  return next;
+}
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
 const passwordSchema = z.string().min(8, "At least 8 characters").max(72);
