@@ -11,22 +11,33 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: AuthPage,
   head: () => ({ meta: [{ title: "Sign in — AKCOE Portal" }, { name: "robots", content: "noindex" }] }),
 });
+
+function safeNext(next: string | undefined): string {
+  if (!next) return "/dashboard";
+  if (!next.startsWith("/") || next.startsWith("//")) return "/dashboard";
+  return next;
+}
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
 const passwordSchema = z.string().min(8, "At least 8 characters").max(72);
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const dest = safeNext(next);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) window.location.href = dest;
     });
-  }, [navigate]);
+  }, [dest]);
 
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,7 +55,7 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Welcome back");
-    navigate({ to: "/dashboard" });
+    window.location.href = dest;
   }
 
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
@@ -63,12 +74,16 @@ function AuthPage() {
     }
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: window.location.origin, data: { full_name } },
+      options: { emailRedirectTo: window.location.origin + dest, data: { full_name } },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Account created. You can now sign in.");
   }
+
+  // eliminate unused warning
+  void navigate;
+
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
