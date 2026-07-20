@@ -7,10 +7,11 @@ export const Route = createFileRoute("/")({
   component: Landing,
   head: () => ({
     meta: [
-      { title: "AKCOE Portal — Aminu Kano College of Education" },
+      { title: "AKCOE Portal" },
       {
         name: "description",
-        content: "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria",
+        content:
+          "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria",
       },
     ],
   }),
@@ -47,7 +48,7 @@ function Landing() {
               Est. Excellence in Teacher Education
             </span>
             <h1 className="mt-5 font-serif text-4xl md:text-6xl font-bold leading-tight">
-              AMINU KANO <span className="text-gradient-gold">Collge</span>of Education Management Portal
+              AMINU KANO <span className="text-gradient-gold"> College</span> of Education Management Portal
             </h1>
             <p className="mt-5 text-lg text-white/80 max-w-xl">
               Register courses, upload results, track approvals, view your CGPA and manage the academic life of Aminu
