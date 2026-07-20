@@ -33,7 +33,7 @@ export const getOfferingRoster = createServerFn({ method: "POST" })
       .select(`
         id, student_id,
         student:students!inner(matric_number, profile:profiles!inner(full_name)),
-        result:results(id, ca_score, exam_score, total_score, grade, grade_point, status)
+        result:results(id, ca_score, exam_score, total_score, grade, grade_point, status, rejection_reason)
       `)
       .eq("offering_id", data.offering_id)
       .eq("status", "approved");
@@ -63,6 +63,81 @@ export const upsertResult = createServerFn({ method: "POST" })
       submitted_by: userId,
     }, { onConflict: "registration_id" });
     if (error) throw error;
+    return { ok: true };
+  });
+
+// -------- Bulk upsert (from CSV import) --------
+export const upsertResultsBulk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    offering_id: z.string().uuid(),
+    rows: z.array(z.object({
+      registration_id: z.string().uuid(),
+      student_id: z.string().uuid(),
+      ca_score: z.number().min(0).max(40).nullable(),
+      exam_score: z.number().min(0).max(60).nullable(),
+    })).min(1).max(1000),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Verify caller teaches this offering
+    const { data: teach } = await supabase.from("course_lecturers")
+      .select("lecturer_id").eq("offering_id", data.offering_id).eq("lecturer_id", userId).maybeSingle();
+    if (!teach) throw new Error("Forbidden: not a lecturer for this offering");
+
+    // Fetch existing results to skip locked rows (anything past draft/rejected)
+    const { data: existing } = await supabase.from("results")
+      .select("registration_id,status")
+      .eq("offering_id", data.offering_id);
+    const statusByReg = new Map<string, string>((existing ?? []).map((r: any) => [r.registration_id, r.status]));
+    const editable = new Set(["draft","hod_rejected","dean_rejected","registry_rejected"]);
+
+    const payload = data.rows
+      .filter((r) => {
+        const s = statusByReg.get(r.registration_id);
+        return !s || editable.has(s);
+      })
+      .map((r) => ({
+        registration_id: r.registration_id,
+        student_id: r.student_id,
+        offering_id: data.offering_id,
+        ca_score: r.ca_score,
+        exam_score: r.exam_score,
+        status: "draft" as const,
+        submitted_by: userId,
+      }));
+
+    if (payload.length === 0) return { written: 0, skipped: data.rows.length };
+    const { error } = await supabase.from("results").upsert(payload, { onConflict: "registration_id" });
+    if (error) throw error;
+    return { written: payload.length, skipped: data.rows.length - payload.length };
+  });
+
+// -------- Toggle current-semester registration open/closed --------
+export const setRegistrationOpen = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ open: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (roleRows ?? []).map((r: any) => r.role as string);
+    if (!roles.some((r) => ["registry","super_admin","ict_admin"].includes(r))) {
+      throw new Error("Forbidden: registry role required");
+    }
+    const { data: sem } = await supabase.from("semesters").select("id,registration_open").eq("is_current", true).maybeSingle();
+    if (!sem) throw new Error("No current semester set");
+    const { error } = await supabase.from("semesters")
+      .update({ registration_open: data.open })
+      .eq("id", sem.id);
+    if (error) throw error;
+    await supabase.from("audit_logs").insert({
+      actor_id: userId,
+      action: "semester.registration_toggle",
+      entity: "semesters",
+      entity_id: sem.id,
+      metadata: { before: sem.registration_open, after: data.open },
+    });
     return { ok: true };
   });
 
@@ -98,6 +173,10 @@ export const getPendingApprovals = createServerFn({ method: "GET" })
       .from("results")
       .select(`
         id, ca_score, exam_score, total_score, grade, grade_point, status,
+        rejection_reason,
+        hod_approved_by, hod_approved_at,
+        dean_approved_by, dean_approved_at,
+        registry_approved_by, registry_approved_at,
         offering:course_offerings!inner(
           id,
           course:courses!inner(id, code, title, credit_units, department_id),

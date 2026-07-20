@@ -1,87 +1,48 @@
-## Students Directory + HOD/Dean Views
+## Admin Dashboard + Result Uploading (fully functional)
 
-Build a proper students-records surface plus role-aware analytics for HODs, Deans, Registry, ICT and Super Admin. Fills out the `/students` route (currently ComingSoon) and upgrades the Admin dashboard with real KPIs scoped by role.
+Ships bulk CSV score entry for lecturers, four admin-dashboard widgets, and tightens the existing per-offering approval flow. No change to the AKCOE grading rules already in place (CA/40, Exam/60, 5-point NCE scale, 24-unit cap, Lecturer → HOD → Dean → Registry → Published).
 
-### Scope
+### 1. Result upload — Bulk CSV import/export
 
-1. **Students directory (`/students`)**
-   - Server-side searchable, filterable, paginated list of students.
-   - Filters: department, programme, level, session of admission, standing (excellent/good/probation/withdrawn), status (active/suspended/graduated/withdrawn), free-text search on matric number / name / email.
-   - Table columns: matric no, full name, programme, department, level, CGPA, standing, status.
-   - Row action → Student detail drawer/page.
-   - Role scoping enforced server-side:
-     - `hod` → only students in their department.
-     - `dean` → only students in departments under their faculty.
-     - `registry`, `super_admin`, `ict_admin` → all students.
-     - `lecturer` → only students registered in one of their offerings (read-only, minimal columns).
-   - Export current filter to CSV.
+On `/upload-results`, after selecting an offering:
+- **Export roster CSV**: `matric_number,full_name,ca_score,exam_score` (prefilled with any existing draft/rejected scores; approved/published rows exported read-only, greyed out on re-import).
+- **Import CSV**: parse client-side, validate every row (matric exists in roster, CA 0–40, Exam 0–60, numeric, no duplicates), show a pre-commit summary (`X to insert, Y to update, Z errors, W skipped-locked`), then one server call writes all valid rows as `draft`.
+- Server fn `upsertResultsBulk({ offering_id, rows[] })` — validates offering ownership, filters to registrations that belong to the offering, rejects rows whose current status isn't editable (`draft`/`*_rejected`), inserts/updates in a single round-trip.
+- Existing single-row save + Submit-for-approval stay unchanged.
 
-2. **Student detail (`/students/$id`)**
-   - Header: photo/avatar, matric no, full name, programme, department, level, standing badge, status.
-   - Tabs:
-     - **Academic**: semester-by-semester GPA history + published results with credit units, grade, grade points; CGPA summary.
-     - **Registrations**: current & past course registrations by semester.
-     - **Profile**: contact/bio-data from `profiles` + `students`.
-     - **Admin actions** (registry/super_admin only): change level, change status (suspend/reinstate/graduate/withdraw), reassign programme/department. All writes audited into `audit_logs`.
+### 2. Admin dashboard widgets
 
-3. **HOD/Dean management views (upgrade `AdminDashboard`)**
-   - Real KPIs, scoped by role:
-     - Total students in scope, active, on probation, withdrawn.
-     - Average CGPA in scope.
-     - Pending result approvals in scope.
-     - Current session/semester banner.
-   - Charts (recharts, already available via shadcn):
-     - Students per level (bar).
-     - Standing distribution (donut).
-     - Results pipeline (draft → submitted → approved → published) for the current semester.
-   - "My department/faculty" quick links.
+Extend `getManagementStats` (already returns `pipeline` + `currentSemesterId`) with a small `pendingForMe` bundle and a `currentSemester` object (session name, semester type, `registration_open`).
 
-4. **Server functions (`src/lib/students.functions.ts`)**
-   - `listStudents({ search, department_id, programme_id, level_id, session_id, standing, status, page, pageSize })` → paginated rows + total count, scoped by caller role.
-   - `getStudentDetail(id)` → student + profile + programme + department + level + gpa_records + published results + registrations, with authorization check.
-   - `updateStudentAdmin({ id, patch })` → registry/super_admin only; validates transitions; writes `audit_logs`.
-   - `getManagementStats()` → role-scoped KPI bundle for the dashboard.
-   - All use `.middleware([requireSupabaseAuth])`; scope enforced in-handler on top of RLS.
+- **Results pipeline widget** — horizontal funnel bar for the current semester using the existing `pipeline` counts (draft → submitted → hod_approved → dean_approved → registry_approved → published, plus rejected). Role-scoped: HOD/Dean see their scope only (server-side filter by department/faculty offerings).
+- **Approvals queue shortcut** — card listing top 5 offerings awaiting *my* level (HOD→submitted, Dean→hod_approved, Registry→dean_approved+registry_approved-to-publish), each row shows course code/title, semester, count, "Review" → `/approvals`.
+- **Session control banner** — shows `Current session · Semester · Registration [open/closed]`. Registry / super_admin / ict_admin get a toggle (`setRegistrationOpen(open: boolean)` server fn writing `semesters.registration_open` for the current semester, audited).
+- **Role-scoped drilldowns** — KPI cards and chart bars become links with search params: Students → `/students?standing=probation` etc; pipeline segments → `/approvals?status=submitted`. `/students` and `/approvals` read those params and prefilter.
 
-5. **RLS review (migration if needed)**
-   - Current `students` table has 2 policies. Confirm:
-     - Students read own row.
-     - Registry / super_admin / ict_admin full access.
-     - HOD read where `department_id` matches an HOD assignment.
-     - Dean read where department's faculty matches a Dean assignment.
-     - Lecturer read only via join to `course_registrations` for their offerings (via a `SECURITY DEFINER` helper `public.lecturer_can_see_student(_student uuid)` to avoid recursive policy joins).
-   - Same review for `gpa_records`, `course_registrations`, `results` reads so HOD/Dean detail views work under RLS.
-   - Only add missing policies; do not loosen existing ones. Migration is a no-op if all policies already exist.
+### 3. Approvals
 
-6. **UI plumbing**
-   - New route: `src/routes/_authenticated.students.$id.tsx`.
-   - Update `src/routes/_authenticated.students.tsx` to render the directory.
-   - Extract a small `StudentsTable`, `StudentFilters`, `StudentDetail` under `src/components/portal/students/`.
-   - Update `src/components/dashboards/AdminDashboard.tsx` to use `getManagementStats()`.
-   - Add `Users2` link entry — already present in `PortalShell` for the right roles; no nav changes needed.
+Keep per-offering behavior. Small quality fixes only:
+- Surface `rejection_reason` on the roster for `*_rejected` rows so the lecturer sees why before resubmitting.
+- Show approver name + timestamp per stage on the approvals card.
 
-### Out of scope (deferred)
+### Technical details
 
-- Bulk import of students (CSV upload) — after this slice.
-- Transcript PDF export — after Fees are in so it can include payment status.
-- HOD/Dean assignment UI (which HOD owns which department) — will piggyback on the existing `/users` role admin; assignment table can come with the Admissions slice.
-
-### Technical notes
-
-- Pagination is server-side with `range()` + `count: 'exact'` to stay fast on thousands of rows.
-- All list queries select only the columns the table shows; detail queries hydrate the rest.
-- Every write in `updateStudentAdmin` inserts a matching `audit_logs` row (actor, action, before/after).
-- KPI queries use aggregated SQL (single round-trip per card group) rather than fetching rows into JS.
-- Charts render client-side from the aggregated payload; no client-side aggregation of raw rows.
-- No schema changes to existing tables; the only DB change is additive RLS policies + a `lecturer_can_see_student` helper if not already present.
+- **New server fns** in `src/lib/results.functions.ts`: `upsertResultsBulk`, `setRegistrationOpen`. Both under `requireSupabaseAuth`; `upsertResultsBulk` verifies caller teaches the offering; `setRegistrationOpen` requires registry/super_admin/ict_admin and writes `audit_logs`.
+- **Extend** `getManagementStats` in `src/lib/students.functions.ts` to include `currentSemester` (session name, type, `registration_open`) and `pendingForMe: [{ offering_id, course_code, course_title, semester, count }]` for the caller's approval level, scoped by department/faculty.
+- **CSV parsing** client-side with a tiny parser (no new dependency) — RFC-4180-lite, quoted fields, BOM-safe. Export uses `Blob` + object URL; import uses `<input type="file">`.
+- **UI**: new `src/components/dashboards/widgets/{PipelineWidget,ApprovalsShortcut,SessionBanner}.tsx`; extend `AdminDashboard.tsx` to render them and wire drilldown links. `/upload-results` gains an `ImportExportBar` above the roster table.
+- **Route params**: `/students` and `/approvals` add `validateSearch` for the new filters and honor them in their queries.
+- **Rejection reason** column already exists on `results` — no schema change. No migration needed for this slice.
 
 ### Deliverables
 
-- `src/lib/students.functions.ts`
-- `src/routes/_authenticated.students.tsx` (directory)
-- `src/routes/_authenticated.students.$id.tsx` (detail)
-- `src/components/portal/students/*` (table, filters, detail tabs)
-- Updated `src/components/dashboards/AdminDashboard.tsx`
-- One additive migration for RLS gaps (if the review finds any)
+- `src/lib/results.functions.ts` (add `upsertResultsBulk`, `setRegistrationOpen`)
+- `src/lib/students.functions.ts` (extend `getManagementStats`)
+- `src/routes/_authenticated.upload-results.tsx` (CSV bar, rejection reason surfacing)
+- `src/components/dashboards/AdminDashboard.tsx` + `src/components/dashboards/widgets/*`
+- `src/routes/_authenticated.students.index.tsx`, `src/routes/_authenticated.approvals.tsx` (search-param prefilters)
 
-Once approved I'll implement, then run a quick RLS + role-scope smoke test before handing back.
+### Out of scope (for a later slice)
+
+- Printable broadsheet PDF, per-row approvals, inline bulk edit UI (skipped per your picks).
+- Auto-recompute GPA outside the existing publish trigger.

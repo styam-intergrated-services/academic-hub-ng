@@ -250,17 +250,60 @@ export const getManagementStats = createServerFn({ method: "GET" })
     const { data: levels } = await supabase.from("levels").select("id, name, order_index").order("order_index");
     const perLevel = (levels ?? []).map((l: any) => ({ level: l.name, count: levelCounts.get(l.id) ?? 0 }));
 
-    // Results pipeline (current semester if any)
-    const { data: currentSem } = await supabase.from("semesters").select("id").eq("is_current", true).maybeSingle();
+    // Results pipeline (current semester if any) — scoped by department when applicable
+    const { data: currentSemRow } = await supabase.from("semesters")
+      .select("id, type, registration_open, session:academic_sessions(name)")
+      .eq("is_current", true)
+      .maybeSingle();
     let pipeline = { draft: 0, submitted: 0, hod_approved: 0, dean_approved: 0, registry_approved: 0, published: 0, rejected: 0 } as Record<string, number>;
     let pendingApprovals = 0;
-    if (currentSem?.id) {
-      const { data: offs } = await supabase.from("course_offerings").select("id").eq("semester_id", currentSem.id);
-      const offIds = (offs ?? []).map((o: any) => o.id);
-      if (offIds.length) {
-        const { data: res } = await supabase.from("results").select("status").in("offering_id", offIds);
+    let pendingForMe: Array<{ offering_id: string; course_code: string; course_title: string; semester: string; count: number; status: string }> = [];
+    let scopedOfferingIds: string[] = [];
+
+    if (currentSemRow?.id) {
+      let offQ = supabase.from("course_offerings").select("id, course:courses!inner(id, code, title, department_id)").eq("semester_id", currentSemRow.id);
+      if (scope !== null) {
+        if (scope.length === 0) offQ = offQ.eq("id", "00000000-0000-0000-0000-000000000000");
+        else offQ = offQ.in("courses.department_id", scope);
+      }
+      const { data: offs } = await offQ;
+      const offList = (offs ?? []) as any[];
+      scopedOfferingIds = offList.map((o) => o.id);
+      const offMeta = new Map(offList.map((o) => [o.id, o]));
+
+      if (scopedOfferingIds.length) {
+        const { data: res } = await supabase.from("results").select("status, offering_id").in("offering_id", scopedOfferingIds);
         for (const r of res ?? []) pipeline[r.status as string] = (pipeline[r.status as string] ?? 0) + 1;
         pendingApprovals = (pipeline.submitted ?? 0) + (pipeline.hod_approved ?? 0) + (pipeline.dean_approved ?? 0);
+
+        // Determine caller's approval level and build "pending for me" bundle
+        const myStatuses: string[] = [];
+        if (roles.includes("hod")) myStatuses.push("submitted");
+        if (roles.includes("dean")) myStatuses.push("hod_approved");
+        if (roles.some((r) => ["registry","super_admin","ict_admin"].includes(r))) { myStatuses.push("dean_approved"); myStatuses.push("registry_approved"); }
+        if (myStatuses.length) {
+          const groups = new Map<string, { count: number; status: string }>();
+          for (const r of (res ?? []) as any[]) {
+            if (!myStatuses.includes(r.status)) continue;
+            const g = groups.get(r.offering_id) ?? { count: 0, status: r.status };
+            g.count++;
+            groups.set(r.offering_id, g);
+          }
+          pendingForMe = Array.from(groups.entries())
+            .map(([offering_id, v]) => {
+              const meta: any = offMeta.get(offering_id);
+              return {
+                offering_id,
+                course_code: meta?.course?.code ?? "",
+                course_title: meta?.course?.title ?? "",
+                semester: `${currentSemRow.type} · ${(currentSemRow as any).session?.name ?? ""}`,
+                count: v.count,
+                status: v.status,
+              };
+            })
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+        }
       }
     }
 
@@ -274,6 +317,13 @@ export const getManagementStats = createServerFn({ method: "GET" })
       standingCounts,
       perLevel,
       pipeline,
-      currentSemesterId: currentSem?.id ?? null,
+      pendingForMe,
+      currentSemester: currentSemRow ? {
+        id: currentSemRow.id,
+        type: currentSemRow.type,
+        registration_open: currentSemRow.registration_open,
+        session_name: (currentSemRow as any).session?.name ?? "",
+      } : null,
+      currentSemesterId: currentSemRow?.id ?? null,
     };
   });
