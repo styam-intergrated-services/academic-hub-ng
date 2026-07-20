@@ -13,8 +13,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import akceLogo from "@/assets/akce-logo.asset.json";
+import { FEATURE_FLAGS } from "@/lib/feature-flags";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; roles?: AppRole[] };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: AppRole[];
+  flag?: keyof typeof FEATURE_FLAGS;
+};
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
