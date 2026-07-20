@@ -989,6 +989,41 @@ export type Database = {
           },
         ]
       }
+      transcripts_issued: {
+        Row: {
+          id: string
+          issued_at: string
+          issued_by: string
+          metadata: Json
+          serial: string
+          student_id: string
+        }
+        Insert: {
+          id?: string
+          issued_at?: string
+          issued_by: string
+          metadata?: Json
+          serial: string
+          student_id: string
+        }
+        Update: {
+          id?: string
+          issued_at?: string
+          issued_by?: string
+          metadata?: Json
+          serial?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcripts_issued_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1044,6 +1079,7 @@ export type Database = {
         Args: { _application_id: string }
         Returns: string
       }
+      next_transcript_serial: { Args: { _year: number }; Returns: string }
       recompute_semester_gpa: {
         Args: { _semester_id: string; _student_id: string }
         Returns: undefined
