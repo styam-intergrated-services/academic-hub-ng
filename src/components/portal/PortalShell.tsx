@@ -13,18 +13,25 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import akceLogo from "@/assets/akce-logo.asset.json";
+import { FEATURE_FLAGS } from "@/lib/feature-flags";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; roles?: AppRole[] };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: AppRole[];
+  flag?: keyof typeof FEATURE_FLAGS;
+};
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/apply", label: "Admission Application", icon: GraduationCap, roles: ["applicant"] },
   { to: "/courses", label: "My Courses", icon: BookOpen, roles: ["student"] },
-  { to: "/registration", label: "Course Registration", icon: ClipboardList, roles: ["student"] },
+  { to: "/registration", label: "Course Registration", icon: ClipboardList, roles: ["student"], flag: "registration" },
   { to: "/results", label: "My Results", icon: Award, roles: ["student"] },
   { to: "/transcript", label: "My Transcript", icon: FileCheck2, roles: ["student"] },
-  { to: "/fees", label: "Fees & Payments", icon: Wallet, roles: ["student","bursary","super_admin","ict_admin"] },
+  { to: "/fees", label: "Fees & Payments", icon: Wallet, roles: ["student","bursary","super_admin","ict_admin"], flag: "fees" },
   { to: "/teaching", label: "My Teaching", icon: BookOpen, roles: ["lecturer"] },
   { to: "/upload-results", label: "Upload Results", icon: FileCheck2, roles: ["lecturer"] },
   { to: "/approvals", label: "Result Approvals", icon: FileCheck2, roles: ["hod","dean","registry","super_admin"] },
@@ -55,7 +62,11 @@ export function PortalShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
-  const visible = NAV.filter((n) => !n.roles || (user && n.roles.some((r) => user.roles.includes(r))));
+  const visible = NAV.filter(
+    (n) =>
+      (!n.flag || FEATURE_FLAGS[n.flag]) &&
+      (!n.roles || (user && n.roles.some((r) => user.roles.includes(r))))
+  );
 
   return (
     <div className="min-h-screen bg-muted/30">
