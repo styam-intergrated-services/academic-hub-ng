@@ -173,6 +173,10 @@ export const getPendingApprovals = createServerFn({ method: "GET" })
       .from("results")
       .select(`
         id, ca_score, exam_score, total_score, grade, grade_point, status,
+        rejection_reason,
+        hod_approved_by, hod_approved_at,
+        dean_approved_by, dean_approved_at,
+        registry_approved_by, registry_approved_at,
         offering:course_offerings!inner(
           id,
           course:courses!inner(id, code, title, credit_units, department_id),
