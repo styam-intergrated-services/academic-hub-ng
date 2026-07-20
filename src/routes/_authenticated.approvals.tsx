@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { z } from "zod";
 import { getPendingApprovals, decideApproval } from "@/lib/results.functions";
 import { getPortalUser as getPortalUserFn } from "@/lib/portal.functions";
@@ -11,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Check, X, Rocket } from "lucide-react";
+import { Check, X, Rocket, History } from "lucide-react";
+import { AuditTimelineDialog } from "@/components/portal/AuditTimelineDialog";
 
 const searchSchema = z.object({ status: z.string().optional() });
 
@@ -29,6 +31,7 @@ function Approvals() {
   const navigate = Route.useNavigate();
   const { data: user } = useQuery({ queryKey: ["portal","user"], queryFn: () => userFn(), staleTime: 60_000 });
   const { data, isLoading } = useQuery({ queryKey: ["approvals"], queryFn: () => fn() });
+  const [audit, setAudit] = useState<{ id: string; label: string } | null>(null);
 
   const levels = user?.roles ?? [];
   const decideMut = useMutation({
@@ -83,7 +86,10 @@ function Approvals() {
                 </CardDescription>
                 <ApprovalTrail r={first} />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="ghost" size="sm" onClick={() => setAudit({ id: g.offering.id, label: `${g.offering.course.code} — ${g.offering.course.title}` })}>
+                  <History className="h-4 w-4 mr-2" />Audit trail
+                </Button>
                 {canPublish ? (
                   <Button onClick={() => decideMut.mutate({ offering_id: g.offering.id, level: "registry", action: "publish" })} className="bg-primary text-primary-foreground"><Rocket className="h-4 w-4 mr-2" />Publish</Button>
                 ) : level && (
@@ -121,6 +127,13 @@ function Approvals() {
           </Card>
         );
       })}
+
+      <AuditTimelineDialog
+        open={!!audit}
+        onOpenChange={(v) => !v && setAudit(null)}
+        offeringId={audit?.id ?? null}
+        offeringLabel={audit?.label}
+      />
     </div>
   );
 }
