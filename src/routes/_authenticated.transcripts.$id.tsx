@@ -12,7 +12,7 @@ import { TranscriptView } from "@/components/TranscriptView";
 
 const searchSchema = z.object({ official: z.coerce.boolean().optional(), serial: z.string().optional() });
 
-export const Route = createFileRoute("/_authenticated/students/$id/transcript")({
+export const Route = createFileRoute("/_authenticated/transcripts/$id")({
   validateSearch: (s: unknown) => searchSchema.parse(s ?? {}),
   component: StudentTranscriptPage,
 });
