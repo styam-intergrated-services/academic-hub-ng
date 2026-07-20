@@ -9,6 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getManagementStats } from "@/lib/students.functions";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
+import { PipelineWidget } from "@/components/dashboards/widgets/PipelineWidget";
+import { ApprovalsShortcut } from "@/components/dashboards/widgets/ApprovalsShortcut";
+import { SessionBanner } from "@/components/dashboards/widgets/SessionBanner";
 
 export function AdminDashboard({ user }: { user: PortalUser }) {
   const stats = useServerFn(getManagementStats);
@@ -29,6 +32,9 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
     probation: "hsl(40 90% 55%)",
     withdrawn: "hsl(0 75% 55%)",
   };
+  const semesterLabel = data?.currentSemester
+    ? `${data.currentSemester.session_name} · ${data.currentSemester.type}`
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -45,12 +51,23 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
         )}
       </section>
 
+      <SessionBanner semester={data?.currentSemester ?? null} canToggle={isRegistry} />
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={GraduationCap} label="Students" value={isLoading ? null : (t?.students ?? 0).toLocaleString()} />
+        <StatCard icon={GraduationCap} label="Students" value={isLoading ? null : (t?.students ?? 0).toLocaleString()} to="/students" />
         <StatCard icon={TrendingUp} label="Avg CGPA" value={isLoading ? null : (t?.avgCgpa ?? 0).toFixed(2)} />
-        <StatCard icon={AlertTriangle} label="On probation" value={isLoading ? null : (t?.probation ?? 0).toLocaleString()} />
-        <StatCard icon={ClipboardList} label="Pending approvals" value={isLoading ? null : (t?.pendingApprovals ?? 0).toLocaleString()} />
+        <StatCard icon={AlertTriangle} label="On probation" value={isLoading ? null : (t?.probation ?? 0).toLocaleString()} to="/students" search={{ standing: "probation" }} />
+        <StatCard icon={ClipboardList} label="Pending approvals" value={isLoading ? null : (t?.pendingApprovals ?? 0).toLocaleString()} to="/approvals" />
       </div>
+
+      {isLoading || !data ? (
+        <Skeleton className="h-40" />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2"><PipelineWidget pipeline={data.pipeline} semesterLabel={semesterLabel} /></div>
+          <ApprovalsShortcut items={data.pendingForMe ?? []} />
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -75,7 +92,7 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
         <Card>
           <CardHeader>
             <CardTitle className="font-serif text-lg">Academic standing</CardTitle>
-            <CardDescription>Distribution across the {data?.scope === "all" ? "college" : "current scope"}.</CardDescription>
+            <CardDescription>Distribution across the {data?.scope === "all" ? "college" : "current scope"}. Click a slice to filter.</CardDescription>
           </CardHeader>
           <CardContent className="h-64">
             {isLoading || !data ? <Skeleton className="h-full" /> : (
@@ -84,7 +101,14 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
                   <Pie data={standingData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80}>
                     {standingData.map((s) => <Cell key={s.name} fill={STANDING_COLORS[s.name] ?? "hsl(var(--muted))"} />)}
                   </Pie>
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Legend
+                    wrapperStyle={{ fontSize: 11, cursor: "pointer" }}
+                    onClick={(e: any) => {
+                      if (typeof window === "undefined") return;
+                      const v = e?.value;
+                      if (v) window.location.href = `/students?standing=${encodeURIComponent(v)}`;
+                    }}
+                  />
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
@@ -109,9 +133,9 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | null }) {
-  return (
-    <Card>
+function StatCard({ icon: Icon, label, value, to, search }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | null; to?: string; search?: Record<string, string> }) {
+  const inner = (
+    <Card className={to ? "hover:shadow-md transition-shadow cursor-pointer" : ""}>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
@@ -125,6 +149,8 @@ function StatCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ cl
       </CardContent>
     </Card>
   );
+  if (!to) return inner;
+  return <Link to={to as any} search={search as any}>{inner}</Link>;
 }
 
 function QuickCard({ title, desc, to, icon: Icon }: { title: string; desc: string; to: string; icon: React.ComponentType<{ className?: string }> }) {
