@@ -8,7 +8,10 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "AKCOE Portal — Aminu Kano College of Education" },
-      { name: "description", content: "Official portal for students, lecturers and administration at Aminu Kano College of Education." },
+      {
+        name: "description",
+        content: "Official portal for students, lecturers and administration at Aminu Kano College of Education.",
+      },
     ],
   }),
 });
@@ -19,29 +22,43 @@ function Landing() {
       <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src={akceLogo.url} alt="AKCOE" className="h-11 w-11 rounded-md object-cover bg-white p-0.5 shadow-sm" />
+            <img
+              src={akceLogo.url}
+              alt="AKCOE"
+              className="h-11 w-11 rounded-md object-cover bg-white p-0.5 shadow-sm"
+            />
             <div className="leading-tight">
               <div className="font-serif font-bold text-primary">AKCOE Portal</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Aminu Kano College of Education</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Aminu Kano College of Education
+              </div>
             </div>
           </Link>
-          <Link to="/auth"><Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign in</Button></Link>
+          <Link to="/auth">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign in</Button>
+          </Link>
         </div>
       </header>
 
       <section className="bg-hero-gradient text-white">
         <div className="mx-auto max-w-7xl px-4 py-20 md:py-28 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <span className="inline-block rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-widest">Est. Excellence in Teacher Education</span>
+            <span className="inline-block rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-widest">
+              Est. Excellence in Teacher Education
+            </span>
             <h1 className="mt-5 font-serif text-4xl md:text-6xl font-bold leading-tight">
-              A modern portal for a <span className="text-gradient-gold">world-class</span> college
+              AMINU KANO <span className="text-gradient-gold">Collge</span>of Education Management Portal
             </h1>
             <p className="mt-5 text-lg text-white/80 max-w-xl">
-              Register courses, upload results, track approvals, view your CGPA and manage the academic
-              life of Aminu Kano College of Education — all in one secure place.
+              Register courses, upload results, track approvals, view your CGPA and manage the academic life of Aminu
+              Kano College of Education — all in one secure place.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth"><Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90">Access portal <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+              <Link to="/auth">
+                <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90">
+                  Access portal <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="hidden md:grid grid-cols-2 gap-4">
