@@ -41,6 +41,102 @@ export type Database = {
         }
         Relationships: []
       }
+      applications: {
+        Row: {
+          address: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          entry_session_id: string | null
+          full_name: string
+          gender: string | null
+          id: string
+          lga: string | null
+          matric_number: string | null
+          matriculated_at: string | null
+          phone: string | null
+          previous_school: string | null
+          programme_id: string
+          qualification: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          state_of_origin: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          subjects_grades: Json | null
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          entry_session_id?: string | null
+          full_name: string
+          gender?: string | null
+          id?: string
+          lga?: string | null
+          matric_number?: string | null
+          matriculated_at?: string | null
+          phone?: string | null
+          previous_school?: string | null
+          programme_id: string
+          qualification?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          state_of_origin?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          subjects_grades?: Json | null
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          entry_session_id?: string | null
+          full_name?: string
+          gender?: string | null
+          id?: string
+          lga?: string | null
+          matric_number?: string | null
+          matriculated_at?: string | null
+          phone?: string | null
+          previous_school?: string | null
+          programme_id?: string
+          qualification?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          state_of_origin?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          subjects_grades?: Json | null
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_entry_session_id_fkey"
+            columns: ["entry_session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_programme_id_fkey"
+            columns: ["programme_id"]
+            isOneToOne: false
+            referencedRelation: "programmes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -944,6 +1040,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      matriculate_application: {
+        Args: { _application_id: string }
+        Returns: string
+      }
       recompute_semester_gpa: {
         Args: { _semester_id: string; _student_id: string }
         Returns: undefined
@@ -965,6 +1065,12 @@ export type Database = {
         | "lecturer"
         | "student"
         | "applicant"
+      application_status:
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "matriculated"
       payment_status: "pending" | "verified" | "failed" | "refunded"
       registration_status: "pending" | "approved" | "rejected"
       result_status:
@@ -1117,6 +1223,13 @@ export const Constants = {
         "lecturer",
         "student",
         "applicant",
+      ],
+      application_status: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "matriculated",
       ],
       payment_status: ["pending", "verified", "failed", "refunded"],
       registration_status: ["pending", "approved", "rejected"],

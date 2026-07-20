@@ -19,6 +19,7 @@ type NavItem = { to: string; label: string; icon: React.ComponentType<{ classNam
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/profile", label: "Profile", icon: User },
+  { to: "/apply", label: "Admission Application", icon: GraduationCap, roles: ["applicant"] },
   { to: "/courses", label: "My Courses", icon: BookOpen, roles: ["student"] },
   { to: "/registration", label: "Course Registration", icon: ClipboardList, roles: ["student"] },
   { to: "/results", label: "My Results", icon: Award, roles: ["student"] },
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
   { to: "/teaching", label: "My Teaching", icon: BookOpen, roles: ["lecturer"] },
   { to: "/upload-results", label: "Upload Results", icon: FileCheck2, roles: ["lecturer"] },
   { to: "/approvals", label: "Result Approvals", icon: FileCheck2, roles: ["hod","dean","registry","super_admin"] },
+  { to: "/applications", label: "Admissions", icon: GraduationCap, roles: ["registry","super_admin","ict_admin"] },
   { to: "/students", label: "Students", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin"] },
   { to: "/departments", label: "Departments", icon: Building2, roles: ["super_admin","ict_admin","registry","dean"] },
   { to: "/users", label: "Users & Roles", icon: Users, roles: ["super_admin","ict_admin"] },
