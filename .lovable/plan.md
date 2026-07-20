@@ -1,48 +1,50 @@
-## Admin Dashboard + Result Uploading (fully functional)
+## Result artifacts — Printable Broadsheet + Official Transcript
 
-Ships bulk CSV score entry for lecturers, four admin-dashboard widgets, and tightens the existing per-offering approval flow. No change to the AKCOE grading rules already in place (CA/40, Exam/60, 5-point NCE scale, 24-unit cap, Lecturer → HOD → Dean → Registry → Published).
+Focused slice on the two result-output artifacts AKCOE actually issues on paper. Both reuse the existing published-results + GPA pipeline; no grading-rule changes.
 
-### 1. Result upload — Bulk CSV import/export
+### 1. Course Broadsheet (per offering)
 
-On `/upload-results`, after selecting an offering:
-- **Export roster CSV**: `matric_number,full_name,ca_score,exam_score` (prefilled with any existing draft/rejected scores; approved/published rows exported read-only, greyed out on re-import).
-- **Import CSV**: parse client-side, validate every row (matric exists in roster, CA 0–40, Exam 0–60, numeric, no duplicates), show a pre-commit summary (`X to insert, Y to update, Z errors, W skipped-locked`), then one server call writes all valid rows as `draft`.
-- Server fn `upsertResultsBulk({ offering_id, rows[] })` — validates offering ownership, filters to registrations that belong to the offering, rejects rows whose current status isn't editable (`draft`/`*_rejected`), inserts/updates in a single round-trip.
-- Existing single-row save + Submit-for-approval stay unchanged.
+The sheet Registry pins on the noticeboard / files after publication.
 
-### 2. Admin dashboard widgets
+- Route: `/broadsheet/$offeringId` (Registry, Dean, HOD-of-dept, and the offering's lecturers).
+- Server fn `getBroadsheet({ offering_id })` returns: course (code, title, credit units, level), semester + session, department + school, roster ordered by matric, each row's CA/40, Exam/60, Total/100, Grade, Grade Point, plus summary stats (count, pass/fail by grade, average, highest, lowest).
+- Rendered as an on-screen A4 layout using existing tokens; **Print** button uses `window.print()` with a `@media print` stylesheet (no PDF library — stays inside the Worker runtime limits, prints identical output cross-browser via the browser's built-in "Save as PDF").
+- Header: AKCOE crest + full name + "OFFICE OF THE REGISTRAR", session/semester/course line.
+- Signatory block (blank lines for wet signatures): **Course Lecturer · HOD · Dean · Registrar · Provost** — matches the AKCOE brief hierarchy.
+- Only rows with status `published` are shown. Empty state if none.
 
-Extend `getManagementStats` (already returns `pipeline` + `currentSemesterId`) with a small `pendingForMe` bundle and a `currentSemester` object (session name, semester type, `registration_open`).
+### 2. Official Transcript (per student)
 
-- **Results pipeline widget** — horizontal funnel bar for the current semester using the existing `pipeline` counts (draft → submitted → hod_approved → dean_approved → registry_approved → published, plus rejected). Role-scoped: HOD/Dean see their scope only (server-side filter by department/faculty offerings).
-- **Approvals queue shortcut** — card listing top 5 offerings awaiting *my* level (HOD→submitted, Dean→hod_approved, Registry→dean_approved+registry_approved-to-publish), each row shows course code/title, semester, count, "Review" → `/approvals`.
-- **Session control banner** — shows `Current session · Semester · Registration [open/closed]`. Registry / super_admin / ict_admin get a toggle (`setRegistrationOpen(open: boolean)` server fn writing `semesters.registration_open` for the current semester, audited).
-- **Role-scoped drilldowns** — KPI cards and chart bars become links with search params: Students → `/students?standing=probation` etc; pipeline segments → `/approvals?status=submitted`. `/students` and `/approvals` read those params and prefilter.
+Cumulative NCE academic record.
 
-### 3. Approvals
+- Student self-service: `/transcript` (own record only).
+- Registry: `/students/$id/transcript` (any student).
+- Server fn `getTranscript({ student_id })` (student_id defaults to `auth.uid()` for students; Registry/ICT/Super/Dean can pass any id, enforced server-side): bio (name, matric, DOB, gender, state, programme, department, school, entry session, current level, standing), then per-semester blocks in chronological order — each block lists published courses (code, title, units, grade, grade point), semester GPA, TCU (Total Credit Units), TGP (Total Grade Points), running CGPA. Footer: overall CGPA, total units earned, class of result, date issued.
+- Two visual modes toggled by a `?official=1` query param:
+  - **Unofficial** (default, students): watermarked "UNOFFICIAL — STUDENT COPY", no signatories.
+  - **Official** (Registry only): no watermark, signatory block (Registrar · Provost), transcript serial `AKCOE/TR/<YYYY>/<seq>` recorded to a new `transcripts_issued` audit table so re-issues are traceable.
+- Print via `window.print()` + `@media print` (same approach as broadsheet).
+- Class of result derived from CGPA using the AKCOE bands already in `recompute_student_cgpa` (Distinction ≥4.5, Credit ≥3.5, Merit ≥2.5, Pass ≥1.0) — surfaced as a label; the DB `standing` field is unchanged.
 
-Keep per-offering behavior. Small quality fixes only:
-- Surface `rejection_reason` on the roster for `*_rejected` rows so the lecturer sees why before resubmitting.
-- Show approver name + timestamp per stage on the approvals card.
+### 3. Wiring
+
+- Broadsheet link added on `/approvals` (per offering, after it reaches `published`) and on `/upload-results` for the lecturer.
+- Transcript link added to the student dashboard ("View my transcript") and to the student detail page `/students/$id` for Registry ("Issue official transcript").
+- Nav (`PortalShell`): "Transcript" for students; no new top-level entry for staff (accessed contextually from student pages).
 
 ### Technical details
 
-- **New server fns** in `src/lib/results.functions.ts`: `upsertResultsBulk`, `setRegistrationOpen`. Both under `requireSupabaseAuth`; `upsertResultsBulk` verifies caller teaches the offering; `setRegistrationOpen` requires registry/super_admin/ict_admin and writes `audit_logs`.
-- **Extend** `getManagementStats` in `src/lib/students.functions.ts` to include `currentSemester` (session name, type, `registration_open`) and `pendingForMe: [{ offering_id, course_code, course_title, semester, count }]` for the caller's approval level, scoped by department/faculty.
-- **CSV parsing** client-side with a tiny parser (no new dependency) — RFC-4180-lite, quoted fields, BOM-safe. Export uses `Blob` + object URL; import uses `<input type="file">`.
-- **UI**: new `src/components/dashboards/widgets/{PipelineWidget,ApprovalsShortcut,SessionBanner}.tsx`; extend `AdminDashboard.tsx` to render them and wire drilldown links. `/upload-results` gains an `ImportExportBar` above the roster table.
-- **Route params**: `/students` and `/approvals` add `validateSearch` for the new filters and honor them in their queries.
-- **Rejection reason** column already exists on `results` — no schema change. No migration needed for this slice.
+- New file `src/lib/transcripts.functions.ts` — `getBroadsheet`, `getTranscript`, `issueOfficialTranscript` (Registry-only; inserts into `transcripts_issued` and returns the serial).
+- New migration:
+  - `transcripts_issued(id, student_id, serial, issued_by, issued_at, metadata)` with GRANTs, RLS (student can SELECT own; Registry/ICT/Super can SELECT/INSERT), no UPDATE/DELETE.
+  - Small helper SQL function `next_transcript_serial(_year int)` (SECURITY DEFINER, revoked from anon/authenticated, called only via `issueOfficialTranscript`).
+- New routes: `src/routes/_authenticated.broadsheet.$offeringId.tsx`, `src/routes/_authenticated.transcript.tsx`, `src/routes/_authenticated.students.$id.transcript.tsx`.
+- New shared print styles appended to `src/styles.css` under `@media print` — hide `PortalShell` chrome, force A4, black-on-white, page-break rules between semester blocks.
+- No new npm dependencies. Uses existing tokens, Recharts not needed here.
+- Grading, GPA, CGPA, and approval flow untouched — this slice only *reads and formats* already-published data.
 
-### Deliverables
+### Out of scope (next slices)
 
-- `src/lib/results.functions.ts` (add `upsertResultsBulk`, `setRegistrationOpen`)
-- `src/lib/students.functions.ts` (extend `getManagementStats`)
-- `src/routes/_authenticated.upload-results.tsx` (CSV bar, rejection reason surfacing)
-- `src/components/dashboards/AdminDashboard.tsx` + `src/components/dashboards/widgets/*`
-- `src/routes/_authenticated.students.index.tsx`, `src/routes/_authenticated.approvals.tsx` (search-param prefilters)
-
-### Out of scope (for a later slice)
-
-- Printable broadsheet PDF, per-row approvals, inline bulk edit UI (skipped per your picks).
-- Auto-recompute GPA outside the existing publish trigger.
+- Course registration UI for students (24-unit cap already enforced by DB trigger).
+- Fees module + payment gating.
+- Bulk transcript export for a graduating cohort.
