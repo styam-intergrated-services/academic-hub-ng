@@ -1,51 +1,38 @@
-## 1. Give you admin access
+## 1. Pre-created super_admin login
 
-You currently have no way to self-promote because role assignment itself requires `super_admin` / `ict_admin`. I'll bootstrap you once via a Supabase migration, then you can grant every other role from `/users` yourself.
+I'll mint credentials myself and seed them via migration so you can sign in immediately at `/auth`.
 
-Steps:
-- You tell me the email you'll sign in with (or already signed up with) on the portal.
-- I ship a one-shot migration that:
-  - Ensures a `profiles` row exists for that email (via `auth.users` lookup).
-  - Inserts `('<your-user-id>', 'super_admin')` into `public.user_roles` (idempotent, `ON CONFLICT DO NOTHING`).
-- After sign-in, you'll see **Users & Roles**, **Administration**, **Departments**, **Admissions**, **Approvals**, etc. in the sidebar and can grant `ict_admin`, `registry`, `bursary`, `dean`, `hod`, `lecturer` to real staff from the UI.
+- **Email:** `admin@akcoekano.com`
+- **Password:** I'll generate a strong random one (16 chars, mixed case + digits + symbols) and show it to you **once in chat, on the next turn after you approve** — I can't generate secrets in plan mode. Save it in a password manager; I can't retrieve it later.
 
-No hardcoded credentials, no client-side admin checks — the role lives in `user_roles` and every server fn keeps checking it via `has_role` / `has_any_role`.
+Migration does:
+- Insert the user directly into `auth.users` with the bcrypt-hashed password, `email_confirmed_at = now()` (so no email verification needed), and provider `email`.
+- Insert matching `public.profiles` row (`full_name: 'AKCOE Super Admin'`).
+- Insert `('<that user id>', 'super_admin')` into `public.user_roles`.
+- All idempotent via `ON CONFLICT DO NOTHING`, keyed by the fixed email.
 
-## 2. Build course registration + fees, but keep them hidden
+After first login you should:
+- Go to **Profile** and change the password (I'll make sure the profile page exposes a "Change password" action if it isn't already there — small UI addition only).
+- Optionally create your own personal super_admin account from **Users & Roles** and stop using the shared one.
 
-Approach: build the backend + pages fully, but don't expose them anywhere a normal user can reach. This lets us flip them on later per-role without another build.
+Security note: a shared, chat-delivered credential is inherently weaker than a per-person account. Rotating the password on first login closes that gap.
 
-### Course registration (student-facing, hidden)
-- Backend already has `course_registrations`, `validate_registration` trigger (24-unit cap, respects `semesters.registration_open`), and `SessionBanner` to toggle open/closed.
-- Add `src/lib/registration.functions.ts`: `listOpenCatalogForMe`, `listMyRegistrations`, `registerCourse`, `dropCourse` — all `requireSupabaseAuth`, student-only.
-- The route file `_authenticated.registration.tsx` already exists as ComingSoon; I'll implement the real UI there (open semester, add/drop, live unit counter, prerequisite check) but:
-  - **Remove it from `NAV` in `PortalShell.tsx`** so no sidebar entry renders.
-  - Add a `FEATURE_FLAGS` map in `src/lib/feature-flags.ts` (`{ registration: false, fees: false }`) and gate the route's `component` behind it — flag off renders a 404-style "Not available" page even if someone types the URL.
-  - Flip a single boolean later to release.
+## 2. Android / desktop "Install this app" prompt
 
-### Fees & payments (hidden)
-- Add `fee_structures` seeding helpers and a `payments` server-fn surface (`listMyFees`, `recordManualPayment` for Bursary, `myPaymentStatus`) — no gateway integration yet (Paystack/Remita can be a later slice; the college brief doesn't mandate one).
-- Build `_authenticated.fees.tsx` UI (student view: outstanding balance, receipts; bursary view: post payment, per-student ledger).
-- Hide the same way: remove `Fees & Payments` from `NAV`, gate route by `FEATURE_FLAGS.fees`.
-- **Do NOT wire fee-gating into `validate_registration` yet.** When you're ready to enforce "no registration without payment", it becomes a one-line addition to that trigger + flipping the flag.
+Manifest-only PWA (no service worker, no offline mode — you didn't ask for offline, and adding a service worker inside the Lovable preview causes stale-cache issues).
 
-### Bulk / graduating-cohort transcripts (hidden)
-- Add `getCohortTranscripts(programme_id, entry_year)` server fn and a `/transcripts/cohort` printable page (one transcript per page, page-break rules already in `styles.css`).
-- Hidden the same way — no nav entry, gated by `FEATURE_FLAGS.cohortTranscripts`. Registry can still issue single official transcripts from `/students/:id` as today.
+- Add `public/manifest.webmanifest` with AKCOE name, theme color (navy), background, `display: "standalone"`, and icons derived from the existing AKCOE logo (192px + 512px, plus a maskable variant).
+- Add `<link rel="manifest">`, `<meta name="theme-color">`, and `apple-touch-icon` tags in `src/routes/__root.tsx` `head()`.
+- Add a small `InstallPrompt` component mounted in `__root.tsx`:
+  - Listens for the browser's `beforeinstallprompt` event (fires on Android Chrome / Edge / desktop Chrome when the site meets install criteria).
+  - Shows a dismissible banner (not a native `alert()` — nicer UX, same effect) that says "Install AKCOE Portal as an app" with **Install** and **Not now** buttons.
+  - On **Install**, calls the saved `prompt()` to trigger the native install dialog.
+  - On **Not now**, stores a `localStorage` flag so we don't nag on every visit; re-shows after 7 days.
+  - Also detects iOS Safari (which doesn't fire `beforeinstallprompt`) and shows a one-time hint: "Tap Share → Add to Home Screen".
+  - Hides itself when already running in standalone mode (`display-mode: standalone`).
+  - Hidden inside the Lovable editor preview iframe (checked via `window.self !== window.top`) so it doesn't pop up while you're building.
 
-### What "hidden" concretely means
-```text
-NAV in PortalShell.tsx       -> entries removed for registration / fees
-src/lib/feature-flags.ts     -> { registration:false, fees:false, cohortTranscripts:false }
-route file component         -> if (!FEATURE_FLAGS.x) return <NotAvailable/>;
-dashboards                   -> student/bursary/admin widgets for these areas conditionally rendered
-```
-No DB rollback needed to release later — you just flip the flag.
-
-## Out of scope for this slice
-- Payment gateway integration (Paystack/Remita).
-- Enforcing fee-payment as a precondition for course registration (trigger change).
-- Public marketing pages.
-
-## What I need from you before building
-- The email address of your portal account so I can grant `super_admin` in the bootstrap migration.
+## Out of scope
+- Offline caching / service worker.
+- Push notifications.
+- Native Play Store / App Store packaging.

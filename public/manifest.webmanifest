@@ -1,0 +1,31 @@
+{
+  "name": "AKCOE Portal",
+  "short_name": "AKCOE",
+  "description": "Aminu Kano College of Education — official student, lecturer and administration portal.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0b2a4a",
+  "icons": [
+    {
+      "src": "/__l5e/assets-v1/31f86f47-9361-40ed-b303-1478d4ac8c6b/akce-logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/__l5e/assets-v1/31f86f47-9361-40ed-b303-1478d4ac8c6b/akce-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/__l5e/assets-v1/31f86f47-9361-40ed-b303-1478d4ac8c6b/akce-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}
