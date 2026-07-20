@@ -159,38 +159,9 @@ function RosterEditor({ offeringId }: { offeringId: string }) {
   );
 }
 
-type FixableRow = {
-  rowNumber: number;
-  matric: string;
-  registrationId: string;
-  studentId: string;
-  studentName: string;
-  ca: string;
-  exam: string;
-  error: string;
-};
-type HardError = { rowNumber: number; matric: string; reason: string };
-type PendingImport = {
-  toWrite: Array<{ registration_id: string; student_id: string; ca_score: number | null; exam_score: number | null; rowNumber: number }>;
-  fixable: FixableRow[];
-  hardErrors: HardError[];
-  skippedLocked: number;
-  totalRows: number;
-};
-
-function validateFixable(f: FixableRow): string | null {
-  const caRaw = f.ca.trim(); const examRaw = f.exam.trim();
-  const ca = caRaw === "" ? null : Number(caRaw);
-  const exam = examRaw === "" ? null : Number(examRaw);
-  if (ca !== null && (!Number.isFinite(ca) || ca < 0 || ca > 40)) return "CA out of range (0–40)";
-  if (exam !== null && (!Number.isFinite(exam) || exam < 0 || exam > 60)) return "Exam out of range (0–60)";
-  if (ca === null && exam === null) return "At least one score required";
-  return null;
-}
-
 function ImportExportBar({ rows, onImport, pending, offeringId }: { rows: any[]; onImport: (payload: any[]) => void; pending: boolean; offeringId: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [state, setState] = useState<PendingImport | null>(null);
+  const [pending2, setPending] = useState<{ toWrite: any[]; skippedLocked: number; errors: string[] } | null>(null);
 
   function exportTemplate() {
     const header = ["matric_number", "full_name", "ca_score", "exam_score", "status"];
@@ -226,93 +197,47 @@ function ImportExportBar({ rows, onImport, pending, offeringId }: { rows: any[];
     const byMatric = new Map<string, any>();
     for (const row of rows) byMatric.set(String(row.student?.matric_number ?? "").trim(), row);
 
-    const toWrite: PendingImport["toWrite"] = [];
-    const fixable: FixableRow[] = [];
-    const hardErrors: HardError[] = [];
+    const errors: string[] = [];
     const seen = new Set<string>();
+    const toWrite: any[] = [];
     let skippedLocked = 0;
-    let totalRows = 0;
 
     for (let i = 1; i < parsed.length; i++) {
       const line = parsed[i];
       if (line.every((c) => c.trim() === "")) continue;
-      totalRows++;
-      const rowNumber = i + 1;
       const matric = (line[iMatric] ?? "").trim();
-      if (!matric) { hardErrors.push({ rowNumber, matric: "", reason: "Missing matric_number" }); continue; }
-      if (seen.has(matric)) { hardErrors.push({ rowNumber, matric, reason: "Duplicate matric in CSV" }); continue; }
+      if (!matric) { errors.push(`Row ${i + 1}: missing matric_number`); continue; }
+      if (seen.has(matric)) { errors.push(`Row ${i + 1}: duplicate matric ${matric}`); continue; }
       seen.add(matric);
       const target = byMatric.get(matric);
-      if (!target) { hardErrors.push({ rowNumber, matric, reason: "Not in this roster" }); continue; }
+      if (!target) { errors.push(`Row ${i + 1}: ${matric} not in this roster`); continue; }
 
       const existing = target.result?.[0];
       if (existing && !EDITABLE_STATUSES.has(existing.status)) { skippedLocked++; continue; }
 
       const caRaw = (line[iCa] ?? "").trim();
       const examRaw = (line[iExam] ?? "").trim();
-      const draft: FixableRow = {
-        rowNumber, matric,
-        registrationId: target.id,
-        studentId: target.student_id,
-        studentName: target.student?.profile?.full_name ?? "",
-        ca: caRaw, exam: examRaw, error: "",
-      };
-      const err = validateFixable(draft);
-      if (err) { draft.error = err; fixable.push(draft); continue; }
+      const ca = caRaw === "" ? null : Number(caRaw);
+      const exam = examRaw === "" ? null : Number(examRaw);
+      if (ca !== null && (!Number.isFinite(ca) || ca < 0 || ca > 40)) { errors.push(`Row ${i + 1}: CA out of range (0–40)`); continue; }
+      if (exam !== null && (!Number.isFinite(exam) || exam < 0 || exam > 60)) { errors.push(`Row ${i + 1}: Exam out of range (0–60)`); continue; }
 
       toWrite.push({
         registration_id: target.id,
         student_id: target.student_id,
-        ca_score: caRaw === "" ? null : Number(caRaw),
-        exam_score: examRaw === "" ? null : Number(examRaw),
-        rowNumber,
+        ca_score: ca,
+        exam_score: exam,
       });
     }
 
-    setState({ toWrite, fixable, hardErrors, skippedLocked, totalRows });
-  }
-
-  function editFixable(idx: number, patch: Partial<FixableRow>) {
-    setState((s) => {
-      if (!s) return s;
-      const next = [...s.fixable];
-      const merged = { ...next[idx], ...patch };
-      merged.error = validateFixable(merged) ?? "";
-      next[idx] = merged;
-      return { ...s, fixable: next };
-    });
-  }
-
-  function recheck() {
-    setState((s) => {
-      if (!s) return s;
-      const stillFixable: FixableRow[] = [];
-      const newlyValid: PendingImport["toWrite"] = [];
-      for (const f of s.fixable) {
-        const err = validateFixable(f);
-        if (err) { stillFixable.push({ ...f, error: err }); continue; }
-        newlyValid.push({
-          registration_id: f.registrationId,
-          student_id: f.studentId,
-          ca_score: f.ca.trim() === "" ? null : Number(f.ca),
-          exam_score: f.exam.trim() === "" ? null : Number(f.exam),
-          rowNumber: f.rowNumber,
-        });
-      }
-      const promoted = newlyValid.length;
-      if (promoted > 0) toast.success(`Fixed ${promoted} row${promoted === 1 ? "" : "s"}`);
-      else if (stillFixable.length > 0) toast.error("Some rows still have errors");
-      return { ...s, fixable: stillFixable, toWrite: [...s.toWrite, ...newlyValid] };
-    });
+    setPending({ toWrite, skippedLocked, errors });
   }
 
   function confirmImport() {
-    if (!state) return;
-    onImport(state.toWrite.map(({ rowNumber: _n, ...rest }) => rest));
-    setState(null);
+    if (!pending2) return;
+    onImport(pending2.toWrite);
+    setPending(null);
   }
-
-  const blockedByErrors = (state?.fixable.length ?? 0) > 0;
 
   return (
     <>
@@ -324,75 +249,31 @@ function ImportExportBar({ rows, onImport, pending, offeringId }: { rows: any[];
       </Button>
       <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={onFile} />
 
-      <Dialog open={!!state} onOpenChange={(o) => !o && setState(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <Dialog open={!!pending2} onOpenChange={(o) => !o && setPending(null)}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Review CSV import</DialogTitle>
-            <DialogDescription>
-              Fix invalid rows below and click <span className="font-medium">Re-check</span>, then import.
-              All imported rows are saved as <span className="font-medium">draft</span>.
-            </DialogDescription>
+            <DialogTitle>Confirm CSV import</DialogTitle>
+            <DialogDescription>Review before writing to the roster. All imported rows are saved as <span className="font-medium">draft</span>.</DialogDescription>
           </DialogHeader>
-          {state && (
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <StatPill label="Rows in file" value={state.totalRows} tone="muted" />
-                <StatPill label="Ready to write" value={state.toWrite.length} tone="ok" />
-                <StatPill label="Need fixes" value={state.fixable.length} tone={state.fixable.length ? "err" : "muted"} />
-                <StatPill label="Locked (skipped)" value={state.skippedLocked} tone="warn" />
+          {pending2 && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-3 gap-3">
+                <StatPill label="To write" value={pending2.toWrite.length} tone="ok" />
+                <StatPill label="Locked (skipped)" value={pending2.skippedLocked} tone="warn" />
+                <StatPill label="Errors" value={pending2.errors.length} tone={pending2.errors.length ? "err" : "muted"} />
               </div>
-
-              {state.fixable.length > 0 && (
-                <div className="rounded-md border">
-                  <div className="flex items-center justify-between px-3 py-2 bg-muted/40 border-b">
-                    <div className="font-medium">Fixable errors ({state.fixable.length})</div>
-                    <Button size="sm" variant="secondary" onClick={recheck}>Re-check</Button>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y">
-                    {state.fixable.map((f, idx) => (
-                      <div key={`${f.rowNumber}-${f.matric}`} className="grid grid-cols-[auto,1fr,auto,auto] items-center gap-2 px-3 py-2">
-                        <span className="text-[11px] text-muted-foreground tabular-nums">L{f.rowNumber}</span>
-                        <div className="min-w-0">
-                          <div className="font-mono text-xs">{f.matric}</div>
-                          <div className="text-xs text-muted-foreground truncate">{f.studentName}</div>
-                          {f.error && <div className="text-[11px] text-rose-600">{f.error}</div>}
-                        </div>
-                        <Input value={f.ca} onChange={(e) => editFixable(idx, { ca: e.target.value })}
-                          type="number" min={0} max={40} step={0.5} placeholder="CA" className="w-20" />
-                        <Input value={f.exam} onChange={(e) => editFixable(idx, { exam: e.target.value })}
-                          type="number" min={0} max={60} step={0.5} placeholder="Exam" className="w-20" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {state.hardErrors.length > 0 && (
-                <div className="rounded-md border">
-                  <div className="px-3 py-2 bg-muted/40 border-b font-medium">
-                    Unfixable rows ({state.hardErrors.length}) — skipped
-                  </div>
-                  <div className="max-h-40 overflow-y-auto text-xs">
-                    {state.hardErrors.slice(0, 40).map((e) => (
-                      <div key={`${e.rowNumber}-${e.matric}`} className="px-3 py-1.5 border-b last:border-0">
-                        <span className="text-muted-foreground">L{e.rowNumber}</span>{" "}
-                        <span className="font-mono">{e.matric || "—"}</span>{" · "}
-                        <span className="text-rose-600">{e.reason}</span>
-                      </div>
-                    ))}
-                    {state.hardErrors.length > 40 && (
-                      <div className="px-3 py-1.5 text-muted-foreground">…and {state.hardErrors.length - 40} more</div>
-                    )}
-                  </div>
+              {pending2.errors.length > 0 && (
+                <div className="max-h-40 overflow-auto rounded-md border p-2 text-xs bg-muted/30 space-y-0.5">
+                  {pending2.errors.slice(0, 30).map((e, i) => <div key={i}>• {e}</div>)}
+                  {pending2.errors.length > 30 && <div className="text-muted-foreground">…and {pending2.errors.length - 30} more</div>}
                 </div>
               )}
             </div>
           )}
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setState(null)}>Cancel</Button>
-            <Button onClick={confirmImport} disabled={!state || state.toWrite.length === 0 || pending || blockedByErrors}
-              title={blockedByErrors ? "Resolve all fixable errors first" : undefined}>
-              Import {state ? state.toWrite.length : 0} row{state?.toWrite.length === 1 ? "" : "s"}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPending(null)}>Cancel</Button>
+            <Button onClick={confirmImport} disabled={!pending2 || pending2.toWrite.length === 0 || pending}>
+              Import {pending2 ? pending2.toWrite.length : 0} rows
             </Button>
           </DialogFooter>
         </DialogContent>
