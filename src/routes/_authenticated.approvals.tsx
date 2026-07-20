@@ -127,6 +127,13 @@ function Approvals() {
           </Card>
         );
       })}
+
+      <AuditTimelineDialog
+        open={!!audit}
+        onOpenChange={(v) => !v && setAudit(null)}
+        offeringId={audit?.id ?? null}
+        offeringLabel={audit?.label}
+      />
     </div>
   );
 }
