@@ -48,7 +48,7 @@ function Landing() {
               Est. Excellence in Teacher Education
             </span>
             <h1 className="mt-5 font-serif text-4xl md:text-6xl font-bold leading-tight">
-              AMINU KANO <span className="text-gradient-gold"> College of </span> Education Management Portal
+              AMINU KANO <span className="text-gradient-gold"> College of Education </span> Management Portal
             </h1>
             <p className="mt-5 text-lg text-white/80 max-w-xl">
               Register courses, upload results, track approvals, view your CGPA and manage the academic life of Aminu
