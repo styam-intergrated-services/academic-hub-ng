@@ -273,3 +273,201 @@ export const getMyResults = createServerFn({ method: "GET" })
     if (error) throw error;
     return { results: results ?? [], gpa: gpa ?? [] };
   });
+
+// ============ EXPORTS + BROADSHEETS + AUDIT ============
+
+// Flat rows for CSV / Excel / PDF export. Approved-or-published only.
+export const getExportRows = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    semester_id: z.string().uuid().nullable().optional(),
+    department_id: z.string().uuid().nullable().optional(),
+    programme_id: z.string().uuid().nullable().optional(),
+    offering_id: z.string().uuid().nullable().optional(),
+    include_approved: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const statuses = data.include_approved
+      ? ["registry_approved", "published"]
+      : ["published"];
+
+    let q = supabase.from("results").select(`
+      id, ca_score, exam_score, total_score, grade, grade_point, status, published_at,
+      student:students!inner(matric_number, programme_id, current_level_id, department_id, profile:profiles!inner(full_name)),
+      offering:course_offerings!inner(
+        id, semester_id,
+        course:courses!inner(code, title, credit_units, department_id),
+        semester:semesters!inner(type, session:academic_sessions(name))
+      )
+    `).in("status", statuses as never);
+    if (data.semester_id) q = q.eq("offering.semester_id", data.semester_id);
+    if (data.offering_id) q = q.eq("offering_id", data.offering_id);
+    if (data.department_id) q = q.eq("offering.course.department_id", data.department_id);
+    if (data.programme_id) q = q.eq("student.programme_id", data.programme_id);
+
+    const { data: rows, error } = await q;
+    if (error) throw error;
+
+    const [{ data: prog }, { data: dept }, { data: lev }] = await Promise.all([
+      supabase.from("programmes").select("id,name,code"),
+      supabase.from("departments").select("id,name,code"),
+      supabase.from("levels").select("id,code,name"),
+    ]);
+    const pm = new Map((prog ?? []).map((p: any) => [p.id, p]));
+    const dm = new Map((dept ?? []).map((d: any) => [d.id, d]));
+    const lm = new Map((lev ?? []).map((l: any) => [l.id, l]));
+
+    return (rows ?? []).map((r: any) => ({
+      matric_number: r.student.matric_number,
+      full_name: r.student.profile?.full_name ?? "",
+      programme: pm.get(r.student.programme_id)?.name ?? "",
+      programme_code: pm.get(r.student.programme_id)?.code ?? "",
+      department: dm.get(r.student.department_id)?.name ?? dm.get(r.offering.course.department_id)?.name ?? "",
+      level: lm.get(r.student.current_level_id)?.code ?? "",
+      session: r.offering.semester.session?.name ?? "",
+      semester: r.offering.semester.type,
+      course_code: r.offering.course.code,
+      course_title: r.offering.course.title,
+      credit_units: r.offering.course.credit_units,
+      ca_score: r.ca_score,
+      exam_score: r.exam_score,
+      total_score: r.total_score,
+      grade: r.grade,
+      grade_point: r.grade_point,
+      status: r.status,
+      published_at: r.published_at,
+    }));
+  });
+
+// Approved/published offerings the caller can broadsheet or export from.
+export const listApprovedOfferings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    semester_id: z.string().uuid().nullable().optional(),
+    department_id: z.string().uuid().nullable().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    let q = supabase.from("results").select(`
+      offering_id, status,
+      offering:course_offerings!inner(
+        id, semester_id,
+        course:courses!inner(code, title, credit_units, department_id),
+        semester:semesters!inner(type, session:academic_sessions(name))
+      )
+    `).in("status", ["registry_approved","published"] as never);
+    if (data.semester_id) q = q.eq("offering.semester_id", data.semester_id);
+    if (data.department_id) q = q.eq("offering.course.department_id", data.department_id);
+    const { data: rows, error } = await q;
+    if (error) throw error;
+    const map = new Map<string, any>();
+    for (const r of (rows ?? []) as any[]) {
+      const key = r.offering_id;
+      const e = map.get(key) ?? { offering: r.offering, published: 0, approved: 0 };
+      if (r.status === "published") e.published++; else e.approved++;
+      map.set(key, e);
+    }
+    return Array.from(map.values());
+  });
+
+// Full broadsheet dataset for a single offering.
+export const getBroadsheetData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ offering_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: offering, error: e1 } = await supabase.from("course_offerings")
+      .select(`
+        id,
+        course:courses!inner(code, title, credit_units,
+          department:departments!inner(id, name, code,
+            faculty:faculties(id, name, code))),
+        semester:semesters!inner(type, session:academic_sessions(name)),
+        lecturers:course_lecturers(lecturer_id, is_lead)
+      `).eq("id", data.offering_id).maybeSingle();
+    if (e1) throw e1;
+    if (!offering) throw new Error("Offering not found");
+
+    const lecturerIds = ((offering as any).lecturers ?? []).map((l: any) => l.lecturer_id);
+    const [{ data: lecProfiles }, { data: results, error: e2 }, { data: progs }] = await Promise.all([
+      lecturerIds.length ? supabase.from("profiles").select("id, full_name").in("id", lecturerIds) : Promise.resolve({ data: [] as any[] }),
+      supabase.from("results")
+        .select(`
+          id, ca_score, exam_score, total_score, grade, grade_point, status,
+          student:students!inner(matric_number, programme_id, current_level_id,
+            profile:profiles!inner(full_name))
+        `).eq("offering_id", data.offering_id)
+        .in("status", ["registry_approved","published"] as never),
+      supabase.from("programmes").select("id,name,code"),
+    ]);
+    if (e2) throw e2;
+
+    const pmap = new Map((lecProfiles ?? []).map((p: any) => [p.id, p]));
+    const pm = new Map((progs ?? []).map((p: any) => [p.id, p]));
+    const lecturers = ((offering as any).lecturers ?? []).map((l: any) => ({
+      is_lead: l.is_lead,
+      full_name: pmap.get(l.lecturer_id)?.full_name ?? "—",
+    }));
+
+    return {
+      offering,
+      lecturers,
+      results: (results ?? []).map((r: any) => ({
+        matric_number: r.student.matric_number,
+        full_name: r.student.profile?.full_name ?? "",
+        programme: pm.get(r.student.programme_id)?.code ?? "",
+        ca_score: r.ca_score,
+        exam_score: r.exam_score,
+        total_score: r.total_score,
+        grade: r.grade,
+        grade_point: r.grade_point,
+        status: r.status,
+      })).sort((a, b) => (a.matric_number ?? "").localeCompare(b.matric_number ?? "")),
+    };
+  });
+
+// Audit timeline (result_history) rolled up by offering.
+export const getOfferingAuditTrail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ offering_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: results, error: e1 } = await supabase.from("results")
+      .select(`id, student:students!inner(matric_number, profile:profiles!inner(full_name))`)
+      .eq("offering_id", data.offering_id);
+    if (e1) throw e1;
+    const resIds = (results ?? []).map((r: any) => r.id);
+    if (resIds.length === 0) return [];
+
+    const { data: hist, error: e2 } = await supabase.from("result_history")
+      .select("id, result_id, changed_by, action, from_status, to_status, ca_score, exam_score, note, changed_at")
+      .in("result_id", resIds)
+      .order("changed_at", { ascending: false })
+      .limit(500);
+    if (e2) throw e2;
+
+    const actorIds = Array.from(new Set((hist ?? []).map((h: any) => h.changed_by)));
+    const { data: actors } = actorIds.length
+      ? await supabase.from("profiles").select("id, full_name").in("id", actorIds)
+      : { data: [] as any[] };
+    const amap = new Map((actors ?? []).map((a: any) => [a.id, a]));
+    const rmap = new Map((results ?? []).map((r: any) => [r.id, r]));
+
+    return (hist ?? []).map((h: any) => {
+      const r = rmap.get(h.result_id);
+      return {
+        id: h.id,
+        matric_number: r?.student?.matric_number ?? "—",
+        student_name: r?.student?.profile?.full_name ?? "—",
+        actor_name: amap.get(h.changed_by)?.full_name ?? "System",
+        action: h.action,
+        from_status: h.from_status,
+        to_status: h.to_status,
+        ca_score: h.ca_score,
+        exam_score: h.exam_score,
+        note: h.note,
+        changed_at: h.changed_at,
+      };
+    });
+  });
