@@ -38,6 +38,7 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
           <CardContent className="grid grid-cols-2 gap-3">
             <Link to="/registration"><Button className="w-full justify-start" variant="secondary"><ClipboardList className="h-4 w-4 mr-2" /> Register courses</Button></Link>
             <Link to="/results"><Button className="w-full justify-start" variant="secondary"><Award className="h-4 w-4 mr-2" /> View results</Button></Link>
+            <Link to="/transcript"><Button className="w-full justify-start" variant="secondary"><Award className="h-4 w-4 mr-2" /> My transcript</Button></Link>
             <Link to="/fees"><Button className="w-full justify-start" variant="secondary"><Wallet className="h-4 w-4 mr-2" /> Pay fees</Button></Link>
             <Link to="/profile"><Button className="w-full justify-start" variant="secondary"><TrendingUp className="h-4 w-4 mr-2" /> Update profile</Button></Link>
           </CardContent>

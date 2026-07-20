@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Check, X, Rocket } from "lucide-react";
+import { Check, X, Rocket, FileText } from "lucide-react";
 
 const searchSchema = z.object({ status: z.string().optional() });
 
@@ -83,7 +83,12 @@ function Approvals() {
                 </CardDescription>
                 <ApprovalTrail r={first} />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                {first.status === "published" && (
+                  <Link to="/broadsheet/$offeringId" params={{ offeringId: g.offering.id }}>
+                    <Button variant="outline" size="sm"><FileText className="h-4 w-4 mr-2" />Broadsheet</Button>
+                  </Link>
+                )}
                 {canPublish ? (
                   <Button onClick={() => decideMut.mutate({ offering_id: g.offering.id, level: "registry", action: "publish" })} className="bg-primary text-primary-foreground"><Rocket className="h-4 w-4 mr-2" />Publish</Button>
                 ) : level && (

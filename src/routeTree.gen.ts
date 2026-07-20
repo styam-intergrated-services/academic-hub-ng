@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated.users'
 import { Route as AuthenticatedUploadResultsRouteImport } from './routes/_authenticated.upload-results'
+import { Route as AuthenticatedTranscriptRouteImport } from './routes/_authenticated.transcript'
 import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
@@ -31,7 +32,9 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated.students.index'
+import { Route as AuthenticatedTranscriptsIdRouteImport } from './routes/_authenticated.transcripts.$id'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id'
+import { Route as AuthenticatedBroadsheetOfferingIdRouteImport } from './routes/_authenticated.broadsheet.$offeringId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -65,6 +68,11 @@ const AuthenticatedUploadResultsRoute =
     path: '/upload-results',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTranscriptRoute = AuthenticatedTranscriptRouteImport.update({
+  id: '/transcript',
+  path: '/transcript',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTeachingRoute = AuthenticatedTeachingRouteImport.update({
   id: '/teaching',
   path: '/teaching',
@@ -151,11 +159,23 @@ const AuthenticatedStudentsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedStudentsRoute,
   } as any)
+const AuthenticatedTranscriptsIdRoute =
+  AuthenticatedTranscriptsIdRouteImport.update({
+    id: '/transcripts/$id',
+    path: '/transcripts/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AuthenticatedStudentsRoute,
 } as any)
+const AuthenticatedBroadsheetOfferingIdRoute =
+  AuthenticatedBroadsheetOfferingIdRouteImport.update({
+    id: '/broadsheet/$offeringId',
+    path: '/broadsheet/$offeringId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -187,11 +207,14 @@ export interface FileRoutesByFullPath {
   '/results': typeof AuthenticatedResultsRoute
   '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/teaching': typeof AuthenticatedTeachingRoute
+  '/transcript': typeof AuthenticatedTranscriptRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -212,11 +235,14 @@ export interface FileRoutesByTo {
   '/registration': typeof AuthenticatedRegistrationRoute
   '/results': typeof AuthenticatedResultsRoute
   '/teaching': typeof AuthenticatedTeachingRoute
+  '/transcript': typeof AuthenticatedTranscriptRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
@@ -240,11 +266,14 @@ export interface FileRoutesById {
   '/_authenticated/results': typeof AuthenticatedResultsRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
   '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
+  '/_authenticated/transcript': typeof AuthenticatedTranscriptRoute
   '/_authenticated/upload-results': typeof AuthenticatedUploadResultsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/_authenticated/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -268,11 +297,14 @@ export interface FileRouteTypes {
     | '/results'
     | '/students'
     | '/teaching'
+    | '/transcript'
     | '/upload-results'
     | '/users'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/broadsheet/$offeringId'
     | '/students/$id'
+    | '/transcripts/$id'
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -293,11 +325,14 @@ export interface FileRouteTypes {
     | '/registration'
     | '/results'
     | '/teaching'
+    | '/transcript'
     | '/upload-results'
     | '/users'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/broadsheet/$offeringId'
     | '/students/$id'
+    | '/transcripts/$id'
     | '/students'
   id:
     | '__root__'
@@ -320,11 +355,14 @@ export interface FileRouteTypes {
     | '/_authenticated/results'
     | '/_authenticated/students'
     | '/_authenticated/teaching'
+    | '/_authenticated/transcript'
     | '/_authenticated/upload-results'
     | '/_authenticated/users'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/broadsheet/$offeringId'
     | '/_authenticated/students/$id'
+    | '/_authenticated/transcripts/$id'
     | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
@@ -381,6 +419,13 @@ declare module '@tanstack/react-router' {
       path: '/upload-results'
       fullPath: '/upload-results'
       preLoaderRoute: typeof AuthenticatedUploadResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/transcript': {
+      id: '/_authenticated/transcript'
+      path: '/transcript'
+      fullPath: '/transcript'
+      preLoaderRoute: typeof AuthenticatedTranscriptRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/teaching': {
@@ -495,12 +540,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
       parentRoute: typeof AuthenticatedStudentsRoute
     }
+    '/_authenticated/transcripts/$id': {
+      id: '/_authenticated/transcripts/$id'
+      path: '/transcripts/$id'
+      fullPath: '/transcripts/$id'
+      preLoaderRoute: typeof AuthenticatedTranscriptsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/students/$id': {
       id: '/_authenticated/students/$id'
       path: '/$id'
       fullPath: '/students/$id'
       preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
       parentRoute: typeof AuthenticatedStudentsRoute
+    }
+    '/_authenticated/broadsheet/$offeringId': {
+      id: '/_authenticated/broadsheet/$offeringId'
+      path: '/broadsheet/$offeringId'
+      fullPath: '/broadsheet/$offeringId'
+      preLoaderRoute: typeof AuthenticatedBroadsheetOfferingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
@@ -548,8 +607,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
   AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
+  AuthenticatedTranscriptRoute: typeof AuthenticatedTranscriptRoute
   AuthenticatedUploadResultsRoute: typeof AuthenticatedUploadResultsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
+  AuthenticatedBroadsheetOfferingIdRoute: typeof AuthenticatedBroadsheetOfferingIdRoute
+  AuthenticatedTranscriptsIdRoute: typeof AuthenticatedTranscriptsIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -566,8 +628,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
   AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,
+  AuthenticatedTranscriptRoute: AuthenticatedTranscriptRoute,
   AuthenticatedUploadResultsRoute: AuthenticatedUploadResultsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
+  AuthenticatedBroadsheetOfferingIdRoute:
+    AuthenticatedBroadsheetOfferingIdRoute,
+  AuthenticatedTranscriptsIdRoute: AuthenticatedTranscriptsIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
