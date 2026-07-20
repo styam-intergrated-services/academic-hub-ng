@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { z } from "zod";
 import { getPendingApprovals, decideApproval } from "@/lib/results.functions";
 import { getPortalUser as getPortalUserFn } from "@/lib/portal.functions";
@@ -11,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Check, X, Rocket } from "lucide-react";
+import { Check, X, Rocket, History } from "lucide-react";
+import { AuditTimelineDialog } from "@/components/portal/AuditTimelineDialog";
 
 const searchSchema = z.object({ status: z.string().optional() });
 
