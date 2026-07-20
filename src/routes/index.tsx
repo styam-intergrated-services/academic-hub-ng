@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
       { title: "AKCOE Portal — Aminu Kano College of Education" },
       {
         name: "description",
-        content: "Official portal for students, lecturers and administration at Aminu Kano College of Education.",
+        content: "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria",
       },
     ],
   }),
