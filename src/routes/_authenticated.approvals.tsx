@@ -31,6 +31,7 @@ function Approvals() {
   const navigate = Route.useNavigate();
   const { data: user } = useQuery({ queryKey: ["portal","user"], queryFn: () => userFn(), staleTime: 60_000 });
   const { data, isLoading } = useQuery({ queryKey: ["approvals"], queryFn: () => fn() });
+  const [audit, setAudit] = useState<{ id: string; label: string } | null>(null);
 
   const levels = user?.roles ?? [];
   const decideMut = useMutation({
@@ -85,7 +86,10 @@ function Approvals() {
                 </CardDescription>
                 <ApprovalTrail r={first} />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="ghost" size="sm" onClick={() => setAudit({ id: g.offering.id, label: `${g.offering.course.code} — ${g.offering.course.title}` })}>
+                  <History className="h-4 w-4 mr-2" />Audit trail
+                </Button>
                 {canPublish ? (
                   <Button onClick={() => decideMut.mutate({ offering_id: g.offering.id, level: "registry", action: "publish" })} className="bg-primary text-primary-foreground"><Rocket className="h-4 w-4 mr-2" />Publish</Button>
                 ) : level && (
