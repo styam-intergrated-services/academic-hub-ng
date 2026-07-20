@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StandingBadge } from "./_authenticated.students.index";
-import { ChevronLeft, ShieldAlert } from "lucide-react";
+import { ChevronLeft, ShieldAlert, FileText } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/students/$id")({
@@ -73,6 +73,11 @@ function StudentDetailPage() {
             <div className="text-xs uppercase tracking-widest text-muted-foreground">CGPA</div>
             <div className="font-serif text-3xl font-bold text-primary">{Number(student.cgpa ?? 0).toFixed(2)}</div>
             <div className="text-xs text-muted-foreground">{student.total_credit_units ?? 0} units earned</div>
+            {canAdmin && (
+              <Link to="/students/$id/transcript" params={{ id: student.id }} className="mt-2 inline-block">
+                <Button size="sm" variant="outline"><FileText className="h-4 w-4 mr-2" />Transcript</Button>
+              </Link>
+            )}
           </div>
         </CardContent>
       </Card>
