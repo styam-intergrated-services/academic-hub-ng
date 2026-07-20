@@ -33,7 +33,7 @@ export const getOfferingRoster = createServerFn({ method: "POST" })
       .select(`
         id, student_id,
         student:students!inner(matric_number, profile:profiles!inner(full_name)),
-        result:results(id, ca_score, exam_score, total_score, grade, grade_point, status)
+        result:results(id, ca_score, exam_score, total_score, grade, grade_point, status, rejection_reason)
       `)
       .eq("offering_id", data.offering_id)
       .eq("status", "approved");
