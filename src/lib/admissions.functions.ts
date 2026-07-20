@@ -86,8 +86,19 @@ export const matriculateApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: matric, error } = await supabase.rpc("matriculate_application", { _application_id: data.id });
+    const { supabase, userId } = context;
+    // Verify caller has an authorized role under RLS before elevating privileges.
+    const { data: roles, error: roleErr } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (roleErr) throw roleErr;
+    const allowed = new Set(["super_admin", "ict_admin", "registry"]);
+    if (!(roles ?? []).some((r) => allowed.has(r.role as string))) {
+      throw new Error("Not authorized to matriculate applications");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: matric, error } = await supabaseAdmin.rpc("matriculate_application", { _application_id: data.id });
     if (error) throw error;
     return { matric_number: matric as unknown as string };
   });
