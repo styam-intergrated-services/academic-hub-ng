@@ -62,7 +62,11 @@ export function PortalShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
-  const visible = NAV.filter((n) => !n.roles || (user && n.roles.some((r) => user.roles.includes(r))));
+  const visible = NAV.filter(
+    (n) =>
+      (!n.flag || FEATURE_FLAGS[n.flag]) &&
+      (!n.roles || (user && n.roles.some((r) => user.roles.includes(r))))
+  );
 
   return (
     <div className="min-h-screen bg-muted/30">
