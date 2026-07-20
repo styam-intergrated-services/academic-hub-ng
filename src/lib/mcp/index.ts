@@ -4,6 +4,7 @@ import listFaculties from "./tools/list-faculties";
 import listMyRegistrations from "./tools/list-my-registrations";
 import listMyResults from "./tools/list-my-results";
 import listNotifications from "./tools/list-notifications";
+import listMyCatalog from "./tools/list-my-catalog";
 
 const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
@@ -17,5 +18,5 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [whoami, listFaculties, listMyRegistrations, listMyResults, listNotifications],
+  tools: [whoami, listFaculties, listMyRegistrations, listMyResults, listNotifications, listMyCatalog],
 });
