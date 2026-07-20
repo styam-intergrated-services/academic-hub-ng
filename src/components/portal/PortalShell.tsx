@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { to: "/courses", label: "My Courses", icon: BookOpen, roles: ["student"] },
   { to: "/registration", label: "Course Registration", icon: ClipboardList, roles: ["student"] },
   { to: "/results", label: "My Results", icon: Award, roles: ["student"] },
+  { to: "/transcript", label: "My Transcript", icon: FileCheck2, roles: ["student"] },
   { to: "/fees", label: "Fees & Payments", icon: Wallet, roles: ["student","bursary","super_admin","ict_admin"] },
   { to: "/teaching", label: "My Teaching", icon: BookOpen, roles: ["lecturer"] },
   { to: "/upload-results", label: "Upload Results", icon: FileCheck2, roles: ["lecturer"] },

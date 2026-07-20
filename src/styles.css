@@ -184,3 +184,14 @@
   background-clip: text;
   color: transparent;
 }
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  header, aside, nav, .no-print, [role="banner"] { display: none !important; }
+  .md\:pl-64 { padding-left: 0 !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .print-sheet, .print-sheet * { color: #000 !important; }
+  .print-sheet table, .print-sheet th, .print-sheet td { border-color: #000 !important; }
+  .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+}
