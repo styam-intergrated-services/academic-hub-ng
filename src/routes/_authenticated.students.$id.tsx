@@ -74,7 +74,7 @@ function StudentDetailPage() {
             <div className="font-serif text-3xl font-bold text-primary">{Number(student.cgpa ?? 0).toFixed(2)}</div>
             <div className="text-xs text-muted-foreground">{student.total_credit_units ?? 0} units earned</div>
             {canAdmin && (
-              <Link to="/students/$id/transcript" params={{ id: student.id }} className="mt-2 inline-block">
+              <Link to="/transcripts/$id" params={{ id: student.id }} className="mt-2 inline-block">
                 <Button size="sm" variant="outline"><FileText className="h-4 w-4 mr-2" />Transcript</Button>
               </Link>
             )}
