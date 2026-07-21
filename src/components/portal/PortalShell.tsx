@@ -6,7 +6,7 @@ import { getPortalUser, type AppRole } from "@/lib/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, User, BookOpen, ClipboardList, Users, Building2, FileCheck2,
-  Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings, TrendingUp, Megaphone,
+  Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings, TrendingUp, Megaphone, AlertTriangle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
