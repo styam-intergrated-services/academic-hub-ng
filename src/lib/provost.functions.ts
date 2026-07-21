@@ -50,7 +50,7 @@ export const getProvostOverview = createServerFn({ method: "GET" })
       supabase.from("results").select("id", { count: "exact", head: true }).eq("status","published"),
       supabase.from("announcements").select("id,title,status,created_at,category").order("created_at",{ascending:false}).limit(5),
       supabase.from("academic_calendar_events").select("id,title,event_date,category").gte("event_date", new Date().toISOString().slice(0,10)).order("event_date").limit(6),
-      supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("read", false),
+      supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_read", false),
       supabase.from("graduation_lists").select("id,status"),
       supabase.from("policy_documents").select("id,status"),
     ]);
