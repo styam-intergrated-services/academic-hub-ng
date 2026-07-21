@@ -117,7 +117,7 @@ export const listAcademicStructure = createServerFn({ method: "GET" })
       supabase.from("levels").select("id,code,name,order_index").order("order_index"),
       supabase.from("academic_sessions").select("id,name,start_date,end_date,status").order("start_date", { ascending: false }),
       supabase.from("semesters").select("id,session_id,type,start_date,end_date,registration_open,is_current").order("start_date", { ascending: false }),
-      supabase.from("courses").select("id,department_id,code,title,credit_units,level_id,semester_type,is_active").order("code"),
+      supabase.from("courses").select("id,department_id,code,title,credit_units,level_id,semester_type,is_active,category").order("code"),
     ]);
     if (f.error) throw f.error;
     return {
