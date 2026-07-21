@@ -100,7 +100,7 @@ export const getTranscript = createServerFn({ method: "POST" })
 
     const { data: publishedResults, error: eRes } = await supabase.from("results")
       .select(`
-        id, ca_score, exam_score, total_score, grade, grade_point,
+        id, ca_score, exam_score, total_score, grade, grade_point, status_code,
         offering:course_offerings!inner(
           course:courses!inner(code, title, credit_units),
           semester:semesters!inner(id, type, session:academic_sessions(name, start_date))
@@ -140,6 +140,7 @@ export const getTranscript = createServerFn({ method: "POST" })
       const block = byId.get(key)!;
       const units = Number(r.offering.course.credit_units) || 0;
       const gp = Number(r.grade_point) || 0;
+      const statusCode = r.status_code ?? "OK";
       block.rows.push({
         code: r.offering.course.code,
         title: r.offering.course.title,
@@ -149,9 +150,12 @@ export const getTranscript = createServerFn({ method: "POST" })
         total: r.total_score,
         grade: r.grade,
         grade_point: gp,
+        status_code: statusCode,
       });
-      block.tcu += units;
-      block.tgp += units * gp;
+      if (statusCode === "OK") {
+        block.tcu += units;
+        block.tgp += units * gp;
+      }
     }
     const semesters = Array.from(byId.values())
       .map((b) => ({ ...b, gpa: b.tcu > 0 ? Math.round((b.tgp / b.tcu) * 100) / 100 : 0 }))
@@ -169,8 +173,9 @@ export const getTranscript = createServerFn({ method: "POST" })
     const overallCgpa = cumUnits > 0 ? Math.round((cumPoints / cumUnits) * 100) / 100 : Number(student.cgpa ?? 0);
     const classOfResult =
       overallCgpa >= 4.5 ? "Distinction" :
-      overallCgpa >= 3.5 ? "Credit" :
-      overallCgpa >= 2.5 ? "Merit" :
+      overallCgpa >= 3.5 ? "Upper Credit" :
+      overallCgpa >= 2.5 ? "Lower Credit" :
+      overallCgpa >= 1.5 ? "Merit" :
       overallCgpa >= 1.0 ? "Pass" : "Fail";
 
     return {

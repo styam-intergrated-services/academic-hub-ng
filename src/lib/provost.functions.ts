@@ -158,8 +158,12 @@ export const getAcademicReports = createServerFn({ method: "GET" })
 
     // Graduation stats: students at NCE3+ with CGPA >= 1.0 grouped by classification
     const classify = (cg: number) =>
-      cg >= 4.5 ? "Distinction" : cg >= 3.5 ? "Credit" : cg >= 2.5 ? "Merit" : cg >= 1.0 ? "Pass" : "Fail";
-    const grad: Record<string, number> = { Distinction: 0, Credit: 0, Merit: 0, Pass: 0, Fail: 0 };
+      cg >= 4.5 ? "Distinction" :
+      cg >= 3.5 ? "Upper Credit" :
+      cg >= 2.5 ? "Lower Credit" :
+      cg >= 1.5 ? "Merit" :
+      cg >= 1.0 ? "Pass" : "Fail";
+    const grad: Record<string, number> = { Distinction: 0, "Upper Credit": 0, "Lower Credit": 0, Merit: 0, Pass: 0, Fail: 0 };
     for (const s of students.data ?? []) grad[classify(Number(s.cgpa ?? 0))] += 1;
 
     return {
