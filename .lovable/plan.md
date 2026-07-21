@@ -1,38 +1,38 @@
-## 1. Pre-created super_admin login
 
-I'll mint credentials myself and seed them via migration so you can sign in immediately at `/auth`.
+## Goals
 
-- **Email:** `admin@akcoekano.com`
-- **Password:** I'll generate a strong random one (16 chars, mixed case + digits + symbols) and show it to you **once in chat, on the next turn after you approve** — I can't generate secrets in plan mode. Save it in a password manager; I can't retrieve it later.
+1. Let any user (including the super admin) change their password from inside the app.
+2. Add a "Forgot password?" flow on the sign-in page.
+3. Re-enable email confirmation on signup — after the user clicks the link in Gmail, they land signed-in on their dashboard.
 
-Migration does:
-- Insert the user directly into `auth.users` with the bcrypt-hashed password, `email_confirmed_at = now()` (so no email verification needed), and provider `email`.
-- Insert matching `public.profiles` row (`full_name: 'AKCOE Super Admin'`).
-- Insert `('<that user id>', 'super_admin')` into `public.user_roles`.
-- All idempotent via `ON CONFLICT DO NOTHING`, keyed by the fixed email.
+## 1. Change password (works for the super admin too)
 
-After first login you should:
-- Go to **Profile** and change the password (I'll make sure the profile page exposes a "Change password" action if it isn't already there — small UI addition only).
-- Optionally create your own personal super_admin account from **Users & Roles** and stop using the shared one.
+- On the Profile page, add a "Change password" card: new password + confirm password fields.
+- Calls `supabase.auth.updateUser({ password })` — works for the signed-in user, so the shared `admin@akcoekano.com` account can rotate its own password anytime by signing in and updating it here.
+- Show success toast and, for the super admin, a reminder to store the new password securely.
 
-Security note: a shared, chat-delivered credential is inherently weaker than a per-person account. Rotating the password on first login closes that gap.
+## 2. Forgot password on `/auth`
 
-## 2. Android / desktop "Install this app" prompt
+- Add a "Forgot password?" link under the sign-in form that opens a small inline form (or a `?mode=forgot` view on the same route).
+- Calls `supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password' })`.
+- Create a new **public** route `/reset-password`:
+  - Detects the recovery session from the URL.
+  - Shows "Set a new password" form → calls `supabase.auth.updateUser({ password })`.
+  - On success, redirects to `/` (dashboard router picks the right role).
 
-Manifest-only PWA (no service worker, no offline mode — you didn't ask for offline, and adding a service worker inside the Lovable preview causes stale-cache issues).
+## 3. Re-enable email verification on signup
 
-- Add `public/manifest.webmanifest` with AKCOE name, theme color (navy), background, `display: "standalone"`, and icons derived from the existing AKCOE logo (192px + 512px, plus a maskable variant).
-- Add `<link rel="manifest">`, `<meta name="theme-color">`, and `apple-touch-icon` tags in `src/routes/__root.tsx` `head()`.
-- Add a small `InstallPrompt` component mounted in `__root.tsx`:
-  - Listens for the browser's `beforeinstallprompt` event (fires on Android Chrome / Edge / desktop Chrome when the site meets install criteria).
-  - Shows a dismissible banner (not a native `alert()` — nicer UX, same effect) that says "Install AKCOE Portal as an app" with **Install** and **Not now** buttons.
-  - On **Install**, calls the saved `prompt()` to trigger the native install dialog.
-  - On **Not now**, stores a `localStorage` flag so we don't nag on every visit; re-shows after 7 days.
-  - Also detects iOS Safari (which doesn't fire `beforeinstallprompt`) and shows a one-time hint: "Tap Share → Add to Home Screen".
-  - Hides itself when already running in standalone mode (`display-mode: standalone`).
-  - Hidden inside the Lovable editor preview iframe (checked via `window.self !== window.top`) so it doesn't pop up while you're building.
+- Turn OFF auto-confirm email in Supabase auth settings (reverse the earlier change).
+- In the signup call on `/auth`, pass `emailRedirectTo: window.location.origin + '/'`.
+- After the user clicks the verification link in Gmail, Supabase completes the session and redirects to `/`; the existing dashboard router lands them on their role-appropriate dashboard automatically. No extra "please verify" page is needed beyond a confirmation message on the signup form telling them to check their inbox.
+- Keep the AKCOE-branded Lovable auth email templates that are already in place so the confirmation email looks like the school, not a generic Supabase message. (If templates aren't scaffolded yet, scaffold them as part of this step — requires the email domain to already be set up.)
 
-## Out of scope
-- Offline caching / service worker.
-- Push notifications.
-- Native Play Store / App Store packaging.
+## Technical details
+
+- Files touched:
+  - `src/routes/auth.tsx` — add "Forgot password?" link + inline request form; add `emailRedirectTo` to signup; show "Check your email to confirm" state.
+  - `src/routes/reset-password.tsx` — new public route with the "set new password" form.
+  - `src/routes/_authenticated/profile.tsx` (or wherever the profile page lives) — add "Change password" card.
+- Supabase config: `configure_auth` with `auto_confirm_email: false`.
+- No schema changes, no new tables.
+- The super admin login (`admin@akcoekano.com`) continues to work; once signed in they can change the password via Profile, or use "Forgot password?" from `/auth` if they lose it (as long as the mailbox is reachable — otherwise a new migration would be needed to reset it).

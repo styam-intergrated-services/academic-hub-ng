@@ -32,6 +32,8 @@ function AuthPage() {
   const { next } = Route.useSearch();
   const dest = safeNext(next);
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [awaitingVerify, setAwaitingVerify] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -78,12 +80,30 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Account created. You can now sign in.");
+    setAwaitingVerify(email);
+    toast.success("Check your email to confirm your account.");
   }
 
-  // eliminate unused warning
-  void navigate;
+  async function handleForgot(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") ?? "");
+    try { emailSchema.parse(email); }
+    catch (err: any) {
+      toast.error(err.issues?.[0]?.message ?? "Invalid email");
+      setLoading(false); return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("If an account exists, a reset link has been sent.");
+    setForgotOpen(false);
+  }
 
+  void navigate;
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
@@ -109,32 +129,64 @@ function AuthPage() {
             <CardDescription>Sign in to your AKCOE account.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin">
-              <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Create account</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin" className="space-y-4 mt-4">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" /></div>
-                  <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
-                  <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
+            {forgotOpen ? (
+              <form onSubmit={handleForgot} className="space-y-4">
+                <div>
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <Input id="forgot-email" name="email" type="email" required autoComplete="email" />
+                  <p className="text-xs text-muted-foreground mt-2">We'll email you a link to set a new password.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={loading} className="flex-1 bg-primary text-primary-foreground">
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
                   </Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="signup" className="space-y-4 mt-4">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div><Label htmlFor="full_name">Full name</Label><Input id="full_name" name="full_name" required /></div>
-                  <div><Label htmlFor="email2">Email</Label><Input id="email2" name="email" type="email" required autoComplete="email" /></div>
-                  <div><Label htmlFor="password2">Password</Label><Input id="password2" name="password" type="password" required minLength={8} autoComplete="new-password" /></div>
-                  <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground">New accounts start as applicants. An administrator assigns your role.</p>
-                </form>
-              </TabsContent>
-            </Tabs>
+                  <Button type="button" variant="ghost" onClick={() => setForgotOpen(false)}>Back</Button>
+                </div>
+              </form>
+            ) : awaitingVerify ? (
+              <div className="space-y-3 text-sm">
+                <p className="font-medium">Verify your email</p>
+                <p className="text-muted-foreground">
+                  We sent a confirmation link to <span className="font-medium text-foreground">{awaitingVerify}</span>.
+                  Click the link in that email to activate your account — you'll be signed in and taken to your dashboard.
+                </p>
+                <Button variant="ghost" onClick={() => setAwaitingVerify(null)}>Back to sign in</Button>
+              </div>
+            ) : (
+              <Tabs defaultValue="signin">
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="signin">Sign in</TabsTrigger>
+                  <TabsTrigger value="signup">Create account</TabsTrigger>
+                </TabsList>
+                <TabsContent value="signin" className="space-y-4 mt-4">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" /></div>
+                    <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
+                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => setForgotOpen(true)}
+                      className="text-xs text-primary hover:underline block w-full text-center"
+                    >
+                      Forgot password?
+                    </button>
+                  </form>
+                </TabsContent>
+                <TabsContent value="signup" className="space-y-4 mt-4">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div><Label htmlFor="full_name">Full name</Label><Input id="full_name" name="full_name" required /></div>
+                    <div><Label htmlFor="email2">Email</Label><Input id="email2" name="email" type="email" required autoComplete="email" /></div>
+                    <div><Label htmlFor="password2">Password</Label><Input id="password2" name="password" type="password" required minLength={8} autoComplete="new-password" /></div>
+                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">You'll receive an email to confirm your address before you can sign in.</p>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>
