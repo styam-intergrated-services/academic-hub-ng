@@ -230,7 +230,7 @@ export const getAdminReports = createServerFn({ method: "GET" })
     const [rolesRes, deptsRes, studentsRes, coursesRes, apps, levels] = await Promise.all([
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("departments").select("id,name"),
-      supabase.from("students").select("id,department_id,current_level_id,gender,state_of_origin:profiles(state_of_origin)"),
+      supabase.from("students").select("id,department_id,current_level_id"),
       supabase.from("courses").select("id,department_id"),
       supabase.from("applications").select("id,status"),
       supabase.from("levels").select("id,code,name"),
