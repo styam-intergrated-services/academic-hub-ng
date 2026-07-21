@@ -100,7 +100,7 @@ export const getTranscript = createServerFn({ method: "POST" })
 
     const { data: publishedResults, error: eRes } = await supabase.from("results")
       .select(`
-        id, ca_score, exam_score, total_score, grade, grade_point,
+        id, ca_score, exam_score, total_score, grade, grade_point, status_code,
         offering:course_offerings!inner(
           course:courses!inner(code, title, credit_units),
           semester:semesters!inner(id, type, session:academic_sessions(name, start_date))
