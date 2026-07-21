@@ -2,8 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type AppRole =
-  | "super_admin" | "ict_admin" | "registry" | "bursary"
+  | "super_admin" | "ict_admin" | "provost" | "registry" | "bursary"
   | "dean" | "hod" | "lecturer" | "student" | "applicant";
+
 
 export interface PortalUser {
   id: string;
