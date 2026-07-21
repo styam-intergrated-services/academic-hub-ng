@@ -14,8 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_calendar_events: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          event_date: string
+          id: string
+          is_public: boolean
+          session_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_date: string
+          id?: string
+          is_public?: boolean
+          session_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_date?: string
+          id?: string
+          is_public?: boolean
+          session_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_calendar_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academic_sessions: {
         Row: {
+          calendar_approved_at: string | null
+          calendar_approved_by: string | null
+          calendar_status: Database["public"]["Enums"]["senate_status"]
           created_at: string
           end_date: string
           id: string
@@ -24,6 +77,9 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status"]
         }
         Insert: {
+          calendar_approved_at?: string | null
+          calendar_approved_by?: string | null
+          calendar_status?: Database["public"]["Enums"]["senate_status"]
           created_at?: string
           end_date: string
           id?: string
@@ -32,12 +88,60 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status"]
         }
         Update: {
+          calendar_approved_at?: string | null
+          calendar_approved_by?: string | null
+          calendar_status?: Database["public"]["Enums"]["senate_status"]
           created_at?: string
           end_date?: string
           id?: string
           name?: string
           start_date?: string
           status?: Database["public"]["Enums"]["session_status"]
+        }
+        Relationships: []
+      }
+      announcements: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          author_id: string
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_public: boolean
+          publish_at: string | null
+          status: Database["public"]["Enums"]["senate_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id: string
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          publish_at?: string | null
+          status?: Database["public"]["Enums"]["senate_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id?: string
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          publish_at?: string | null
+          status?: Database["public"]["Enums"]["senate_status"]
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -520,6 +624,95 @@ export type Database = {
           },
         ]
       }
+      graduation_list_entries: {
+        Row: {
+          cgpa: number | null
+          classification: string | null
+          created_at: string
+          id: string
+          list_id: string
+          student_id: string
+        }
+        Insert: {
+          cgpa?: number | null
+          classification?: string | null
+          created_at?: string
+          id?: string
+          list_id: string
+          student_id: string
+        }
+        Update: {
+          cgpa?: number | null
+          classification?: string | null
+          created_at?: string
+          id?: string
+          list_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graduation_list_entries_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "graduation_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graduation_list_entries_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graduation_lists: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          prepared_by: string
+          session_id: string
+          status: Database["public"]["Enums"]["graduation_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prepared_by: string
+          session_id: string
+          status?: Database["public"]["Enums"]["graduation_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prepared_by?: string
+          session_id?: string
+          status?: Database["public"]["Enums"]["graduation_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graduation_lists_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       levels: {
         Row: {
           code: string
@@ -640,6 +833,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pending_role_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      policy_documents: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          author_id: string
+          body_md: string
+          category: string
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["policy_status"]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id: string
+          body_md: string
+          category?: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["policy_status"]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_id?: string
+          body_md?: string
+          category?: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["policy_status"]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -771,6 +1030,8 @@ export type Database = {
       results: {
         Row: {
           ca_score: number | null
+          correction_reason: string | null
+          correction_requested: boolean
           created_at: string
           dean_approved_at: string | null
           dean_approved_by: string | null
@@ -786,7 +1047,9 @@ export type Database = {
           registry_approved_at: string | null
           registry_approved_by: string | null
           rejection_reason: string | null
+          requires_senate: boolean
           status: Database["public"]["Enums"]["result_status"]
+          status_code: Database["public"]["Enums"]["result_status_code"]
           student_id: string
           submitted_at: string | null
           submitted_by: string | null
@@ -795,6 +1058,8 @@ export type Database = {
         }
         Insert: {
           ca_score?: number | null
+          correction_reason?: string | null
+          correction_requested?: boolean
           created_at?: string
           dean_approved_at?: string | null
           dean_approved_by?: string | null
@@ -810,7 +1075,9 @@ export type Database = {
           registry_approved_at?: string | null
           registry_approved_by?: string | null
           rejection_reason?: string | null
+          requires_senate?: boolean
           status?: Database["public"]["Enums"]["result_status"]
+          status_code?: Database["public"]["Enums"]["result_status_code"]
           student_id: string
           submitted_at?: string | null
           submitted_by?: string | null
@@ -819,6 +1086,8 @@ export type Database = {
         }
         Update: {
           ca_score?: number | null
+          correction_reason?: string | null
+          correction_requested?: boolean
           created_at?: string
           dean_approved_at?: string | null
           dean_approved_by?: string | null
@@ -834,7 +1103,9 @@ export type Database = {
           registry_approved_at?: string | null
           registry_approved_by?: string | null
           rejection_reason?: string | null
+          requires_senate?: boolean
           status?: Database["public"]["Enums"]["result_status"]
+          status_code?: Database["public"]["Enums"]["result_status_code"]
           student_id?: string
           submitted_at?: string | null
           submitted_by?: string | null
@@ -1101,13 +1372,21 @@ export type Database = {
         | "lecturer"
         | "student"
         | "applicant"
+        | "provost"
       application_status:
         | "pending"
         | "under_review"
         | "approved"
         | "rejected"
         | "matriculated"
+      graduation_status: "draft" | "pending_senate" | "approved" | "rejected"
       payment_status: "pending" | "verified" | "failed" | "refunded"
+      policy_status:
+        | "draft"
+        | "pending_senate"
+        | "active"
+        | "archived"
+        | "rejected"
       registration_status: "pending" | "approved" | "rejected"
       result_status:
         | "draft"
@@ -1119,7 +1398,14 @@ export type Database = {
         | "registry_approved"
         | "registry_rejected"
         | "published"
+      result_status_code: "OK" | "ABS" | "INC" | "WH"
       semester_type: "first" | "second"
+      senate_status:
+        | "draft"
+        | "pending_senate"
+        | "published"
+        | "archived"
+        | "rejected"
       session_status: "upcoming" | "active" | "archived" | "closed"
     }
     CompositeTypes: {
@@ -1259,6 +1545,7 @@ export const Constants = {
         "lecturer",
         "student",
         "applicant",
+        "provost",
       ],
       application_status: [
         "pending",
@@ -1267,7 +1554,15 @@ export const Constants = {
         "rejected",
         "matriculated",
       ],
+      graduation_status: ["draft", "pending_senate", "approved", "rejected"],
       payment_status: ["pending", "verified", "failed", "refunded"],
+      policy_status: [
+        "draft",
+        "pending_senate",
+        "active",
+        "archived",
+        "rejected",
+      ],
       registration_status: ["pending", "approved", "rejected"],
       result_status: [
         "draft",
@@ -1280,7 +1575,15 @@ export const Constants = {
         "registry_rejected",
         "published",
       ],
+      result_status_code: ["OK", "ABS", "INC", "WH"],
       semester_type: ["first", "second"],
+      senate_status: [
+        "draft",
+        "pending_senate",
+        "published",
+        "archived",
+        "rejected",
+      ],
       session_status: ["upcoming", "active", "archived", "closed"],
     },
   },

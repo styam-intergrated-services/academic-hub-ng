@@ -6,8 +6,9 @@ import { getPortalUser, type AppRole } from "@/lib/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, User, BookOpen, ClipboardList, Users, Building2, FileCheck2,
-  Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings,
+  Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings, TrendingUp, Megaphone,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,12 +35,15 @@ const NAV: NavItem[] = [
   { to: "/fees", label: "Fees & Payments", icon: Wallet, roles: ["student","bursary","super_admin","ict_admin"], flag: "fees" },
   { to: "/teaching", label: "My Teaching", icon: BookOpen, roles: ["lecturer"] },
   { to: "/upload-results", label: "Upload Results", icon: FileCheck2, roles: ["lecturer"] },
-  { to: "/approvals", label: "Result Approvals", icon: FileCheck2, roles: ["hod","dean","registry","super_admin"] },
-  { to: "/applications", label: "Admissions", icon: GraduationCap, roles: ["registry","super_admin","ict_admin"] },
-  { to: "/students", label: "Students", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin"] },
-  { to: "/departments", label: "Departments", icon: Building2, roles: ["super_admin","ict_admin","registry","dean"] },
+  { to: "/approvals", label: "Result Approvals", icon: FileCheck2, roles: ["hod","dean","registry","super_admin","provost"] },
+  { to: "/reports", label: "Reports", icon: TrendingUp, roles: ["provost","super_admin","ict_admin"] },
+  { to: "/announcements", label: "Announcements", icon: Megaphone, roles: ["provost","registry","super_admin","ict_admin","dean"] },
+  { to: "/applications", label: "Admissions", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
+  { to: "/students", label: "Students", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin","provost"] },
+  { to: "/departments", label: "Departments", icon: Building2, roles: ["super_admin","ict_admin","registry","dean","provost"] },
   { to: "/users", label: "Users & Roles", icon: Users, roles: ["super_admin","ict_admin"] },
   { to: "/admin", label: "Administration", icon: Settings, roles: ["super_admin","ict_admin","registry"] },
+
 ];
 
 export function PortalShell({ children }: { children: ReactNode }) {

@@ -20,6 +20,7 @@ import { Route as AuthenticatedTranscriptRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated.fees'
@@ -29,6 +30,7 @@ import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated.approvals'
 import { Route as AuthenticatedApplyRouteImport } from './routes/_authenticated.apply'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated.applications'
+import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated.announcements'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -94,6 +96,11 @@ const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   path: '/results',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedRegistrationRoute =
   AuthenticatedRegistrationRouteImport.update({
     id: '/registration',
@@ -140,6 +147,12 @@ const AuthenticatedApplicationsRoute =
   AuthenticatedApplicationsRouteImport.update({
     id: '/applications',
     path: '/applications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAnnouncementsRoute =
+  AuthenticatedAnnouncementsRouteImport.update({
+    id: '/announcements',
+    path: '/announcements',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -202,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
@@ -211,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/fees': typeof AuthenticatedFeesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
   '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/teaching': typeof AuthenticatedTeachingRoute
@@ -232,6 +247,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
@@ -241,6 +257,7 @@ export interface FileRoutesByTo {
   '/fees': typeof AuthenticatedFeesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
   '/teaching': typeof AuthenticatedTeachingRoute
   '/transcript': typeof AuthenticatedTranscriptRoute
@@ -263,6 +280,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/apply': typeof AuthenticatedApplyRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
@@ -272,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
   '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
@@ -295,6 +314,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/announcements'
     | '/applications'
     | '/apply'
     | '/approvals'
@@ -304,6 +324,7 @@ export interface FileRouteTypes {
     | '/fees'
     | '/profile'
     | '/registration'
+    | '/reports'
     | '/results'
     | '/students'
     | '/teaching'
@@ -325,6 +346,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/announcements'
     | '/applications'
     | '/apply'
     | '/approvals'
@@ -334,6 +356,7 @@ export interface FileRouteTypes {
     | '/fees'
     | '/profile'
     | '/registration'
+    | '/reports'
     | '/results'
     | '/teaching'
     | '/transcript'
@@ -355,6 +378,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/_authenticated/announcements'
     | '/_authenticated/applications'
     | '/_authenticated/apply'
     | '/_authenticated/approvals'
@@ -364,6 +388,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fees'
     | '/_authenticated/profile'
     | '/_authenticated/registration'
+    | '/_authenticated/reports'
     | '/_authenticated/results'
     | '/_authenticated/students'
     | '/_authenticated/teaching'
@@ -469,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResultsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/registration': {
       id: '/_authenticated/registration'
       path: '/registration'
@@ -530,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/applications'
       fullPath: '/applications'
       preLoaderRoute: typeof AuthenticatedApplicationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/announcements': {
+      id: '/_authenticated/announcements'
+      path: '/announcements'
+      fullPath: '/announcements'
+      preLoaderRoute: typeof AuthenticatedAnnouncementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin': {
@@ -615,6 +654,7 @@ const AuthenticatedStudentsRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAnnouncementsRoute: typeof AuthenticatedAnnouncementsRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedApplyRoute: typeof AuthenticatedApplyRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
@@ -624,6 +664,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
   AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
@@ -636,6 +677,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAnnouncementsRoute: AuthenticatedAnnouncementsRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedApplyRoute: AuthenticatedApplyRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
@@ -645,6 +687,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
   AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,
