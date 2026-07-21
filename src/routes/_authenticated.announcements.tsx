@@ -84,7 +84,8 @@ function AnnouncementsPage() {
               onApprove={() => decMut.mutate({ id: a.id, decision: "approve" })}
               onReject={() => decMut.mutate({ id: a.id, decision: "reject" })}
               onArchive={() => decMut.mutate({ id: a.id, decision: "archive" })}
-              onSave={(v) => upMut.mutate({ ...v, id: a.id })}
+              onSave={(v: any) => upMut.mutate({ ...v, id: a.id })}
+
               onDelete={() => delMut.mutate(a.id)}
               busy={decMut.isPending || upMut.isPending || delMut.isPending}
             />
@@ -105,7 +106,7 @@ function AnnouncementsPage() {
               onApprove={() => decMut.mutate({ id: a.id, decision: "approve" })}
               onReject={() => decMut.mutate({ id: a.id, decision: "reject" })}
               onArchive={() => decMut.mutate({ id: a.id, decision: "archive" })}
-              onSave={(v) => upMut.mutate({ ...v, id: a.id })}
+              onSave={(v: any) => upMut.mutate({ ...v, id: a.id })}
               onDelete={() => delMut.mutate(a.id)}
               busy={decMut.isPending || upMut.isPending || delMut.isPending}
             />
