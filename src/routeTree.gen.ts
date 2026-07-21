@@ -19,6 +19,7 @@ import { Route as AuthenticatedUploadResultsRouteImport } from './routes/_authen
 import { Route as AuthenticatedTranscriptRouteImport } from './routes/_authenticated.transcript'
 import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
+import { Route as AuthenticatedStandingRouteImport } from './routes/_authenticated.standing'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
@@ -90,6 +91,11 @@ const AuthenticatedTeachingRoute = AuthenticatedTeachingRouteImport.update({
 const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
   id: '/students',
   path: '/students',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStandingRoute = AuthenticatedStandingRouteImport.update({
+  id: '/standing',
+  path: '/standing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/standing': typeof AuthenticatedStandingRoute
   '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/teaching': typeof AuthenticatedTeachingRoute
   '/transcript': typeof AuthenticatedTranscriptRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/standing': typeof AuthenticatedStandingRoute
   '/teaching': typeof AuthenticatedTeachingRoute
   '/transcript': typeof AuthenticatedTranscriptRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/standing': typeof AuthenticatedStandingRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
   '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
   '/_authenticated/transcript': typeof AuthenticatedTranscriptRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/registration'
     | '/reports'
     | '/results'
+    | '/standing'
     | '/students'
     | '/teaching'
     | '/transcript'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/registration'
     | '/reports'
     | '/results'
+    | '/standing'
     | '/teaching'
     | '/transcript'
     | '/upload-results'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/_authenticated/registration'
     | '/_authenticated/reports'
     | '/_authenticated/results'
+    | '/_authenticated/standing'
     | '/_authenticated/students'
     | '/_authenticated/teaching'
     | '/_authenticated/transcript'
@@ -497,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students'
       preLoaderRoute: typeof AuthenticatedStudentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/standing': {
+      id: '/_authenticated/standing'
+      path: '/standing'
+      fullPath: '/standing'
+      preLoaderRoute: typeof AuthenticatedStandingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/results': {
@@ -686,6 +705,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedStandingRoute: typeof AuthenticatedStandingRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
   AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
   AuthenticatedTranscriptRoute: typeof AuthenticatedTranscriptRoute
@@ -710,6 +730,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedStandingRoute: AuthenticatedStandingRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
   AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,
   AuthenticatedTranscriptRoute: AuthenticatedTranscriptRoute,
