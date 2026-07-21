@@ -14,7 +14,7 @@ function classify(cgpa: number): string {
 async function assertRegistry(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const roles = (data ?? []).map((r: any) => r.role as string);
-  if (!roles.some((r) => ["registry", "super_admin", "ict_admin", "provost"].includes(r))) {
+  if (!roles.some((r: string) => ["registry", "super_admin", "ict_admin", "provost"].includes(r))) {
     throw new Error("Forbidden: registry role required");
   }
 }
