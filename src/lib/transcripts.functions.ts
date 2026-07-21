@@ -140,6 +140,7 @@ export const getTranscript = createServerFn({ method: "POST" })
       const block = byId.get(key)!;
       const units = Number(r.offering.course.credit_units) || 0;
       const gp = Number(r.grade_point) || 0;
+      const statusCode = r.status_code ?? "OK";
       block.rows.push({
         code: r.offering.course.code,
         title: r.offering.course.title,
@@ -149,9 +150,12 @@ export const getTranscript = createServerFn({ method: "POST" })
         total: r.total_score,
         grade: r.grade,
         grade_point: gp,
+        status_code: statusCode,
       });
-      block.tcu += units;
-      block.tgp += units * gp;
+      if (statusCode === "OK") {
+        block.tcu += units;
+        block.tgp += units * gp;
+      }
     }
     const semesters = Array.from(byId.values())
       .map((b) => ({ ...b, gpa: b.tcu > 0 ? Math.round((b.tgp / b.tcu) * 100) / 100 : 0 }))
