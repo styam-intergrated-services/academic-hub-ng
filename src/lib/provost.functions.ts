@@ -263,12 +263,17 @@ export const getAdminReports = createServerFn({ method: "GET" })
       byLevel[name] = (byLevel[name] ?? 0) + 1;
     }
 
-    // Gender split
+    // Gender split from profiles for students only
+    const studentIds = (studentsRes.data ?? []).map((s: any) => s.id);
     const byGender: Record<string, number> = { male: 0, female: 0, other: 0, unknown: 0 };
-    for (const s of studentsRes.data ?? []) {
-      const g = (s as any).gender ?? "unknown";
-      byGender[g] = (byGender[g] ?? 0) + 1;
+    if (studentIds.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id,gender").in("id", studentIds);
+      for (const p of profs ?? []) {
+        const g = (p as any).gender ?? "unknown";
+        byGender[g] = (byGender[g] ?? 0) + 1;
+      }
     }
+
 
     return {
       staffByRole: Object.entries(staffByRole).map(([role, count]) => ({ role, count })),
