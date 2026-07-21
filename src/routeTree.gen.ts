@@ -23,6 +23,7 @@ import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
+import { Route as AuthenticatedGraduationRouteImport } from './routes/_authenticated.graduation'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated.fees'
 import { Route as AuthenticatedDepartmentsRouteImport } from './routes/_authenticated.departments'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
@@ -110,6 +111,11 @@ const AuthenticatedRegistrationRoute =
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedGraduationRoute = AuthenticatedGraduationRouteImport.update({
+  id: '/graduation',
+  path: '/graduation',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
   '/fees': typeof AuthenticatedFeesRoute
+  '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
   '/fees': typeof AuthenticatedFeesRoute
+  '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/departments': typeof AuthenticatedDepartmentsRoute
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
+  '/_authenticated/graduation': typeof AuthenticatedGraduationRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/fees'
+    | '/graduation'
     | '/profile'
     | '/registration'
     | '/reports'
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/fees'
+    | '/graduation'
     | '/profile'
     | '/registration'
     | '/reports'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/departments'
     | '/_authenticated/fees'
+    | '/_authenticated/graduation'
     | '/_authenticated/profile'
     | '/_authenticated/registration'
     | '/_authenticated/reports'
@@ -513,6 +525,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/graduation': {
+      id: '/_authenticated/graduation'
+      path: '/graduation'
+      fullPath: '/graduation'
+      preLoaderRoute: typeof AuthenticatedGraduationRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/fees': {
@@ -662,6 +681,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDepartmentsRoute: typeof AuthenticatedDepartmentsRoute
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
+  AuthenticatedGraduationRoute: typeof AuthenticatedGraduationRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
@@ -685,6 +705,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDepartmentsRoute: AuthenticatedDepartmentsRoute,
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
+  AuthenticatedGraduationRoute: AuthenticatedGraduationRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
