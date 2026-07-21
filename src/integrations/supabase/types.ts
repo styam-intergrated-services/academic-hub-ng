@@ -1101,6 +1101,7 @@ export type Database = {
         | "lecturer"
         | "student"
         | "applicant"
+        | "provost"
       application_status:
         | "pending"
         | "under_review"
@@ -1259,6 +1260,7 @@ export const Constants = {
         "lecturer",
         "student",
         "applicant",
+        "provost",
       ],
       application_status: [
         "pending",
