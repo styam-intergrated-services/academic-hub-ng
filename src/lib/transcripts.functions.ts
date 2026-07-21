@@ -169,8 +169,9 @@ export const getTranscript = createServerFn({ method: "POST" })
     const overallCgpa = cumUnits > 0 ? Math.round((cumPoints / cumUnits) * 100) / 100 : Number(student.cgpa ?? 0);
     const classOfResult =
       overallCgpa >= 4.5 ? "Distinction" :
-      overallCgpa >= 3.5 ? "Credit" :
-      overallCgpa >= 2.5 ? "Merit" :
+      overallCgpa >= 3.5 ? "Upper Credit" :
+      overallCgpa >= 2.5 ? "Lower Credit" :
+      overallCgpa >= 1.5 ? "Merit" :
       overallCgpa >= 1.0 ? "Pass" : "Fail";
 
     return {
