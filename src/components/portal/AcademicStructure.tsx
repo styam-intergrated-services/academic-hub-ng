@@ -566,7 +566,7 @@ export function CoursesSection({ data }: { data: Awaited<ReturnType<typeof listA
       }
     >
       <DataTable
-        head={["Code", "Title", "Dept", "Level", "Semester", "Units", "Active", ""]}
+        head={["Code", "Title", "Dept", "Level", "Semester", "Units", "Category", "Active", ""]}
         rows={data.courses.map((c) => [
           <Badge variant="outline" key="c">{c.code}</Badge>,
           <span className="font-medium" key="t">{c.title}</span>,
@@ -574,6 +574,7 @@ export function CoursesSection({ data }: { data: Awaited<ReturnType<typeof listA
           levelById.get(c.level_id)?.code ?? "—",
           c.semester_type,
           c.credit_units,
+          <Badge variant="secondary" key="cat" className="capitalize">{((c as any).category ?? "subject_major").replace(/_/g, " ")}</Badge>,
           c.is_active ? <Badge key="a">active</Badge> : <Badge key="a" variant="secondary">inactive</Badge>,
           <div className="flex justify-end gap-1" key="a">
             <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
@@ -593,6 +594,7 @@ function CourseForm({ editing, departments, levels, onSubmit, pending }: { editi
   const [units, setUnits] = useState<number>(editing?.credit_units ?? 3);
   const [active, setActive] = useState<boolean>(editing?.is_active ?? true);
   const [desc, setDesc] = useState<string>(editing?.description ?? "");
+  const [category, setCategory] = useState<string>(editing?.category ?? "subject_major");
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>{editing ? "Edit" : "New"} course</DialogTitle></DialogHeader>
