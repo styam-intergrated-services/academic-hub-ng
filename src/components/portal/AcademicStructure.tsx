@@ -624,6 +624,19 @@ function CourseForm({ editing, departments, levels, onSubmit, pending }: { editi
             </Select>
           </div>
         </div>
+        <div><Label>Category</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="education">Education</SelectItem>
+              <SelectItem value="general_studies">General Studies</SelectItem>
+              <SelectItem value="subject_major">Subject Major</SelectItem>
+              <SelectItem value="teaching_practice">Teaching Practice</SelectItem>
+              <SelectItem value="siwes">SIWES</SelectItem>
+              <SelectItem value="elective">Elective</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} /></div>
         <div className="flex items-center justify-between rounded-md border p-3">
           <Label>Active</Label>
@@ -631,7 +644,7 @@ function CourseForm({ editing, departments, levels, onSubmit, pending }: { editi
         </div>
       </div>
       <DialogFooter>
-        <Button disabled={pending || !code || !title || !deptId || !levelId} onClick={() => onSubmit({ id: editing?.id, department_id: deptId, code, title, credit_units: units, level_id: levelId, semester_type: sem, is_active: active, description: desc || null })}>{editing ? "Save" : "Create"}</Button>
+        <Button disabled={pending || !code || !title || !deptId || !levelId} onClick={() => onSubmit({ id: editing?.id, department_id: deptId, code, title, credit_units: units, level_id: levelId, semester_type: sem, is_active: active, description: desc || null, category })}>{editing ? "Save" : "Create"}</Button>
       </DialogFooter>
     </DialogContent>
   );
