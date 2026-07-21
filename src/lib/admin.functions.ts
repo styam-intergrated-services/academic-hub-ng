@@ -117,7 +117,7 @@ export const listAcademicStructure = createServerFn({ method: "GET" })
       supabase.from("levels").select("id,code,name,order_index").order("order_index"),
       supabase.from("academic_sessions").select("id,name,start_date,end_date,status").order("start_date", { ascending: false }),
       supabase.from("semesters").select("id,session_id,type,start_date,end_date,registration_open,is_current").order("start_date", { ascending: false }),
-      supabase.from("courses").select("id,department_id,code,title,credit_units,level_id,semester_type,is_active").order("code"),
+      supabase.from("courses").select("id,department_id,code,title,credit_units,level_id,semester_type,is_active,category").order("code"),
     ]);
     if (f.error) throw f.error;
     return {
@@ -309,6 +309,7 @@ export const deleteSemester = createServerFn({ method: "POST" })
   });
 
 // ============ COURSES ============
+const COURSE_CATEGORIES = ["education","general_studies","subject_major","teaching_practice","siwes","elective"] as const;
 const courseSchema = z.object({
   id: z.string().uuid().optional(),
   department_id: z.string().uuid(),
@@ -319,6 +320,7 @@ const courseSchema = z.object({
   semester_type: z.enum(SEMESTER_TYPES),
   is_active: z.boolean(),
   description: z.string().max(1000).nullable().optional(),
+  category: z.enum(COURSE_CATEGORIES).default("subject_major"),
 });
 export const upsertCourse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

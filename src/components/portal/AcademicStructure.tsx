@@ -566,7 +566,7 @@ export function CoursesSection({ data }: { data: Awaited<ReturnType<typeof listA
       }
     >
       <DataTable
-        head={["Code", "Title", "Dept", "Level", "Semester", "Units", "Active", ""]}
+        head={["Code", "Title", "Dept", "Level", "Semester", "Units", "Category", "Active", ""]}
         rows={data.courses.map((c) => [
           <Badge variant="outline" key="c">{c.code}</Badge>,
           <span className="font-medium" key="t">{c.title}</span>,
@@ -574,6 +574,7 @@ export function CoursesSection({ data }: { data: Awaited<ReturnType<typeof listA
           levelById.get(c.level_id)?.code ?? "—",
           c.semester_type,
           c.credit_units,
+          <Badge variant="secondary" key="cat" className="capitalize">{((c as any).category ?? "subject_major").replace(/_/g, " ")}</Badge>,
           c.is_active ? <Badge key="a">active</Badge> : <Badge key="a" variant="secondary">inactive</Badge>,
           <div className="flex justify-end gap-1" key="a">
             <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
@@ -593,6 +594,7 @@ function CourseForm({ editing, departments, levels, onSubmit, pending }: { editi
   const [units, setUnits] = useState<number>(editing?.credit_units ?? 3);
   const [active, setActive] = useState<boolean>(editing?.is_active ?? true);
   const [desc, setDesc] = useState<string>(editing?.description ?? "");
+  const [category, setCategory] = useState<string>(editing?.category ?? "subject_major");
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>{editing ? "Edit" : "New"} course</DialogTitle></DialogHeader>
@@ -622,6 +624,19 @@ function CourseForm({ editing, departments, levels, onSubmit, pending }: { editi
             </Select>
           </div>
         </div>
+        <div><Label>Category</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="education">Education</SelectItem>
+              <SelectItem value="general_studies">General Studies</SelectItem>
+              <SelectItem value="subject_major">Subject Major</SelectItem>
+              <SelectItem value="teaching_practice">Teaching Practice</SelectItem>
+              <SelectItem value="siwes">SIWES</SelectItem>
+              <SelectItem value="elective">Elective</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div><Label>Description</Label><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} /></div>
         <div className="flex items-center justify-between rounded-md border p-3">
           <Label>Active</Label>
@@ -629,7 +644,7 @@ function CourseForm({ editing, departments, levels, onSubmit, pending }: { editi
         </div>
       </div>
       <DialogFooter>
-        <Button disabled={pending || !code || !title || !deptId || !levelId} onClick={() => onSubmit({ id: editing?.id, department_id: deptId, code, title, credit_units: units, level_id: levelId, semester_type: sem, is_active: active, description: desc || null })}>{editing ? "Save" : "Create"}</Button>
+        <Button disabled={pending || !code || !title || !deptId || !levelId} onClick={() => onSubmit({ id: editing?.id, department_id: deptId, code, title, credit_units: units, level_id: levelId, semester_type: sem, is_active: active, description: desc || null, category })}>{editing ? "Save" : "Create"}</Button>
       </DialogFooter>
     </DialogContent>
   );

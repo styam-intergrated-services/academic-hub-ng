@@ -407,6 +407,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          category: string
           code: string
           created_at: string
           credit_units: number
@@ -419,6 +420,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          category?: string
           code: string
           created_at?: string
           credit_units: number
@@ -431,6 +433,7 @@ export type Database = {
           title: string
         }
         Update: {
+          category?: string
           code?: string
           created_at?: string
           credit_units?: number
@@ -1180,6 +1183,54 @@ export type Database = {
           },
         ]
       }
+      standing_history: {
+        Row: {
+          cgpa_at_time: number | null
+          created_at: string
+          gpa_at_time: number | null
+          id: string
+          reason: string | null
+          semester_id: string | null
+          standing: Database["public"]["Enums"]["academic_standing"]
+          student_id: string
+        }
+        Insert: {
+          cgpa_at_time?: number | null
+          created_at?: string
+          gpa_at_time?: number | null
+          id?: string
+          reason?: string | null
+          semester_id?: string | null
+          standing: Database["public"]["Enums"]["academic_standing"]
+          student_id: string
+        }
+        Update: {
+          cgpa_at_time?: number | null
+          created_at?: string
+          gpa_at_time?: number | null
+          id?: string
+          reason?: string | null
+          semester_id?: string | null
+          standing?: Database["public"]["Enums"]["academic_standing"]
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standing_history_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standing_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           cgpa: number
@@ -1321,6 +1372,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_graduation_eligibility: {
+        Args: { _student_id: string }
+        Returns: {
+          cgpa: number
+          education_credits: number
+          eligible: boolean
+          general_studies_credits: number
+          reasons: string[]
+          siwes_completed: boolean
+          standing: Database["public"]["Enums"]["academic_standing"]
+          subject_major_credits: number
+          teaching_practice_completed: boolean
+          total_credits_earned: number
+        }[]
+      }
       compute_grade: {
         Args: { _score: number }
         Returns: {

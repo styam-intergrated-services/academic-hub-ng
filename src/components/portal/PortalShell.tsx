@@ -6,7 +6,7 @@ import { getPortalUser, type AppRole } from "@/lib/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, User, BookOpen, ClipboardList, Users, Building2, FileCheck2,
-  Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings, TrendingUp, Megaphone,
+  Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings, TrendingUp, Megaphone, AlertTriangle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,8 @@ const NAV: NavItem[] = [
   { to: "/students", label: "Students", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin","provost"] },
   { to: "/departments", label: "Departments", icon: Building2, roles: ["super_admin","ict_admin","registry","dean","provost"] },
   { to: "/users", label: "Users & Roles", icon: Users, roles: ["super_admin","ict_admin"] },
+  { to: "/graduation", label: "Graduation", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
+  { to: "/standing", label: "Academic Standing", icon: AlertTriangle, roles: ["registry","super_admin","ict_admin","provost","dean","hod"] },
   { to: "/admin", label: "Administration", icon: Settings, roles: ["super_admin","ict_admin","registry"] },
 
 ];
