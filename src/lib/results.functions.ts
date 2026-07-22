@@ -167,7 +167,10 @@ export const getPendingApprovals = createServerFn({ method: "GET" })
     let statuses: string[] = [];
     if (roles.includes("hod")) statuses.push("submitted");
     if (roles.includes("dean")) statuses.push("hod_approved");
-    if (roles.some((r) => ["registry","super_admin","ict_admin"].includes(r))) statuses.push("dean_approved");
+    if (roles.some((r) => ["registry","super_admin","ict_admin"].includes(r))) {
+      statuses.push("dean_approved");
+      statuses.push("registry_approved");
+    }
     if (statuses.length === 0) return { statuses: [], groups: [] };
 
     const { data, error } = await supabase
