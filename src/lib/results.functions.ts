@@ -131,7 +131,8 @@ export const setRegistrationOpen = createServerFn({ method: "POST" })
       .update({ registration_open: data.open })
       .eq("id", sem.id);
     if (error) throw error;
-    await supabase.from("audit_logs").insert({
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
       actor_id: userId,
       action: "semester.registration_toggle",
       entity: "semesters",
