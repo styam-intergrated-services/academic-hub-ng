@@ -201,7 +201,8 @@ export const updateStudentAdmin = createServerFn({ method: "POST" })
     const { error } = await supabase.from("students").update(data.patch).eq("id", data.id);
     if (error) throw error;
 
-    await supabase.from("audit_logs").insert({
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
       actor_id: userId,
       action: "student.update",
       entity: "students",
