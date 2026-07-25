@@ -102,41 +102,84 @@ export function PortalShell({ children }: { children: ReactNode }) {
       (!n.roles || (user && n.roles.some((r) => user.roles.includes(r))))
   );
 
+  const groups: NavGroup[] = ["Overview", "Academics", "Results", "Administration"];
+  const currentLabel = visible.find((n) => n.to === pathname)?.label ?? "Portal";
+  const initials = (user?.full_name ?? user?.email ?? "?").slice(0, 2).toUpperCase();
+
   return (
     <div className="min-h-screen bg-muted/30">
+      {/* Mobile scrim */}
+      {open ? (
+        <div
+          className="fixed inset-0 z-30 bg-foreground/50 backdrop-blur-[1px] md:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      ) : null}
+
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar text-sidebar-foreground transform transition-transform md:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] flex-col bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-200 md:w-64 md:translate-x-0 md:shadow-none",
+          open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={akceLogo.url} alt="Aminu Kano College of Education logo" className="h-10 w-10 rounded-md object-cover bg-white p-0.5" />
-            <div className="leading-tight">
-              <div className="font-serif font-bold text-sm">AKCOE Portal</div>
-              <div className="text-[10px] uppercase tracking-widest opacity-70">Academic System</div>
+        <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4">
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2">
+            <img
+              src={akceLogo.url}
+              alt="Aminu Kano College of Education logo"
+              className="size-10 shrink-0 rounded-md bg-white object-cover p-0.5"
+            />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-serif text-sm font-bold">AKCOE Portal</div>
+              <div className="truncate text-[10px] uppercase tracking-widest opacity-70">
+                Academic System
+              </div>
             </div>
           </Link>
-          <button className="md:hidden" aria-label="Close navigation menu" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Close navigation menu"
+            onClick={() => setOpen(false)}
+            className="size-11 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent/50 md:hidden"
+          >
+            <X className="size-5" />
+          </Button>
         </div>
-        <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
-          {visible.map((item) => {
-            const active = pathname === item.to || (item.to !== "/dashboard" && pathname.startsWith(item.to));
+
+        <nav className="flex-1 space-y-5 overflow-y-auto p-3">
+          {groups.map((g) => {
+            const items = visible.filter((n) => n.group === g);
+            if (items.length === 0) return null;
             return (
-              <Link
-                key={item.to}
-                to={item.to as any}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
+              <div key={g} className="space-y-1">
+                <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest opacity-50">
+                  {g}
+                </div>
+                {items.map((item) => {
+                  const active =
+                    pathname === item.to ||
+                    (item.to !== "/dashboard" && pathname.startsWith(item.to));
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to as any}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
+                        active
+                          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-sm"
+                          : "hover:bg-sidebar-accent/50",
+                      )}
+                    >
+                      <item.icon className="size-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
@@ -144,31 +187,82 @@ export function PortalShell({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <div className="md:pl-64">
-        <header className="h-16 bg-background border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
-          <div className="flex items-center gap-2">
-            <button className="md:hidden" aria-label="Open navigation menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
-            <h1 className="font-serif text-lg text-primary">
-              {visible.find((n) => n.to === pathname)?.label ?? "Portal"}
-            </h1>
+        <header className="sticky top-0 z-20 grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b bg-background/95 px-3 backdrop-blur md:px-6">
+          <div className="flex min-w-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Open navigation menu"
+              onClick={() => setOpen(true)}
+              className="size-11 shrink-0 md:hidden"
+            >
+              <Menu className="size-5" />
+            </Button>
+            <div className="min-w-0 leading-tight">
+              <h1 className="truncate font-serif text-base text-primary sm:text-lg">
+                {currentLabel}
+              </h1>
+              <p className="hidden truncate text-[11px] text-muted-foreground sm:block">
+                Aminu Kano College of Education
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-md hover:bg-muted" aria-label="Notifications"><Bell className="h-5 w-5" /></button>
+
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Notifications"
+              className="size-11 shrink-0"
+            >
+              <Bell className="size-5" />
+            </Button>
             {isLoading ? (
-              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-9 w-9 rounded-full sm:w-32" />
             ) : (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8"><AvatarFallback className="bg-primary text-primary-foreground text-xs">{(user?.full_name ?? user?.email ?? "?").slice(0,2).toUpperCase()}</AvatarFallback></Avatar>
-                <div className="hidden sm:block leading-tight">
-                  <div className="text-sm font-medium">{user?.full_name ?? user?.email}</div>
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{user?.primary_role?.replace("_"," ")}</div>
-                </div>
-                <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex min-w-0 items-center gap-2 rounded-full p-1 pr-1 transition-colors hover:bg-muted sm:pr-3"
+                    aria-label="Account menu"
+                  >
+                    <Avatar className="size-9 shrink-0">
+                      <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden min-w-0 text-left leading-tight sm:block">
+                      <div className="truncate text-sm font-medium">
+                        {user?.full_name ?? user?.email}
+                      </div>
+                      <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {user?.primary_role?.replace("_", " ")}
+                      </div>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="truncate">
+                    {user?.full_name ?? user?.email}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">
+                      <User className="mr-2 size-4" /> Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => void signOut()}>
+                    <LogOut className="mr-2 size-4" /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </header>
-        <main className="p-4 md:p-6 max-w-7xl mx-auto">{children}</main>
+        <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
 }
+
