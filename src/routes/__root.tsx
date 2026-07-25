@@ -61,8 +61,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-const APP_NAME = "AKCOE Portal";
-const APP_DESC = "Aminu Kano College of Education — official student, lecturer and administration portal.";
+const APP_NAME = "AKCOE Portal — College Management System";
+const APP_DESC = "Official portal for students, lecturers and administration at Aminu Kano College of Education, Kano, Nigeria.";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -71,23 +71,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: APP_NAME },
       { name: "description", content: APP_DESC },
+      { property: "og:site_name", content: "AKCOE Portal" },
       { property: "og:title", content: APP_NAME },
       { property: "og:description", content: APP_DESC },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "AKCOE Portal — Aminu Kano College of Education" },
-      { property: "og:title", content: "AKCOE Portal — Aminu Kano College of Education" },
-      { name: "twitter:title", content: "AKCOE Portal — Aminu Kano College of Education" },
-      { name: "description", content: "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria" },
-      { property: "og:description", content: "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria" },
-      { name: "twitter:description", content: "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/08860a6d-e594-4a03-87d2-3718c2b02932" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/08860a6d-e594-4a03-87d2-3718c2b02932" },
+      { name: "twitter:title", content: APP_NAME },
+      { name: "twitter:description", content: APP_DESC },
       { name: "theme-color", content: "#0b2a4a" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "AKCOE" },
     ],
+
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
