@@ -195,9 +195,10 @@ function AuthPage() {
               </div>
             ) : (
               <Tabs defaultValue="signin">
-                <TabsList className="grid grid-cols-2 w-full">
-                  <TabsTrigger value="signin">Sign in</TabsTrigger>
-                  <TabsTrigger value="signup">Create account</TabsTrigger>
+                <TabsList className="grid grid-cols-3 w-full">
+                  <TabsTrigger value="signin">Email</TabsTrigger>
+                  <TabsTrigger value="matric">Matric No.</TabsTrigger>
+                  <TabsTrigger value="signup">Sign up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin" className="space-y-4 mt-4">
                   <form onSubmit={handleSignIn} className="space-y-4">
@@ -213,6 +214,25 @@ function AuthPage() {
                     >
                       Forgot password?
                     </button>
+                  </form>
+                </TabsContent>
+                <TabsContent value="matric" className="space-y-4 mt-4">
+                  <form onSubmit={handleMatricSignIn} className="space-y-4">
+                    <div>
+                      <Label htmlFor="matric">Matric number</Label>
+                      <Input id="matric" name="matric" required placeholder="AKCOE/2022/0001" autoCapitalize="characters" />
+                    </div>
+                    <div>
+                      <Label htmlFor="matric-password">Password</Label>
+                      <Input id="matric-password" name="password" type="password" required autoComplete="current-password" />
+                    </div>
+                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in with matric"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      First time signing in? Use your <span className="font-medium">year of entry</span> (e.g. 2022) as your temporary password.
+                      You'll be asked to set a new password right after.
+                    </p>
                   </form>
                 </TabsContent>
                 <TabsContent value="signup" className="space-y-4 mt-4">
