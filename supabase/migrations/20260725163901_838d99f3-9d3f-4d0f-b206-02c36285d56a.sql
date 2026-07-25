@@ -1,0 +1,294 @@
+
+-- 1. Extend semesters with optional label + contact number
+ALTER TABLE public.semesters
+  ADD COLUMN IF NOT EXISTS label text,
+  ADD COLUMN IF NOT EXISTS contact_number integer;
+
+-- 2. Allow the historical importer to bypass registration guardrails via a session GUC.
+CREATE OR REPLACE FUNCTION public.validate_registration()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_reg_open BOOLEAN; v_current_units INT; v_course_units INT;
+BEGIN
+  IF current_setting('app.import_mode', true) = 'true' THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT s.registration_open INTO v_reg_open
+  FROM public.course_offerings o JOIN public.semesters s ON s.id = o.semester_id
+  WHERE o.id = NEW.offering_id;
+  IF NOT COALESCE(v_reg_open,false) THEN
+    RAISE EXCEPTION 'Registration is not open for this semester';
+  END IF;
+
+  SELECT c.credit_units INTO v_course_units
+  FROM public.course_offerings o JOIN public.courses c ON c.id = o.course_id
+  WHERE o.id = NEW.offering_id;
+
+  SELECT COALESCE(SUM(c.credit_units),0) INTO v_current_units
+  FROM public.course_registrations cr
+  JOIN public.course_offerings o ON o.id = cr.offering_id
+  JOIN public.courses c ON c.id = o.course_id
+  WHERE cr.student_id = NEW.student_id AND o.semester_id = (
+    SELECT semester_id FROM public.course_offerings WHERE id = NEW.offering_id
+  );
+
+  IF v_current_units + v_course_units > 24 THEN
+    RAISE EXCEPTION 'Maximum credit units (24) exceeded';
+  END IF;
+
+  RETURN NEW;
+END; $function$;
+
+-- 3. The importer itself.
+CREATE OR REPLACE FUNCTION public.admin_import_iss_lvt_2022(_payload jsonb, _dry_run boolean DEFAULT true)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $fn$
+DECLARE
+  v_session_id uuid; v_dept_id uuid; v_prog_id uuid; v_faculty_id uuid;
+  v_level_by_code jsonb := '{}'::jsonb;
+  v_level_id uuid;
+  v_semester_by_contact jsonb := '{}'::jsonb;
+  v_course_by_code jsonb := '{}'::jsonb;
+  v_offering_by_key jsonb := '{}'::jsonb;
+  v_student_by_matric jsonb := '{}'::jsonb;
+  v_registration_by_key jsonb := '{}'::jsonb;
+  r_course record;
+  r_stu record;
+  r_res record;
+  v_contact int;
+  v_course_code text;
+  v_credit_units int;
+  v_category text;
+  v_semester_id uuid;
+  v_course_id uuid;
+  v_offering_id uuid;
+  v_student_id uuid;
+  v_registration_id uuid;
+  v_total_semesters int := 0;
+  v_total_courses int := 0;
+  v_total_offerings int := 0;
+  v_total_students_new int := 0;
+  v_total_students_existing int := 0;
+  v_total_registrations int := 0;
+  v_total_results int := 0;
+  v_max_contact int;
+  v_current_level_id uuid;
+  v_student_ids uuid[] := ARRAY[]::uuid[];
+  v_stu_id uuid;
+BEGIN
+  IF NOT public.has_role(auth.uid(), 'super_admin'::app_role) THEN
+    RAISE EXCEPTION 'Only super_admin may run this importer';
+  END IF;
+
+  -- Enter import mode (skips validate_registration guardrails).
+  PERFORM set_config('app.import_mode', 'true', true);
+
+  -- Resolve department + programme + faculty.
+  SELECT id, faculty_id INTO v_dept_id, v_faculty_id
+    FROM public.departments WHERE name = 'Islamic Studies' LIMIT 1;
+  IF v_dept_id IS NULL THEN RAISE EXCEPTION 'Islamic Studies department not found'; END IF;
+
+  SELECT id INTO v_prog_id FROM public.programmes WHERE code = 'BA-ISL-LVT' LIMIT 1;
+  IF v_prog_id IS NULL THEN RAISE EXCEPTION 'Programme BA-ISL-LVT not found'; END IF;
+
+  -- Level lookup L100..L400
+  FOR r_course IN SELECT id, code FROM public.levels WHERE code LIKE 'L%' LOOP
+    v_level_by_code := v_level_by_code || jsonb_build_object(r_course.code, r_course.id::text);
+  END LOOP;
+
+  -- 1. Session
+  SELECT id INTO v_session_id FROM public.academic_sessions WHERE name = '2022/2023 Academic Session' LIMIT 1;
+  IF v_session_id IS NULL THEN
+    IF _dry_run THEN
+      v_session_id := gen_random_uuid();
+    ELSE
+      INSERT INTO public.academic_sessions (name, start_date, end_date, status)
+      VALUES ('2022/2023 Academic Session', '2022-09-01', '2023-08-31', 'archived')
+      RETURNING id INTO v_session_id;
+    END IF;
+  END IF;
+
+  -- 2. Semesters per contact
+  FOR r_course IN SELECT * FROM jsonb_to_recordset(_payload->'contacts') AS x(contact_no int, level_code text) LOOP
+    v_contact := r_course.contact_no;
+    SELECT id INTO v_semester_id FROM public.semesters
+      WHERE session_id = v_session_id AND contact_number = v_contact LIMIT 1;
+    IF v_semester_id IS NULL THEN
+      IF _dry_run THEN
+        v_semester_id := gen_random_uuid();
+      ELSE
+        INSERT INTO public.semesters (session_id, type, start_date, end_date, is_current,
+                                      label, contact_number, registration_open)
+        VALUES (v_session_id,
+                (CASE WHEN v_contact % 2 = 1 THEN 'first' ELSE 'second' END)::semester_type,
+                '2022-09-01', '2023-08-31', false,
+                'Contact ' || v_contact, v_contact, false)
+        RETURNING id INTO v_semester_id;
+      END IF;
+      v_total_semesters := v_total_semesters + 1;
+    END IF;
+    v_semester_by_contact := v_semester_by_contact || jsonb_build_object(v_contact::text, v_semester_id::text);
+  END LOOP;
+
+  -- 3. Courses
+  FOR r_course IN SELECT * FROM jsonb_to_recordset(_payload->'courses')
+    AS x(code text, credit_units int, category text, contacts int[]) LOOP
+    v_course_code := r_course.code;
+    v_credit_units := COALESCE(r_course.credit_units, 2);
+    v_category := COALESCE(r_course.category, 'subject_major');
+    -- level by min contact
+    v_level_id := ((v_level_by_code ->> ('L' || (LEAST(r_course.contacts[1]) * 100)::text))::uuid);
+    IF v_level_id IS NULL THEN
+      v_level_id := (v_level_by_code ->> 'L200')::uuid;
+    END IF;
+
+    SELECT id INTO v_course_id FROM public.courses
+      WHERE department_id = v_dept_id AND code = v_course_code LIMIT 1;
+    IF v_course_id IS NULL THEN
+      IF _dry_run THEN
+        v_course_id := gen_random_uuid();
+      ELSE
+        INSERT INTO public.courses (department_id, code, title, credit_units, level_id,
+                                    semester_type, category, is_active)
+        VALUES (v_dept_id, v_course_code, v_course_code, v_credit_units, v_level_id,
+                'first'::semester_type, v_category, true)
+        RETURNING id INTO v_course_id;
+      END IF;
+      v_total_courses := v_total_courses + 1;
+    END IF;
+    v_course_by_code := v_course_by_code || jsonb_build_object(v_course_code, v_course_id::text);
+
+    -- offerings for each contact this course belongs to
+    FOR v_contact IN SELECT unnest FROM unnest(r_course.contacts) LOOP
+      v_semester_id := (v_semester_by_contact ->> v_contact::text)::uuid;
+      IF v_semester_id IS NULL THEN CONTINUE; END IF;
+      SELECT id INTO v_offering_id FROM public.course_offerings
+        WHERE course_id = v_course_id AND semester_id = v_semester_id LIMIT 1;
+      IF v_offering_id IS NULL THEN
+        IF _dry_run THEN
+          v_offering_id := gen_random_uuid();
+        ELSE
+          INSERT INTO public.course_offerings (course_id, semester_id, max_students)
+          VALUES (v_course_id, v_semester_id, 200)
+          RETURNING id INTO v_offering_id;
+        END IF;
+        v_total_offerings := v_total_offerings + 1;
+      END IF;
+      v_offering_by_key := v_offering_by_key ||
+        jsonb_build_object(v_course_code || '@' || v_contact::text, v_offering_id::text);
+    END LOOP;
+  END LOOP;
+
+  -- 4. Students + registrations + results
+  FOR r_stu IN SELECT * FROM jsonb_array_elements(_payload->'students') AS x LOOP
+    DECLARE
+      stu jsonb := r_stu; -- shadow
+      matric text := (r_stu ->> 'matric_number');
+      full_name text := (r_stu ->> 'name');
+      results jsonb := (r_stu -> 'results');
+    BEGIN
+      SELECT id INTO v_student_id FROM public.students WHERE matric_number = matric LIMIT 1;
+      -- max contact for level
+      SELECT MAX((v->>'contact_no')::int) INTO v_max_contact
+        FROM jsonb_array_elements(results) v;
+      v_current_level_id := (v_level_by_code ->> ('L' || (v_max_contact * 100)::text))::uuid;
+      IF v_current_level_id IS NULL THEN
+        v_current_level_id := (v_level_by_code ->> 'L400')::uuid;
+      END IF;
+
+      IF v_student_id IS NULL THEN
+        IF _dry_run THEN
+          v_student_id := gen_random_uuid();
+        ELSE
+          INSERT INTO public.students (matric_number, programme_id, department_id,
+                                       current_level_id, entry_session_id, entry_year,
+                                       default_password_changed)
+          VALUES (matric, v_prog_id, v_dept_id, v_current_level_id,
+                  v_session_id, 2022, false)
+          RETURNING id INTO v_student_id;
+        END IF;
+        v_total_students_new := v_total_students_new + 1;
+      ELSE
+        v_total_students_existing := v_total_students_existing + 1;
+      END IF;
+      v_student_by_matric := v_student_by_matric || jsonb_build_object(matric, v_student_id::text);
+      v_student_ids := array_append(v_student_ids, v_student_id);
+
+      -- results
+      FOR r_res IN SELECT * FROM jsonb_to_recordset(results)
+        AS x(contact_no int, course_code text, score int, grade text, credit_units int, status_code text) LOOP
+        v_offering_id := (v_offering_by_key ->> (r_res.course_code || '@' || r_res.contact_no::text))::uuid;
+        IF v_offering_id IS NULL THEN CONTINUE; END IF;
+
+        -- registration (approved)
+        SELECT id INTO v_registration_id FROM public.course_registrations
+          WHERE student_id = v_student_id AND offering_id = v_offering_id LIMIT 1;
+        IF v_registration_id IS NULL THEN
+          IF _dry_run THEN
+            v_registration_id := gen_random_uuid();
+          ELSE
+            INSERT INTO public.course_registrations (student_id, offering_id, status)
+            VALUES (v_student_id, v_offering_id, 'approved')
+            RETURNING id INTO v_registration_id;
+          END IF;
+          v_total_registrations := v_total_registrations + 1;
+        END IF;
+
+        IF NOT _dry_run THEN
+          INSERT INTO public.results (
+            registration_id, student_id, offering_id,
+            ca_score, exam_score, total_score,
+            status, status_code, published_at
+          ) VALUES (
+            v_registration_id, v_student_id, v_offering_id,
+            0, r_res.score, r_res.score,
+            'published'::result_status,
+            COALESCE(r_res.status_code, 'OK')::result_status_code,
+            now()
+          )
+          ON CONFLICT DO NOTHING;
+        END IF;
+        v_total_results := v_total_results + 1;
+      END LOOP;
+    END;
+  END LOOP;
+
+  -- Recompute CGPA + GPAs per touched student (skip on dry run)
+  IF NOT _dry_run THEN
+    FOREACH v_stu_id IN ARRAY v_student_ids LOOP
+      PERFORM public.recompute_student_cgpa(v_stu_id);
+    END LOOP;
+
+    -- audit
+    INSERT INTO public.audit_logs (actor_id, action, entity, entity_id, metadata)
+    VALUES (auth.uid(), 'import', 'results', NULL,
+            jsonb_build_object('source','ISS-LVT-2022-2023-DE',
+                               'students_new', v_total_students_new,
+                               'students_existing', v_total_students_existing,
+                               'results', v_total_results));
+  END IF;
+
+  RETURN jsonb_build_object(
+    'dry_run', _dry_run,
+    'session_id', v_session_id,
+    'semesters_created', v_total_semesters,
+    'courses_created', v_total_courses,
+    'offerings_created', v_total_offerings,
+    'students_new', v_total_students_new,
+    'students_existing', v_total_students_existing,
+    'registrations_created', v_total_registrations,
+    'results_upserted', v_total_results
+  );
+END;
+$fn$;
+
+REVOKE EXECUTE ON FUNCTION public.admin_import_iss_lvt_2022(jsonb, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_import_iss_lvt_2022(jsonb, boolean) TO authenticated;
