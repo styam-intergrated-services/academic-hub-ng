@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type AppRole =
   | "super_admin" | "ict_admin" | "provost" | "registry" | "bursary"
-  | "dean" | "hod" | "lecturer" | "student" | "applicant";
+  | "dean" | "hod" | "lecturer" | "examination_officer" | "student" | "applicant";
 
 
 export interface PortalUser {
