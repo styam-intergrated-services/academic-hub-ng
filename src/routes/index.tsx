@@ -3,19 +3,58 @@ import { GraduationCap, ShieldCheck, BookOpen, Users, ArrowRight } from "lucide-
 import { Button } from "@/components/ui/button";
 import akceLogo from "@/assets/akce-logo.asset.json";
 
+const SITE_URL = "https://academic-hub-ng.lovable.app";
+const OG_IMAGE =
+  "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/08860a6d-e594-4a03-87d2-3718c2b02932";
+const TITLE = "AKCOE Portal — Aminu Kano College of Education";
+const DESC =
+  "Register courses, upload results, track approvals and manage academic records at Aminu Kano College of Education, Kano, Nigeria.";
+
 export const Route = createFileRoute("/")({
   component: Landing,
   head: () => ({
     meta: [
-      { title: "AKCOE Portal" },
+      { title: TITLE },
+      { name: "description", content: DESC },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESC },
+      { property: "og:url", content: SITE_URL + "/" },
+      { property: "og:image", content: OG_IMAGE },
+      { name: "twitter:title", content: TITLE },
+      { name: "twitter:description", content: DESC },
+      { name: "twitter:image", content: OG_IMAGE },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL + "/" }],
+    scripts: [
       {
-        name: "description",
-        content:
-          "Official portal for students, lecturers and administration at Aminu Kano College of Education Kano Nigeria",
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollegeOrUniversity",
+          name: "Aminu Kano College of Education",
+          alternateName: "AKCOE",
+          url: SITE_URL,
+          logo: OG_IMAGE,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Kano",
+            addressCountry: "NG",
+          },
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "AKCOE Portal",
+          url: SITE_URL,
+        }),
       },
     ],
   }),
 });
+
 
 function Landing() {
   return (
