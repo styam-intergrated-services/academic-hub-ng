@@ -64,23 +64,26 @@ function ExamSchedulePage() {
   );
 
   // Offerings available to schedule: EO -> scoped, Staff -> all
-  const { data: eligibleOfferings } = useQuery({
+  const { data: eligibleOfferings } = useQuery<any[]>({
     queryKey: ["schedulable-offerings", isStaff, semesterId],
-    queryFn: () => isStaff
-      ? allOffFn({ data: semesterId ? { semester_id: semesterId } : {} })
-      : scopedOffFn({ data: semesterId ? { semester_id: semesterId } : {} }),
+    queryFn: async () => {
+      const res = isStaff
+        ? await allOffFn({ data: semesterId ? { semester_id: semesterId } : {} })
+        : await scopedOffFn({ data: semesterId ? { semester_id: semesterId } : {} });
+      return (res ?? []) as any[];
+    },
     enabled: !!me,
   });
 
   const offeringIds = useMemo(() => (eligibleOfferings ?? []).map((o: any) => o.id), [eligibleOfferings]);
 
-  const { data: schedules, isLoading } = useQuery({
+  const { data: schedules, isLoading } = useQuery<any[]>({
     queryKey: ["exam-schedules", semesterId, offeringIds.join(",")],
-    queryFn: () => listFn({
+    queryFn: async () => (await listFn({
       data: isStaff
         ? (semesterId ? { semester_id: semesterId } : {})
         : { offering_ids: offeringIds },
-    }),
+    })) as any[],
     enabled: !!me && (isStaff || offeringIds.length > 0 || isEO),
   });
 
