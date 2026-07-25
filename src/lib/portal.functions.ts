@@ -26,7 +26,7 @@ export interface PortalUser {
 }
 
 const ROLE_PRIORITY: AppRole[] = [
-  "super_admin","ict_admin","provost","registry","bursary","dean","hod","lecturer","student","applicant",
+  "super_admin","ict_admin","provost","registry","bursary","dean","hod","examination_officer","lecturer","student","applicant",
 ];
 
 
