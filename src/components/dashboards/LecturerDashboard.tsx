@@ -17,15 +17,27 @@ export function LecturerDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="bg-hero-gradient text-white rounded-xl p-6 md:p-8 shadow-elegant">
-        <div className="text-xs uppercase tracking-widest text-white/70">Lecturer Portal</div>
-        <h1 className="mt-2 font-serif text-3xl md:text-4xl font-bold">Good day, {user.full_name ?? "Lecturer"}</h1>
-        <p className="mt-2 text-white/80">Upload continuous assessment and exam scores, then submit for approval.</p>
+      <section className="rounded-xl bg-hero-gradient p-6 text-white shadow-elegant md:p-8">
+        <div className="text-[10px] uppercase tracking-widest text-white/70">Lecturer Portal</div>
+        <h1 className="mt-2 font-serif text-2xl font-bold sm:text-3xl md:text-4xl">
+          Good day, {user.full_name ?? "Lecturer"}
+        </h1>
+        <p className="mt-2 max-w-xl text-sm text-white/80">
+          Upload continuous assessment and exam scores, then submit for approval.
+        </p>
       </section>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <StatCard icon={BookOpen} label="Courses teaching" value={isLoading ? "…" : n} accent />
+        <StatCard icon={Users} label="Semester" value="Current" hint="Active session" />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="font-serif">My teaching</CardTitle><CardDescription>Assigned courses this semester</CardDescription></CardHeader>
+          <CardHeader>
+            <CardTitle className="font-serif">My teaching</CardTitle>
+            <CardDescription>Assigned courses this semester</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
               {isLoading
@@ -34,27 +46,30 @@ export function LecturerDashboard({ user }: { user: PortalUser }) {
                   ? `You are teaching ${n} course${n === 1 ? "" : "s"} this semester.`
                   : "No courses assigned yet. They will appear here once Registry links you."}
             </p>
-            <Link to="/teaching"><Button variant="secondary"><BookOpen className="h-4 w-4 mr-2" />Open teaching</Button></Link>
+            <Link to="/teaching"><Button variant="secondary"><BookOpen className="mr-2 size-4" />Open teaching</Button></Link>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="font-serif">Result submission</CardTitle><CardDescription>Draft → Submit → HOD → Dean → Registry → Published</CardDescription></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
-            <Link to="/upload-results"><Button className="w-full" variant="secondary"><FileCheck2 className="h-4 w-4 mr-2" />Upload results</Button></Link>
-            <Link to="/teaching"><Button className="w-full" variant="secondary"><Users className="h-4 w-4 mr-2" />View classes</Button></Link>
+          <CardHeader>
+            <CardTitle className="font-serif">Result submission</CardTitle>
+            <CardDescription>Draft → Submit → HOD → Dean → Registry → Published</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link to="/upload-results"><Button className="w-full justify-start" variant="secondary"><FileCheck2 className="mr-2 size-4" />Upload results</Button></Link>
+            <Link to="/teaching"><Button className="w-full justify-start" variant="secondary"><Users className="mr-2 size-4" />View classes</Button></Link>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="font-serif">Workflow</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="font-serif">Approval workflow</CardTitle></CardHeader>
         <CardContent>
-          <ol className="grid md:grid-cols-5 gap-3 text-sm">
+          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {["Lecturer submits","HOD approves","Dean approves","Registry approves","Published to students"].map((s, i) => (
-              <li key={s} className="rounded-md border p-3 bg-muted/40">
-                <div className="text-xs text-muted-foreground">Step {i + 1}</div>
-                <div className="font-medium">{s}</div>
+              <li key={s} className="rounded-lg border bg-muted/40 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Step {i + 1}</div>
+                <div className="mt-0.5 text-sm font-medium">{s}</div>
               </li>
             ))}
           </ol>
@@ -63,3 +78,4 @@ export function LecturerDashboard({ user }: { user: PortalUser }) {
     </div>
   );
 }
+
