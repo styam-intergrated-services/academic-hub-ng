@@ -81,6 +81,8 @@ export function PortalShell({ children }: { children: ReactNode }) {
     if (!user?.student) return;
     if (user.student.default_password_changed) return;
     if (pathname === "/first-login") return;
+    // Students may postpone the change; we re-prompt on their next sign-in.
+    if (sessionStorage.getItem("akcoe:skip-password-change") === "1") return;
     navigate({ to: "/first-login", replace: true });
   }, [user, pathname, navigate]);
 

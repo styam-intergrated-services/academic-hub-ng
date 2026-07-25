@@ -67,6 +67,19 @@ function FirstLoginPage() {
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save and continue"}
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={loading}
+              onClick={() => {
+                sessionStorage.setItem("akcoe:skip-password-change", "1");
+                toast.info("You can change your password anytime from your profile.");
+                navigate({ to: "/dashboard", replace: true });
+              }}
+            >
+              Skip for now
+            </Button>
           </form>
         </CardContent>
       </Card>
