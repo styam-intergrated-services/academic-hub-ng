@@ -46,6 +46,7 @@ import { Route as ApiPublicMatricLoginInitRouteImport } from './routes/api/publi
 import { Route as AuthenticatedTranscriptsIdRouteImport } from './routes/_authenticated.transcripts.$id'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id'
 import { Route as AuthenticatedBroadsheetOfferingIdRouteImport } from './routes/_authenticated.broadsheet.$offeringId'
+import { Route as AuthenticatedAdminImportIssLvt2022RouteImport } from './routes/_authenticated.admin.import-iss-lvt-2022'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -248,6 +249,12 @@ const AuthenticatedBroadsheetOfferingIdRoute =
     path: '/broadsheet/$offeringId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminImportIssLvt2022Route =
+  AuthenticatedAdminImportIssLvt2022RouteImport.update({
+    id: '/import-iss-lvt-2022',
+    path: '/import-iss-lvt-2022',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -267,7 +274,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/allocations': typeof AuthenticatedAllocationsRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/users': typeof AuthenticatedUsersRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/import-iss-lvt-2022': typeof AuthenticatedAdminImportIssLvt2022Route
   '/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
@@ -307,7 +315,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/allocations': typeof AuthenticatedAllocationsRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
@@ -333,6 +341,7 @@ export interface FileRoutesByTo {
   '/users': typeof AuthenticatedUsersRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/import-iss-lvt-2022': typeof AuthenticatedAdminImportIssLvt2022Route
   '/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
@@ -348,7 +357,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/allocations': typeof AuthenticatedAllocationsRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
@@ -375,6 +384,7 @@ export interface FileRoutesById {
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/import-iss-lvt-2022': typeof AuthenticatedAdminImportIssLvt2022Route
   '/_authenticated/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/import-iss-lvt-2022'
     | '/broadsheet/$offeringId'
     | '/students/$id'
     | '/transcripts/$id'
@@ -456,6 +467,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/import-iss-lvt-2022'
     | '/broadsheet/$offeringId'
     | '/students/$id'
     | '/transcripts/$id'
@@ -497,6 +509,7 @@ export interface FileRouteTypes {
     | '/_authenticated/users'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/import-iss-lvt-2022'
     | '/_authenticated/broadsheet/$offeringId'
     | '/_authenticated/students/$id'
     | '/_authenticated/transcripts/$id'
@@ -778,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBroadsheetOfferingIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/import-iss-lvt-2022': {
+      id: '/_authenticated/admin/import-iss-lvt-2022'
+      path: '/import-iss-lvt-2022'
+      fullPath: '/admin/import-iss-lvt-2022'
+      preLoaderRoute: typeof AuthenticatedAdminImportIssLvt2022RouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -795,6 +815,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminImportIssLvt2022Route: typeof AuthenticatedAdminImportIssLvt2022Route
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminImportIssLvt2022Route:
+    AuthenticatedAdminImportIssLvt2022Route,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedStudentsRouteChildren {
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
@@ -811,7 +843,7 @@ const AuthenticatedStudentsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAllocationsRoute: typeof AuthenticatedAllocationsRoute
   AuthenticatedAnnouncementsRoute: typeof AuthenticatedAnnouncementsRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
@@ -841,7 +873,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAllocationsRoute: AuthenticatedAllocationsRoute,
   AuthenticatedAnnouncementsRoute: AuthenticatedAnnouncementsRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
