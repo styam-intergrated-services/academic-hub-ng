@@ -33,6 +33,7 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApplyRouteImport } from './routes/_authenticated.apply'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated.applications'
 import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated.announcements'
+import { Route as AuthenticatedAllocationsRouteImport } from './routes/_authenticated.allocations'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -167,6 +168,12 @@ const AuthenticatedAnnouncementsRoute =
     path: '/announcements',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAllocationsRoute =
+  AuthenticatedAllocationsRouteImport.update({
+    id: '/allocations',
+    path: '/allocations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -227,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/allocations': typeof AuthenticatedAllocationsRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
@@ -261,6 +269,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/allocations': typeof AuthenticatedAllocationsRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
@@ -296,6 +305,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/allocations': typeof AuthenticatedAllocationsRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/apply': typeof AuthenticatedApplyRoute
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/allocations'
     | '/announcements'
     | '/applications'
     | '/apply'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/allocations'
     | '/announcements'
     | '/applications'
     | '/apply'
@@ -400,6 +412,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/_authenticated/allocations'
     | '/_authenticated/announcements'
     | '/_authenticated/applications'
     | '/_authenticated/apply'
@@ -609,6 +622,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnnouncementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/allocations': {
+      id: '/_authenticated/allocations'
+      path: '/allocations'
+      fullPath: '/allocations'
+      preLoaderRoute: typeof AuthenticatedAllocationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -692,6 +712,7 @@ const AuthenticatedStudentsRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAllocationsRoute: typeof AuthenticatedAllocationsRoute
   AuthenticatedAnnouncementsRoute: typeof AuthenticatedAnnouncementsRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedApplyRoute: typeof AuthenticatedApplyRoute
@@ -717,6 +738,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAllocationsRoute: AuthenticatedAllocationsRoute,
   AuthenticatedAnnouncementsRoute: AuthenticatedAnnouncementsRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedApplyRoute: AuthenticatedApplyRoute,
