@@ -20,11 +20,9 @@ export const runIssLvt2022Import = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => RunSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    // Load the bundled JSON at request time so it doesn't cross the client bundle.
-    const payload = (await import("./iss-lvt-2022.data.json", { with: { type: "json" } })).default;
     const { data: result, error } = await supabase.rpc("admin_import_iss_lvt_2022", {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      _payload: payload as any,
+      _payload: issLvtPayload as any,
       _dry_run: data.dry_run,
     });
     if (error) throw new Error(error.message);
@@ -44,15 +42,7 @@ export const runIssLvt2022Import = createServerFn({ method: "POST" })
 export const getIssLvt2022Summary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const payload = (await import("./iss-lvt-2022.data.json", { with: { type: "json" } })).default as {
-      session: string;
-      programme_name: string;
-      department: string;
-      entry_year: number;
-      contacts: { contact_no: number; level_code: string }[];
-      courses: { code: string; credit_units: number; category: string; contacts: number[] }[];
-      students: { matric_number: string; name: string; results: unknown[] }[];
-    };
+    const payload = issLvtPayload as IssLvtPayload;
     return {
       session: payload.session,
       programme_name: payload.programme_name,
