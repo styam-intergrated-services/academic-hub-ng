@@ -16,36 +16,39 @@ import { cn } from "@/lib/utils";
 import akceLogo from "@/assets/akce-logo.asset.json";
 import { FEATURE_FLAGS } from "@/lib/feature-flags";
 
+type NavGroup = "Overview" | "Academics" | "Results" | "Administration";
+
 type NavItem = {
   to: string;
   label: string;
+  group: NavGroup;
   icon: React.ComponentType<{ className?: string }>;
   roles?: AppRole[];
   flag?: keyof typeof FEATURE_FLAGS;
 };
 
 const NAV: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/profile", label: "Profile", icon: User },
-  { to: "/apply", label: "Admission Application", icon: GraduationCap, roles: ["applicant"] },
-  { to: "/courses", label: "My Courses", icon: BookOpen, roles: ["student"] },
-  { to: "/registration", label: "Course Registration", icon: ClipboardList, roles: ["student"], flag: "registration" },
-  { to: "/results", label: "My Results", icon: Award, roles: ["student"] },
-  { to: "/transcript", label: "My Transcript", icon: FileCheck2, roles: ["student"] },
-  { to: "/fees", label: "Fees & Payments", icon: Wallet, roles: ["student","bursary","super_admin","ict_admin"], flag: "fees" },
-  { to: "/teaching", label: "My Teaching", icon: BookOpen, roles: ["lecturer"] },
-  { to: "/upload-results", label: "Upload Results", icon: FileCheck2, roles: ["lecturer"] },
-  { to: "/approvals", label: "Result Approvals", icon: FileCheck2, roles: ["hod","dean","registry","super_admin","provost"] },
+  { to: "/dashboard", label: "Dashboard", group: "Overview", icon: LayoutDashboard },
+  { to: "/profile", label: "Profile", group: "Overview", icon: User },
+  { to: "/apply", label: "Admission Application", group: "Academics", icon: GraduationCap, roles: ["applicant"] },
+  { to: "/courses", label: "My Courses", group: "Academics", icon: BookOpen, roles: ["student"] },
+  { to: "/registration", label: "Course Registration", group: "Academics", icon: ClipboardList, roles: ["student"], flag: "registration" },
+  { to: "/results", label: "My Results", group: "Results", icon: Award, roles: ["student"] },
+  { to: "/transcript", label: "My Transcript", group: "Results", icon: FileCheck2, roles: ["student"] },
+  { to: "/fees", label: "Fees & Payments", group: "Academics", icon: Wallet, roles: ["student","bursary","super_admin","ict_admin"], flag: "fees" },
+  { to: "/teaching", label: "My Teaching", group: "Academics", icon: BookOpen, roles: ["lecturer"] },
+  { to: "/upload-results", label: "Upload Results", group: "Results", icon: FileCheck2, roles: ["lecturer"] },
+  { to: "/approvals", label: "Result Approvals", group: "Results", icon: FileCheck2, roles: ["hod","dean","registry","super_admin","provost"] },
   // Soft-launched (unlinked): /scoped-results, /exam-schedule, /allocations, /exam-officers
-  { to: "/reports", label: "Reports", icon: TrendingUp, roles: ["provost","super_admin","ict_admin"] },
-  { to: "/announcements", label: "Announcements", icon: Megaphone, roles: ["provost","registry","super_admin","ict_admin","dean"] },
-  { to: "/applications", label: "Admissions", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
-  { to: "/students", label: "Students", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin","provost"] },
-  { to: "/departments", label: "Departments", icon: Building2, roles: ["super_admin","ict_admin","registry","dean","provost"] },
-  { to: "/users", label: "Users & Roles", icon: Users, roles: ["super_admin","ict_admin"] },
-  { to: "/graduation", label: "Graduation", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
-  { to: "/standing", label: "Academic Standing", icon: AlertTriangle, roles: ["registry","super_admin","ict_admin","provost","dean","hod"] },
-  { to: "/admin", label: "Administration", icon: Settings, roles: ["super_admin","ict_admin","registry"] },
+  { to: "/reports", label: "Reports", group: "Administration", icon: TrendingUp, roles: ["provost","super_admin","ict_admin"] },
+  { to: "/announcements", label: "Announcements", group: "Administration", icon: Megaphone, roles: ["provost","registry","super_admin","ict_admin","dean"] },
+  { to: "/applications", label: "Admissions", group: "Administration", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
+  { to: "/students", label: "Students", group: "Academics", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin","provost"] },
+  { to: "/departments", label: "Departments", group: "Administration", icon: Building2, roles: ["super_admin","ict_admin","registry","dean","provost"] },
+  { to: "/users", label: "Users & Roles", group: "Administration", icon: Users, roles: ["super_admin","ict_admin"] },
+  { to: "/graduation", label: "Graduation", group: "Results", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
+  { to: "/standing", label: "Academic Standing", group: "Results", icon: AlertTriangle, roles: ["registry","super_admin","ict_admin","provost","dean","hod"] },
+  { to: "/admin", label: "Administration", group: "Administration", icon: Settings, roles: ["super_admin","ict_admin","registry"] },
 
 ];
 
