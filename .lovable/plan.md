@@ -1,117 +1,99 @@
-## Goal
 
-Introduce a first-class **Provost** role at AKCOE with an executive dashboard, read-only reports, an approvals surface for senate-level items, and notifications — strictly view/approve only, never operational.
+## What the files actually contain
 
-Also: grant Provost to `ayubansar200@gmail.com`, and close the remaining gaps in the result pipeline that a Provost view exposes.
+- **`AKCOE_ISS_2022-2023_DE.xlsx`** — the registration workbook. 15 sheets: `REG.` (nominal roll), and 7 paired sheets `SCR(CONT1..6)` + `CONT.1..6R` + `SO1`/`SO1R`. Contains the students, course codes per Contact, credit units, and course status (C/E). Score cells are blank (`-`) — this is the empty template.
+- **PDFs `_CONT._2.pdf`, `_3.pdf`, `_4.pdf`** — the actual scored FUDMA result sheets for Contact 2 (200L), Contact 3 (300L), Contact 4 (400L). Each row has per-course total scores with letter grades (e.g. `40E`, `71A`, `0F`) plus TCR/TCE/TGP/GPA/CGPA and PASS/CO remarks.
+- Session shown: **2022/2023**. Programme: **B.A. Islamic Studies (LVT)**, Islamic Studies dept. Matric format: `FUDMA/AKCOE/22/ISL/####`.
 
----
+Contacts 1, 5, 6, SO1 are empty in the sheet (not yet held at time of export) — nothing to import for those.
 
-## 1. New role: `provost`
+## Approach
 
-- Add `'provost'` to the `app_role` enum (migration).
-- Slot into `ROLE_PRIORITY` in `src/lib/portal.functions.ts` just below `super_admin`/`ict_admin` so it takes precedence over dean/hod for dashboard routing.
-- Add to the `APP_ROLES` list in `src/lib/admin.functions.ts` so it appears in the Users & Roles grant UI.
-- Extend `assertRegistry`-style helpers with an `assertProvost` (read-only) and reuse `assertSenate` (provost OR registry OR super_admin) for senate-approval mutations.
+Confirmed choices from the previous turn:
+- Import as **published** historical results (skip approval chain).
+- **Auto-create** students that don't exist yet.
+- **Flexible Contact→semester mapping** — the LVT programme runs "Contacts" (residency blocks), not the standard First/Second semester rhythm. I'll model this so the mapping is editable, not baked in.
 
-### Grant to the user
-- `ayubansar200@gmail.com` has **no profile yet** (unregistered). Plan: create a one-shot DB trigger `auto_grant_pending_roles` keyed on `pending_role_grants(email, role)`; when `handle_new_user` fires, drain matching rows and insert into `user_roles`. Seed one row for this email with role `provost`. When they sign up next, the role attaches automatically — no manual step needed.
+### 1. Data model changes (small)
 
----
+- Add `label text` and `contact_number int` (nullable) to `semesters`. Existing rows keep `type='first'/'second'`; LVT rows use `label='Contact 2'`, `contact_number=2`. The `semester_type` enum stays as-is (first/second) — LVT rows will pick one arbitrarily (first for odd contacts, second for even) purely to satisfy NOT NULL, with the display driven by `label`.
+- Add an admin screen (Registry/Super Admin only, unlinked from nav for now) `/semesters` to rename/relabel semesters and change their `contact_number` — this is the "room for change in contact semester feature" the user asked for.
+- Ensure course `category` is set correctly for GST vs ISL courses that are inserted on the fly (GST → `general_studies`, ISL → `subject_major`).
 
-## 2. Provost Dashboard (`src/components/dashboards/ProvostDashboard.tsx`)
+### 2. Extraction pipeline (one-shot server-side script, not user-facing)
 
-Rendered from `_authenticated.dashboard.tsx` when `primary_role === 'provost'`.
+Written as a `createServerFn` under `src/lib/imports/iss-lvt-2022.functions.ts`, gated to `super_admin`, invoked once from a hidden `/admin/import-iss-lvt-2022` route:
 
-**KPI cards** (one server fn `getProvostOverview` returning all counts in a single call to keep it fast):
-- Total Students, Total Staff (users with any staff role), Total Departments, Total Programmes
-- Admissions This Session (applications matriculated in current session), Registered Students (unique students with course_registrations in current semester)
-- Students with Outstanding Fees, Revenue Generated (from `payments`) — gated behind fees feature flag; show "—" placeholder if flag off
-- Results Awaiting Senate Approval (see §4), Published Results (this session)
-- Upcoming Events, Recent Announcements (see §5)
+```text
+For each PDF (Contact 2, 3, 4):
+  1. pdftotext -layout → parsed via a hand-tuned regex per header row.
+  2. Extract:
+      - Contact number + level (200/300/400) from header
+      - Column course codes (ISL***, GST***) with their credit units
+      - Per student: matric, name, then a score cell per column like "40E" or "0F" or "-"
+  3. Yield rows: { matric, name, contact_no, course_code, credit_units, category, total_score }
+```
 
-**Charts**: enrollment by department (bar), GPA distribution (histogram), pass/fail rate per school (stacked bar). Reuse recharts already in AdminDashboard.
+Because manually parsing 3 fixed-format PDFs is fragile, the parser runs in **preview mode first**: it writes a `/mnt/documents/iss-lvt-preview.csv` and shows a diff table (students to create, offerings to create, results to insert) before any DB write. Only after the admin clicks **Confirm import** do writes happen.
 
----
+### 3. Upsert order
 
-## 3. Provost sidebar & routes
+```text
+1. Session          → academic_sessions where name='2022/2023' (create if absent)
+2. Semesters        → one per Contact seen (e.g. 'Contact 2', contact_number=2)
+                      linked to the session
+3. Courses          → for every course code encountered, upsert into `courses`
+                      under Islamic Studies dept, level = Contact level,
+                      credit_units from the sheet, category = general_studies (GST*)
+                      or subject_major (ISL*)
+4. Course offerings → one per (course, semester) pair
+5. Students         → upsert by matric_number under B.A. Islamic Studies (LVT),
+                      department = Islamic Studies, entry_year=2022, current_level_id
+                      = the highest Contact seen for that matric,
+                      auth_user_id = NULL (they claim via matric login later),
+                      default_password_changed = FALSE
+6. Course registrations → one approved row per (student, offering)
+7. Results          → one row per (student, offering):
+                        ca_score = 0
+                        exam_score = total_score from PDF
+                        status = 'published'
+                        status_code = 'OK' when numeric, else 'ABS' for missing/dash
+                      Grade + grade_point are computed by the existing
+                      fill_result_grade trigger; CGPA/GPA/standing are refreshed
+                      by on_result_published_after.
+8. Audit            → one audit_logs row per import batch (entity='results',
+                      metadata={source: 'ISS-LVT-2022-2023', pdf: <filename>, rows: N}).
+```
 
-Add to `PortalShell.tsx` nav (visible only when `roles.includes('provost')`):
-- `/dashboard` — executive dashboard
-- `/reports` — reports hub (new)
-- `/approvals` — filtered to senate-level queue (reuse existing route with a `?scope=senate` tab)
-- `/announcements` — create/approve (new, see §5)
-- Read-only links: `/students`, `/applications`, `/departments`, `/broadsheet/*`, `/transcripts`
+Notes on the score model: the PDFs only give a **total** per course (letter appended is derived), not a CA/Exam split. Storing `ca_score=0, exam_score=total` preserves the total and lets `fill_result_grade` recompute the correct letter via the 5-point scale. If you'd rather encode the historical split as null CA / total in exam, it stays consistent with transcripts and broadsheets.
 
-**Guard rails (Provost is view/approve only):**
-- Hide from nav and gate at route-level: `/upload-results`, `/registration`, `/fees`, `/apply`, `/admin` (structure CRUD), `/users` role editing.
-- Add `<FeatureUnavailable reason="read-only">` fallback if a Provost lands on a mutating route via direct URL.
-- Server-side: `provost` is **not** added to any `upsertCourse/upsertDepartment/matriculate/upsertResult` authorization check — existing `assertRegistry` and lecturer/HOD checks already exclude it.
+### 4. Registration-trigger workaround
 
----
+`validate_registration()` blocks inserts when `registration_open=false` and caps at 24 units. For historical import we bypass by setting `registration_open=true` on the LVT semesters temporarily inside the same transaction, or by calling a new SECURITY DEFINER function `admin_insert_historical_registration(...)` that skips the trigger. I'll take the second approach — cleaner, leaves no side effects.
 
-## 4. Reports hub (`src/routes/_authenticated.reports.tsx`)
+### 5. UI additions (all admin-only, unlinked from nav per prior convention)
 
-Tabbed page (Academic / Financial / Administrative), each tab a read-only card grid with CSV export.
+- `/admin/import-iss-lvt-2022` — the import runner (Preview → Confirm). Shows extracted counts, warnings, and post-import summary.
+- `/semesters` — list/rename semesters, change `label` and `contact_number`, toggle `is_current`. Registry + Super Admin only.
 
-- **Academic**: enrolment by department, pass/fail per course, GPA distribution, graduation stats (students at NCE3 with CGPA ≥ 1.0), course registration stats per semester.
-- **Financial**: total revenue, outstanding fees aging, payment trends (line chart), collection by programme. Gated by fees flag.
-- **Administrative**: staff list (grouped by role), department stats (students/staff/courses per dept), admission stats (funnel: submitted → reviewed → matriculated), student population by level/gender/state.
+### 6. Verification after import
 
-One server fn per tab (`getAcademicReports`, `getFinancialReports`, `getAdminReports`) using `requireSupabaseAuth` + `assertProvost`.
+- Query a handful of matrics against the PDF: MUHAMMAD Kabir Yahaya (0105), HAMBALI Muhammad (0210), ABDULLAHI Muhammad Adam (0218) — confirm their Contact 2 total scores, GPA, and CGPA match the PDF's TGP/GPA/CGPA columns. If GPA computed from grades differs from the PDF value by more than ±0.02, halt and surface the mismatch.
+- Sample the transcript view for one of them to visually confirm.
 
----
+## Technical section (implementation detail)
 
-## 5. Senate approvals (announcements, graduation, session opening, calendar, policies)
+- **Files added**: `src/lib/imports/iss-lvt-2022.functions.ts`, `src/lib/imports/iss-lvt-parser.ts` (pure, unit-testable), `src/routes/_authenticated/admin.import-iss-lvt-2022.tsx`, `src/routes/_authenticated/semesters.tsx`, `src/lib/semesters.functions.ts`.
+- **Migrations**:
+  1. `ALTER TABLE semesters ADD COLUMN label text, ADD COLUMN contact_number int;`
+  2. `CREATE FUNCTION admin_insert_historical_registration(...) SECURITY DEFINER` — inserts into `course_registrations` bypassing `validate_registration` (gated to `super_admin`).
+  3. Grants + RLS: `semesters` UPDATE policy widened to registry+super_admin for `label`, `contact_number`, `is_current` only.
+- **PDFs are parsed at import time** on the server using `pdf-parse` (pure JS, Worker-safe) — no `pdftotext` needed at runtime; the parser fixture is validated locally against the three provided files.
+- **The XLSX is NOT ingested** — its score cells are all blank. It's kept only as a reference to cross-check credit units and course codes during parsing (checked-in as a JSON fixture `src/lib/imports/iss-lvt-2022.registration.json`).
 
-New tables (single migration, with GRANTs + RLS):
-- `announcements(title, body, category, status: draft|pending_senate|published|archived, author_id, approved_by, approved_at, publish_at)`
-- `graduation_lists(session_id, status: draft|pending_senate|approved, prepared_by, approved_by, approved_at)` + `graduation_list_entries(list_id, student_id, cgpa, classification)`
-- `policy_documents(title, category, body_md, version, status: draft|pending_senate|active|archived, approved_by, approved_at)`
-- `academic_calendar_events(session_id, title, event_date, category, description, is_public)` — Provost approves the whole calendar per session via `academic_sessions.calendar_approved_by/_at` columns.
+## Out of scope for this plan
 
-**Approval surface**: extend `/approvals` with tabs — Results (existing) / Announcements / Graduation Lists / Policies / Calendar & Sessions. Provost sees only items in `pending_senate`; approve/reject writes audit_logs entry.
-
-**"Senate-approved results" toggle**: add `results.requires_senate` boolean (default false). When a Dean marks a course result batch as senate-required (e.g. final-year), Registry publish is blocked until Provost approves. Optional; ships off by default so existing flow is unchanged.
-
----
-
-## 6. Result-management gaps still open (Provost view surfaces these)
-
-Ship the ones that plug real holes; skip the nice-to-haves for later:
-
-1. **Result correction / re-open workflow** — after publish, Registry can flag a `results` row `correction_requested`; the row re-enters HOD → Dean → Registry → (Provost if senate-required) with the reason logged in `result_history`. Recomputes CGPA on re-publish.
-2. **Absent / Incomplete / Withheld codes** — add `result_status_code enum('OK','ABS','INC','WH')`. `fill_result_grade` treats non-OK as no grade point; `recompute_*_gpa` excludes them from units. Broadsheet & transcript render the code instead of a numeric grade.
-3. **Moderation flags on the broadsheet** — auto-tag courses with >90% A or >40% F for HOD review; surface as a pill on `/approvals` and in the Provost's "Result Analytics" report.
-4. **Carry-over surface** — a materialized `carry_over_courses` view (student × failed offering) drives a "Carry Overs" tab on `/students/:id` and the Provost's pass/fail report.
-
-Deferred: semester GPA statement PDF (already covered by transcript UNOFFICIAL view — revisit when students explicitly request per-semester export).
-
----
-
-## 7. Notifications for Provost
-
-Extend the existing `notifications` table categories and add triggers:
-- `senate_approval` — when any item enters `pending_senate` status → notify all users with `provost` role.
-- `session_lifecycle` — when a session's `status` flips to `upcoming` and calendar is unapproved.
-- `admissions_batch` — daily rollup when N applications reach `matriculated`.
-- `revenue_milestone` — Bursary sets targets in `fee_structures`; trigger fires on % thresholds.
-- `security_critical` and `system_update` — inserted by ICT admin actions (existing audit hook, add category).
-
-Provost dashboard reads unread count from `notifications` where `user_id = auth.uid()`.
-
----
-
-## Technical notes
-
-- **Migration order**: (a) enum `provost` + `pending_role_grants` + seed row; (b) new tables (announcements, graduation_lists, policies, calendar) with GRANTs + RLS + owner/staff/provost policies; (c) `results` additions (`status_code`, `requires_senate`, `correction_requested`); (d) triggers for senate notifications and auto-grant.
-- **RLS**: senate tables — draft rows visible to author + registry, `pending_senate` visible to provost, `published/active` visible to all authenticated. Mutations gated by `has_role`.
-- **No changes** to `client.ts`, `client.server.ts`, `auth-middleware.ts`, `types.ts` — regenerated automatically after the enum migration.
-- **Existing modules untouched**: lecturer upload, HOD/Dean approval, transcript issuance, fees gating, PWA install prompt.
-
----
-
-## What I need from you before building
-
-1. Confirm the plan, or trim any of §5/§6 you don't want yet.
-2. Should the calendar/announcements be public-facing (visible on the marketing route) or portal-only?
-3. For "Senate-approved results", should it default **off** (opt-in per offering) or **on** for NCE3 final-year courses?
+- Contact 1, 5, 6, SO1 (no scored data supplied).
+- Any change to grading scale, classification thresholds, standing rules, or approval chain.
+- Sidebar/nav entries for the new admin pages (kept unlinked, direct-URL only).
+- Bulk historical uploads for other cohorts — this plan is specific to ISS-LVT 2022/2023 Direct Entry. The parser + import runner will be structured so a second cohort just needs a new fixture and a new route entry.
