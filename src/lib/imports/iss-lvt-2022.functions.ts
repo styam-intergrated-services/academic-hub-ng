@@ -12,7 +12,8 @@ export const runIssLvt2022Import = createServerFn({ method: "POST" })
     // Load the bundled JSON at request time so it doesn't cross the client bundle.
     const payload = (await import("./iss-lvt-2022.data.json", { with: { type: "json" } })).default;
     const { data: result, error } = await supabase.rpc("admin_import_iss_lvt_2022", {
-      _payload: payload as unknown as Record<string, unknown>,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      _payload: payload as any,
       _dry_run: data.dry_run,
     });
     if (error) throw new Error(error.message);
