@@ -47,7 +47,10 @@ function ResetPasswordPage() {
     <div className="min-h-screen grid place-items-center bg-background p-6">
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader>
-          <CardTitle className="font-serif text-2xl">Set a new password</CardTitle>
+          <CardTitle asChild className="font-serif text-2xl">
+            <h1>Reset Your Password</h1>
+          </CardTitle>
+
           <CardDescription>
             {ready ? "Choose a new password for your AKCOE account." : "Verifying reset link…"}
           </CardDescription>

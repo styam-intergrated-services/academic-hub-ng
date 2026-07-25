@@ -166,7 +166,10 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6 md:p-10 bg-background">
         <Card className="w-full max-w-md shadow-elegant">
           <CardHeader>
-            <CardTitle className="font-serif text-2xl">Welcome</CardTitle>
+            <CardTitle asChild className="font-serif text-2xl">
+              <h1>Sign in to AKCOE Portal</h1>
+            </CardTitle>
+
             <CardDescription>Sign in to your AKCOE account.</CardDescription>
           </CardHeader>
           <CardContent>
