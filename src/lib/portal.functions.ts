@@ -20,6 +20,8 @@ export interface PortalUser {
     current_level_id: string;
     cgpa: number;
     standing: string;
+    total_credit_units: number;
+    total_grade_points: number;
   } | null;
 }
 
@@ -36,7 +38,7 @@ export const getPortalUser = createServerFn({ method: "GET" })
     const [{ data: profile }, { data: rolesData }, { data: student }] = await Promise.all([
       supabase.from("profiles").select("id,email,full_name,avatar_url").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("students").select("matric_number,programme_id,department_id,current_level_id,cgpa,standing")
+      supabase.from("students").select("matric_number,programme_id,department_id,current_level_id,cgpa,standing,total_credit_units,total_grade_points")
         .eq("id", userId).maybeSingle(),
     ]);
 
@@ -53,4 +55,77 @@ export const getPortalUser = createServerFn({ method: "GET" })
       primary_role,
       student: student ?? null,
     };
+  });
+
+// Lightweight counts for student dashboard cards.
+export const getStudentDashboardStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    // Current semester id (if any)
+    const { data: sem } = await supabase
+      .from("semesters")
+      .select("id")
+      .eq("is_current", true)
+      .maybeSingle();
+
+    const publishedP = supabase
+      .from("results")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", userId)
+      .eq("status", "published");
+
+    let registeredCount = 0;
+    if (sem?.id) {
+      // Filter registrations by current semester via offering.semester_id
+      const { data: offerings } = await supabase
+        .from("course_offerings")
+        .select("id")
+        .eq("semester_id", sem.id);
+      const offeringIds = (offerings ?? []).map((o: { id: string }) => o.id);
+      if (offeringIds.length > 0) {
+        const { count } = await supabase
+          .from("course_registrations")
+          .select("id", { count: "exact", head: true })
+          .eq("student_id", userId)
+          .in("offering_id", offeringIds)
+          .in("status", ["pending", "approved"]);
+        registeredCount = count ?? 0;
+      }
+    }
+
+    const { count: publishedCount } = await publishedP;
+
+    return {
+      registered_courses: registeredCount,
+      published_results: publishedCount ?? 0,
+    };
+  });
+
+// Count of course offerings the lecturer is assigned to in the current semester.
+export const getLecturerTeachingCount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: sem } = await supabase
+      .from("semesters")
+      .select("id")
+      .eq("is_current", true)
+      .maybeSingle();
+    if (!sem?.id) return { count: 0 };
+
+    const { data: offerings } = await supabase
+      .from("course_offerings")
+      .select("id")
+      .eq("semester_id", sem.id);
+    const offeringIds = (offerings ?? []).map((o: { id: string }) => o.id);
+    if (offeringIds.length === 0) return { count: 0 };
+
+    const { count } = await supabase
+      .from("course_lecturers")
+      .select("offering_id", { count: "exact", head: true })
+      .eq("lecturer_id", userId)
+      .in("offering_id", offeringIds);
+    return { count: count ?? 0 };
   });
