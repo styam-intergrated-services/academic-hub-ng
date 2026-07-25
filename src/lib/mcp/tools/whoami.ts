@@ -16,7 +16,7 @@ export default defineTool({
       supabase.from("user_roles").select("role").eq("user_id", userId!),
       supabase.from("students")
         .select("matric_number,cgpa,standing,total_credit_units,programme:programmes(name,code),department:departments(name,code),level:levels(name,code)")
-        .eq("id", userId!).maybeSingle(),
+        .eq("auth_user_id", userId!).maybeSingle(),
     ]);
     const payload = {
       user_id: userId,
