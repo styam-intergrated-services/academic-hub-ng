@@ -12,8 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Send, Download, Upload, AlertCircle } from "lucide-react";
+import { Save, Send, Download, Upload, AlertCircle, BookOpen, Users } from "lucide-react";
 import { parseCsv, toCsv, downloadCsv } from "@/lib/csv";
+import { PageHeader } from "@/components/portal/PageHeader";
+import { EmptyState } from "@/components/portal/EmptyState";
+import { TableScroll, TableSkeleton } from "@/components/portal/TableSkeleton";
+import { StatusBadge, GradeBadge } from "@/components/portal/StatusBadges";
+
 
 export const Route = createFileRoute("/_authenticated/upload-results")({
   component: UploadResults,
@@ -26,26 +31,37 @@ function UploadResults() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl text-primary">Upload Results</h2>
-        <p className="text-sm text-muted-foreground">Enter CA (max 40) and Exam (max 60). Grades compute automatically. Submit to send for HOD approval.</p>
-      </div>
+      <PageHeader
+        title="Upload Results"
+        description="Enter CA (max 40) and Exam (max 60). Grades compute automatically. Submit to send for HOD approval."
+      />
 
       <Card>
-        <CardHeader><CardTitle className="font-serif">My teaching load</CardTitle><CardDescription>Select a course to enter scores</CardDescription></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-serif">My teaching load</CardTitle>
+          <CardDescription>Select a course to enter scores</CardDescription>
+        </CardHeader>
         <CardContent>
           {isLoading ? <Skeleton className="h-32" /> : (teaching?.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">You have no course assignments this semester.</p>
+            <EmptyState
+              icon={BookOpen}
+              title="No course assignments"
+              description="You have no courses allocated for the current semester."
+            />
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {teaching?.map((t: any) => {
                 const o = t.offering;
                 const active = selected === o.id;
                 return (
-                  <button key={o.id} onClick={() => setSelected(o.id)} className={`text-left rounded-lg border p-4 transition-colors ${active ? "border-primary bg-primary/5" : "hover:bg-muted"}`}>
+                  <button
+                    key={o.id}
+                    onClick={() => setSelected(o.id)}
+                    className={`rounded-lg border p-4 text-left transition-all ${active ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "hover:border-primary/40 hover:bg-muted/60"}`}
+                  >
                     <div className="font-mono text-xs text-muted-foreground">{o.course.code}</div>
-                    <div className="font-medium">{o.course.title}</div>
-                    <div className="mt-1 flex gap-2 text-xs text-muted-foreground">
+                    <div className="mt-0.5 font-medium">{o.course.title}</div>
+                    <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
                       <span>{o.course.credit_units} units</span>
                       <span>•</span>
                       <span className="capitalize">{o.semester.type} — {o.semester.session?.name}</span>
@@ -58,6 +74,7 @@ function UploadResults() {
           )}
         </CardContent>
       </Card>
+
 
       {selected && <RosterEditor offeringId={selected} />}
     </div>

@@ -8,7 +8,7 @@ import { getPortalUser as getPortalUserFn } from "@/lib/portal.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { toast } from "sonner";
 import { Check, X, Rocket, FileText, ClipboardCheck } from "lucide-react";
 import { PageHeader } from "@/components/portal/PageHeader";
