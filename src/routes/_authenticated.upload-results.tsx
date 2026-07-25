@@ -137,41 +137,50 @@ function RosterEditor({ offeringId }: { offeringId: string }) {
         </Alert>
       )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
-          <div>
+      <Card className="overflow-hidden">
+        <CardHeader className="grid grid-cols-1 items-start gap-3 border-b bg-muted/30 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="min-w-0">
             <CardTitle className="font-serif">Class roster</CardTitle>
-            <CardDescription>Only approved registrations appear here</CardDescription>
+            <CardDescription>Only approved registrations appear here · {rows.length} student{rows.length === 1 ? "" : "s"}</CardDescription>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <ImportExportBar rows={rows} onImport={(payload) => bulkMut.mutate(payload)} pending={bulkMut.isPending} offeringId={offeringId} />
-            <Button onClick={() => submitMut.mutate()} disabled={submitMut.isPending} className="bg-primary text-primary-foreground">
-              <Send className="h-4 w-4 mr-2" />Submit for approval
+            <Button size="sm" onClick={() => submitMut.mutate()} disabled={submitMut.isPending} className="bg-primary text-primary-foreground">
+              <Send className="mr-2 size-4" />Submit for approval
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {isLoading ? <Skeleton className="h-40" /> : rows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No students registered yet.</p>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-4"><TableSkeleton rows={6} cols={7} /></div>
+          ) : rows.length === 0 ? (
+            <div className="p-4">
+              <EmptyState icon={Users} title="No students registered" description="Approved course registrations will appear here." />
+            </div>
           ) : (
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Matric</TableHead><TableHead>Name</TableHead>
-                <TableHead>CA (0-40)</TableHead><TableHead>Exam (0-60)</TableHead>
-                <TableHead>Total</TableHead><TableHead>Grade</TableHead><TableHead>Status</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {rows.map((row: any) => {
-                  const r = row.result?.[0];
-                  return (
-                    <ScoreRow key={row.id} row={row} existing={r} offeringId={offeringId} onSave={(v: any) => upsertMut.mutate(v)} />
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <TableScroll>
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead>Matric</TableHead><TableHead>Name</TableHead>
+                    <TableHead>CA (0-40)</TableHead><TableHead>Exam (0-60)</TableHead>
+                    <TableHead className="text-right">Total</TableHead><TableHead>Grade</TableHead><TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row: any) => {
+                    const r = row.result?.[0];
+                    return (
+                      <ScoreRow key={row.id} row={row} existing={r} offeringId={offeringId} onSave={(v: any) => upsertMut.mutate(v)} />
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableScroll>
           )}
         </CardContent>
       </Card>
+
     </div>
   );
 }
