@@ -8,10 +8,14 @@ import { getPortalUser as getPortalUserFn } from "@/lib/portal.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { toast } from "sonner";
-import { Check, X, Rocket, FileText } from "lucide-react";
+import { Check, X, Rocket, FileText, ClipboardCheck } from "lucide-react";
+import { PageHeader } from "@/components/portal/PageHeader";
+import { EmptyState } from "@/components/portal/EmptyState";
+import { TableScroll, TableSkeleton } from "@/components/portal/TableSkeleton";
+import { GradeBadge, StatusBadge } from "@/components/portal/StatusBadges";
+
 
 const searchSchema = z.object({ status: z.string().optional() });
 
@@ -52,78 +56,100 @@ function Approvals() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="font-serif text-2xl text-primary">Result Approvals</h2>
-          <p className="text-sm text-muted-foreground">Approve, reject, or publish result batches at your level.</p>
-        </div>
-        {statusFilter && (
-          <Button size="sm" variant="outline" onClick={() => navigate({ search: {} })}>
-            Clear filter: <span className="ml-1 capitalize">{statusFilter.replace("_"," ")}</span> ✕
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Result Approvals"
+        description="Approve, reject, or publish result batches at your level."
+        actions={
+          statusFilter ? (
+            <Button size="sm" variant="outline" onClick={() => navigate({ search: {} })}>
+              Clear filter: <span className="ml-1 capitalize">{statusFilter.replace("_", " ")}</span> ✕
+            </Button>
+          ) : null
+        }
+      />
 
-      {isLoading ? <Skeleton className="h-40" /> : groups.length === 0 ? (
-        <Card><CardContent className="py-10 text-center text-muted-foreground">
-          {statusFilter ? `No offerings with status "${statusFilter.replace("_"," ")}".` : "Nothing awaiting your action."}
+      {isLoading ? (
+        <Card><CardContent className="pt-6"><TableSkeleton rows={6} cols={6} /></CardContent></Card>
+      ) : groups.length === 0 ? (
+        <Card><CardContent className="pt-6">
+          <EmptyState
+            icon={ClipboardCheck}
+            title={statusFilter ? "No matching batches" : "Nothing awaiting your action"}
+            description={statusFilter
+              ? `No offerings currently sit at "${statusFilter.replace("_", " ")}".`
+              : "Result batches will appear here once they reach your approval level."}
+          />
         </CardContent></Card>
       ) : groups.map((g: any) => {
         const first = g.results[0];
         const level = levelFor(first.status);
         const canPublish = first.status === "registry_approved" && levels.some((r: string) => ["registry","super_admin","ict_admin"].includes(r));
         return (
-          <Card key={g.offering.id}>
-            <CardHeader className="flex flex-row items-start justify-between gap-4 flex-wrap">
+          <Card key={g.offering.id} className="overflow-hidden">
+            <CardHeader className="grid grid-cols-1 items-start gap-3 border-b bg-muted/30 sm:grid-cols-[minmax(0,1fr)_auto]">
               <div className="min-w-0">
-                <CardTitle className="font-serif">{g.offering.course.code} — {g.offering.course.title}</CardTitle>
-                <CardDescription>
-                  {g.offering.semester.session?.name} · <span className="capitalize">{g.offering.semester.type}</span> · {g.results.length} students
-                  <Badge variant="secondary" className="capitalize ml-2">{first.status.replace("_"," ")}</Badge>
+                <CardTitle className="font-serif text-base sm:text-lg">
+                  <span className="font-mono text-primary">{g.offering.course.code}</span> — {g.offering.course.title}
+                </CardTitle>
+                <CardDescription className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span>{g.offering.semester.session?.name}</span>
+                  <span>·</span>
+                  <span className="capitalize">{g.offering.semester.type}</span>
+                  <span>·</span>
+                  <span>{g.results.length} students</span>
+                  <StatusBadge status={first.status} />
                 </CardDescription>
                 <ApprovalTrail r={first} />
               </div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-2">
                 {first.status === "published" && (
                   <Link to="/broadsheet/$offeringId" params={{ offeringId: g.offering.id }}>
-                    <Button variant="outline" size="sm"><FileText className="h-4 w-4 mr-2" />Broadsheet</Button>
+                    <Button variant="outline" size="sm"><FileText className="mr-2 size-4" />Broadsheet</Button>
                   </Link>
                 )}
                 {canPublish ? (
-                  <Button onClick={() => decideMut.mutate({ offering_id: g.offering.id, level: "registry", action: "publish" })} className="bg-primary text-primary-foreground"><Rocket className="h-4 w-4 mr-2" />Publish</Button>
+                  <Button size="sm" onClick={() => decideMut.mutate({ offering_id: g.offering.id, level: "registry", action: "publish" })} className="bg-primary text-primary-foreground"><Rocket className="mr-2 size-4" />Publish</Button>
                 ) : level && (
                   <>
-                    <Button variant="outline" onClick={() => {
+                    <Button size="sm" variant="outline" onClick={() => {
                       const reason = window.prompt("Rejection reason (shown to the lecturer):") ?? undefined;
                       if (reason === undefined) return;
                       decideMut.mutate({ offering_id: g.offering.id, level, action: "reject", reason });
-                    }}><X className="h-4 w-4 mr-2" />Reject</Button>
-                    <Button onClick={() => decideMut.mutate({ offering_id: g.offering.id, level, action: "approve" })} className="bg-primary text-primary-foreground"><Check className="h-4 w-4 mr-2" />Approve</Button>
+                    }}><X className="mr-2 size-4" />Reject</Button>
+                    <Button size="sm" onClick={() => decideMut.mutate({ offering_id: g.offering.id, level, action: "approve" })} className="bg-primary text-primary-foreground"><Check className="mr-2 size-4" />Approve</Button>
                   </>
                 )}
               </div>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Matric</TableHead><TableHead>Name</TableHead>
-                  <TableHead>CA</TableHead><TableHead>Exam</TableHead><TableHead>Total</TableHead><TableHead>Grade</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {g.results.map((r: any) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-mono">{r.student.matric_number}</TableCell>
-                      <TableCell>{r.student.profile?.full_name}</TableCell>
-                      <TableCell>{r.ca_score ?? "—"}</TableCell>
-                      <TableCell>{r.exam_score ?? "—"}</TableCell>
-                      <TableCell>{r.total_score ?? "—"}</TableCell>
-                      <TableCell><Badge>{r.grade}</Badge></TableCell>
+            <CardContent className="p-0">
+              <TableScroll>
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      <TableHead>Matric</TableHead><TableHead>Name</TableHead>
+                      <TableHead className="text-right">CA</TableHead>
+                      <TableHead className="text-right">Exam</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Grade</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {g.results.map((r: any) => (
+                      <TableRow key={r.id} className="even:bg-muted/30">
+                        <TableCell className="font-mono text-xs">{r.student.matric_number}</TableCell>
+                        <TableCell className="min-w-0">{r.student.profile?.full_name}</TableCell>
+                        <TableCell className="text-right tabular-nums">{r.ca_score ?? "—"}</TableCell>
+                        <TableCell className="text-right tabular-nums">{r.exam_score ?? "—"}</TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">{r.total_score ?? "—"}</TableCell>
+                        <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableScroll>
             </CardContent>
           </Card>
+
         );
       })}
     </div>

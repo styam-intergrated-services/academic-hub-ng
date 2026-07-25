@@ -12,8 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Send, Download, Upload, AlertCircle } from "lucide-react";
+import { Save, Send, Download, Upload, AlertCircle, BookOpen, Users } from "lucide-react";
 import { parseCsv, toCsv, downloadCsv } from "@/lib/csv";
+import { PageHeader } from "@/components/portal/PageHeader";
+import { EmptyState } from "@/components/portal/EmptyState";
+import { TableScroll, TableSkeleton } from "@/components/portal/TableSkeleton";
+import { StatusBadge, GradeBadge } from "@/components/portal/StatusBadges";
+
 
 export const Route = createFileRoute("/_authenticated/upload-results")({
   component: UploadResults,
@@ -26,26 +31,37 @@ function UploadResults() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-serif text-2xl text-primary">Upload Results</h2>
-        <p className="text-sm text-muted-foreground">Enter CA (max 40) and Exam (max 60). Grades compute automatically. Submit to send for HOD approval.</p>
-      </div>
+      <PageHeader
+        title="Upload Results"
+        description="Enter CA (max 40) and Exam (max 60). Grades compute automatically. Submit to send for HOD approval."
+      />
 
       <Card>
-        <CardHeader><CardTitle className="font-serif">My teaching load</CardTitle><CardDescription>Select a course to enter scores</CardDescription></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-serif">My teaching load</CardTitle>
+          <CardDescription>Select a course to enter scores</CardDescription>
+        </CardHeader>
         <CardContent>
           {isLoading ? <Skeleton className="h-32" /> : (teaching?.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">You have no course assignments this semester.</p>
+            <EmptyState
+              icon={BookOpen}
+              title="No course assignments"
+              description="You have no courses allocated for the current semester."
+            />
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {teaching?.map((t: any) => {
                 const o = t.offering;
                 const active = selected === o.id;
                 return (
-                  <button key={o.id} onClick={() => setSelected(o.id)} className={`text-left rounded-lg border p-4 transition-colors ${active ? "border-primary bg-primary/5" : "hover:bg-muted"}`}>
+                  <button
+                    key={o.id}
+                    onClick={() => setSelected(o.id)}
+                    className={`rounded-lg border p-4 text-left transition-all ${active ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20" : "hover:border-primary/40 hover:bg-muted/60"}`}
+                  >
                     <div className="font-mono text-xs text-muted-foreground">{o.course.code}</div>
-                    <div className="font-medium">{o.course.title}</div>
-                    <div className="mt-1 flex gap-2 text-xs text-muted-foreground">
+                    <div className="mt-0.5 font-medium">{o.course.title}</div>
+                    <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
                       <span>{o.course.credit_units} units</span>
                       <span>•</span>
                       <span className="capitalize">{o.semester.type} — {o.semester.session?.name}</span>
@@ -58,6 +74,7 @@ function UploadResults() {
           )}
         </CardContent>
       </Card>
+
 
       {selected && <RosterEditor offeringId={selected} />}
     </div>
@@ -120,41 +137,50 @@ function RosterEditor({ offeringId }: { offeringId: string }) {
         </Alert>
       )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
-          <div>
+      <Card className="overflow-hidden">
+        <CardHeader className="grid grid-cols-1 items-start gap-3 border-b bg-muted/30 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="min-w-0">
             <CardTitle className="font-serif">Class roster</CardTitle>
-            <CardDescription>Only approved registrations appear here</CardDescription>
+            <CardDescription>Only approved registrations appear here · {rows.length} student{rows.length === 1 ? "" : "s"}</CardDescription>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <ImportExportBar rows={rows} onImport={(payload) => bulkMut.mutate(payload)} pending={bulkMut.isPending} offeringId={offeringId} />
-            <Button onClick={() => submitMut.mutate()} disabled={submitMut.isPending} className="bg-primary text-primary-foreground">
-              <Send className="h-4 w-4 mr-2" />Submit for approval
+            <Button size="sm" onClick={() => submitMut.mutate()} disabled={submitMut.isPending} className="bg-primary text-primary-foreground">
+              <Send className="mr-2 size-4" />Submit for approval
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {isLoading ? <Skeleton className="h-40" /> : rows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No students registered yet.</p>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-4"><TableSkeleton rows={6} cols={7} /></div>
+          ) : rows.length === 0 ? (
+            <div className="p-4">
+              <EmptyState icon={Users} title="No students registered" description="Approved course registrations will appear here." />
+            </div>
           ) : (
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Matric</TableHead><TableHead>Name</TableHead>
-                <TableHead>CA (0-40)</TableHead><TableHead>Exam (0-60)</TableHead>
-                <TableHead>Total</TableHead><TableHead>Grade</TableHead><TableHead>Status</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {rows.map((row: any) => {
-                  const r = row.result?.[0];
-                  return (
-                    <ScoreRow key={row.id} row={row} existing={r} offeringId={offeringId} onSave={(v: any) => upsertMut.mutate(v)} />
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <TableScroll>
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead>Matric</TableHead><TableHead>Name</TableHead>
+                    <TableHead>CA (0-40)</TableHead><TableHead>Exam (0-60)</TableHead>
+                    <TableHead className="text-right">Total</TableHead><TableHead>Grade</TableHead><TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row: any) => {
+                    const r = row.result?.[0];
+                    return (
+                      <ScoreRow key={row.id} row={row} existing={r} offeringId={offeringId} onSave={(v: any) => upsertMut.mutate(v)} />
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableScroll>
           )}
         </CardContent>
       </Card>
+
     </div>
   );
 }
@@ -303,32 +329,35 @@ function ScoreRow({ row, existing, offeringId, onSave }: any) {
   const locked = existing && !EDITABLE_STATUSES.has(existing.status);
   const total = (Number(ca) || 0) + (Number(exam) || 0);
   return (
-    <TableRow>
-      <TableCell className="font-mono">{row.student?.matric_number}</TableCell>
-      <TableCell>
+    <TableRow className="even:bg-muted/30">
+      <TableCell className="font-mono text-xs">{row.student?.matric_number}</TableCell>
+      <TableCell className="min-w-0">
         {row.student?.profile?.full_name}
         {existing?.rejection_reason && !locked && (
-          <div className="text-[11px] text-rose-600 mt-0.5">↺ {existing.rejection_reason}</div>
+          <div className="mt-0.5 text-[11px] text-destructive">↺ {existing.rejection_reason}</div>
         )}
       </TableCell>
-      <TableCell><Input value={ca} onChange={(e) => setCa(e.target.value)} type="number" min={0} max={40} step={0.5} disabled={locked} className="w-24" /></TableCell>
-      <TableCell><Input value={exam} onChange={(e) => setExam(e.target.value)} type="number" min={0} max={60} step={0.5} disabled={locked} className="w-24" /></TableCell>
-      <TableCell>{ca || exam ? total.toFixed(1) : "—"}</TableCell>
-      <TableCell>{existing?.grade ?? "—"}</TableCell>
+      <TableCell><Input value={ca} onChange={(e) => setCa(e.target.value)} type="number" min={0} max={40} step={0.5} disabled={locked} className="w-20 tabular-nums" /></TableCell>
+      <TableCell><Input value={exam} onChange={(e) => setExam(e.target.value)} type="number" min={0} max={60} step={0.5} disabled={locked} className="w-20 tabular-nums" /></TableCell>
+      <TableCell className="text-right font-medium tabular-nums">{ca || exam ? total.toFixed(1) : "—"}</TableCell>
+      <TableCell><GradeBadge grade={existing?.grade} /></TableCell>
       <TableCell>
-        {existing ? <Badge variant="secondary" className="capitalize">{existing.status.replace("_"," ")}</Badge> : <Badge variant="outline">Empty</Badge>}
-        {!locked && (
-          <Button size="sm" variant="ghost" className="ml-2" onClick={() =>
-            onSave({
-              registration_id: row.id,
-              student_id: row.student_id,
-              offering_id: offeringId,
-              ca_score: ca === "" ? null : Number(ca),
-              exam_score: exam === "" ? null : Number(exam),
-            })
-          }><Save className="h-3 w-3 mr-1" />Save</Button>
-        )}
+        <div className="flex items-center gap-2">
+          {existing ? <StatusBadge status={existing.status} /> : <Badge variant="outline">Empty</Badge>}
+          {!locked && (
+            <Button size="sm" variant="ghost" onClick={() =>
+              onSave({
+                registration_id: row.id,
+                student_id: row.student_id,
+                offering_id: offeringId,
+                ca_score: ca === "" ? null : Number(ca),
+                exam_score: exam === "" ? null : Number(exam),
+              })
+            }><Save className="mr-1 size-3" />Save</Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
+
   );
 }

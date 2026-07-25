@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { StatCard } from "@/components/portal/StatCard";
+import { EmptyState } from "@/components/portal/EmptyState";
+
 
 export function StudentDashboard({ user }: { user: PortalUser }) {
   const s = user.student;
@@ -24,51 +27,78 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="bg-hero-gradient text-white rounded-xl p-6 md:p-8 shadow-elegant">
-        <div className="text-xs uppercase tracking-widest text-white/70">Student Portal</div>
-        <h1 className="mt-2 font-serif text-3xl md:text-4xl font-bold">Welcome, {user.full_name ?? "Student"}</h1>
-        <div className="mt-3 flex flex-wrap gap-2 text-sm text-white/80">
+      <section className="rounded-xl bg-hero-gradient p-6 text-white shadow-elegant md:p-8">
+        <div className="text-[10px] uppercase tracking-widest text-white/70">Student Portal</div>
+        <h1 className="mt-2 font-serif text-2xl font-bold sm:text-3xl md:text-4xl">
+          Welcome, {user.full_name ?? "Student"}
+        </h1>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85">
           {s ? (
             <>
-              <span>Matric: <b className="text-gold">{s.matric_number}</b></span>
-              <span>•</span>
-              <span>CGPA: <b className="text-gold">{Number(s.cgpa).toFixed(2)}</b></span>
-              <span>•</span>
-              <span>Standing: <Badge variant="secondary" className="capitalize">{s.standing}</Badge></span>
+              <span className="rounded-full bg-white/10 px-3 py-1">
+                Matric <b className="ml-1 font-mono text-gold">{s.matric_number}</b>
+              </span>
+              <span className="rounded-full bg-white/10 px-3 py-1">
+                CGPA <b className="ml-1 text-gold tabular-nums">{Number(s.cgpa).toFixed(2)}</b>
+              </span>
+              <span className="rounded-full bg-white/10 px-3 py-1 capitalize">
+                Standing <b className="ml-1 text-gold">{s.standing}</b>
+              </span>
             </>
-          ) : <span>Your student record hasn't been activated yet. Contact the Registry.</span>}
+          ) : (
+            <span>Your student record hasn't been activated yet. Contact the Registry.</span>
+          )}
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} accent />
         <StatCard icon={BookOpen} label="Registered courses" value={String(registered)} />
         <StatCard icon={ClipboardList} label="Published results" value={String(published)} />
-        <StatCard icon={Wallet} label="Fees status" value={s ? "View" : "—"} />
+        <StatCard icon={TrendingUp} label="Credit units" value={String(creditsEarned)} />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="font-serif">Quick actions</CardTitle><CardDescription>Frequently used tasks</CardDescription></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
-            <Link to="/registration"><Button className="w-full justify-start" variant="secondary"><ClipboardList className="h-4 w-4 mr-2" /> Register courses</Button></Link>
-            <Link to="/results"><Button className="w-full justify-start" variant="secondary"><Award className="h-4 w-4 mr-2" /> View results</Button></Link>
-            <Link to="/transcript"><Button className="w-full justify-start" variant="secondary"><Award className="h-4 w-4 mr-2" /> My transcript</Button></Link>
-            <Link to="/fees"><Button className="w-full justify-start" variant="secondary"><Wallet className="h-4 w-4 mr-2" /> Pay fees</Button></Link>
-            <Link to="/profile"><Button className="w-full justify-start" variant="secondary"><TrendingUp className="h-4 w-4 mr-2" /> Update profile</Button></Link>
+          <CardHeader>
+            <CardTitle className="font-serif">Quick actions</CardTitle>
+            <CardDescription>Frequently used tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link to="/registration"><Button className="w-full justify-start" variant="secondary"><ClipboardList className="mr-2 size-4" /> Register courses</Button></Link>
+            <Link to="/results"><Button className="w-full justify-start" variant="secondary"><Award className="mr-2 size-4" /> View results</Button></Link>
+            <Link to="/transcript"><Button className="w-full justify-start" variant="secondary"><Award className="mr-2 size-4" /> My transcript</Button></Link>
+            <Link to="/fees"><Button className="w-full justify-start" variant="secondary"><Wallet className="mr-2 size-4" /> Pay fees</Button></Link>
+            <Link to="/profile"><Button className="w-full justify-start" variant="secondary"><TrendingUp className="mr-2 size-4" /> Update profile</Button></Link>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="font-serif">Academic standing</CardTitle><CardDescription>Your current status</CardDescription></CardHeader>
+          <CardHeader>
+            <CardTitle className="font-serif">Academic standing</CardTitle>
+            <CardDescription>Your current status</CardDescription>
+          </CardHeader>
           <CardContent>
             {s ? (
-              <div className="space-y-2 text-sm">
-                <p>Credit units earned: <b>{creditsEarned}</b></p>
-                <p>Grade points: <b>{gradePoints}</b></p>
-                <p>Standing: <Badge className="capitalize" variant={s.standing === "excellent" ? "default" : "secondary"}>{s.standing}</Badge></p>
-                <p className="text-muted-foreground pt-2">Results only appear after they have been fully approved and published by Registry.</p>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Credit units earned</span>
+                  <b className="tabular-nums">{creditsEarned}</b>
+                </div>
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Grade points</span>
+                  <b className="tabular-nums">{gradePoints}</b>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Standing</span>
+                  <Badge className="capitalize" variant={s.standing === "excellent" ? "default" : "secondary"}>{s.standing}</Badge>
+                </div>
+                <p className="pt-2 text-xs text-muted-foreground">
+                  Results only appear after they have been fully approved and published by Registry.
+                </p>
               </div>
-            ) : <p className="text-sm text-muted-foreground">No student record on file.</p>}
+            ) : (
+              <EmptyState title="No student record" description="No student record is on file for this account yet." />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -76,18 +106,3 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-            <div className="mt-1 text-2xl font-serif font-bold text-primary">{value}</div>
-          </div>
-          <div className="w-10 h-10 rounded-md bg-primary/10 text-primary grid place-items-center"><Icon className="h-5 w-5" /></div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
