@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /api/
+Disallow: /.mcp/
+
+Sitemap: https://academic-hub-ng.lovable.app/sitemap.xml

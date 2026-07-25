@@ -1,0 +1,13 @@
+# AKCOE Portal
+
+> Official student, lecturer and administration portal for Aminu Kano College of Education (AKCOE), Kano, Nigeria.
+
+AKCOE Portal is the college management system used for course registration, result upload and approval, transcripts, admissions and academic records for NCE and affiliated degree programmes.
+
+## Pages
+
+- [Home](/): Overview of the AKCOE Portal for students, lecturers, HODs, deans and registry staff.
+
+## Optional
+
+- [Sitemap](/sitemap.xml): Machine-readable list of public pages.
