@@ -72,9 +72,19 @@ export const getTranscript = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ student_id: z.string().uuid().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const targetId = data.student_id ?? userId;
+    let targetId = data.student_id;
+    let callerIsSelf = false;
+    if (!targetId) {
+      const { data: me } = await supabase.from("students").select("id").eq("auth_user_id", userId).maybeSingle();
+      if (!me?.id) throw new Error("Student not found");
+      targetId = me.id;
+      callerIsSelf = true;
+    } else {
+      const { data: me } = await supabase.from("students").select("id").eq("auth_user_id", userId).maybeSingle();
+      callerIsSelf = me?.id === targetId;
+    }
 
-    if (targetId !== userId) {
+    if (!callerIsSelf) {
       const { data: rolesRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
       const roles = (rolesRows ?? []).map((r: any) => r.role as string);
       if (!roles.some((r) => ["registry", "super_admin", "ict_admin", "dean"].includes(r))) {
@@ -84,7 +94,7 @@ export const getTranscript = createServerFn({ method: "POST" })
 
     const { data: student, error: eStu } = await supabase.from("students")
       .select(`
-        id, matric_number, cgpa, total_credit_units, total_grade_points, standing, entry_year, is_active,
+        id, matric_number, cgpa, total_credit_units, total_grade_points, standing, entry_year, is_active, auth_user_id,
         programme:programmes(name, department:departments(name, faculty:faculties(name))),
         department:departments(name, faculty:faculties(name)),
         current_level:levels!students_current_level_id_fkey(code, name),
@@ -94,9 +104,12 @@ export const getTranscript = createServerFn({ method: "POST" })
     if (eStu) throw eStu;
     if (!student) throw new Error("Student not found");
 
-    const { data: profile } = await supabase.from("profiles")
-      .select("full_name, email, date_of_birth, gender, state_of_origin, phone")
-      .eq("id", targetId).maybeSingle();
+    const profileId = (student as any).auth_user_id as string | null;
+    const { data: profile } = profileId
+      ? await supabase.from("profiles")
+          .select("full_name, email, date_of_birth, gender, state_of_origin, phone")
+          .eq("id", profileId).maybeSingle()
+      : { data: null } as any;
 
     const { data: publishedResults, error: eRes } = await supabase.from("results")
       .select(`

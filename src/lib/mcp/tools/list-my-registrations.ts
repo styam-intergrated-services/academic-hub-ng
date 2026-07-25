@@ -13,10 +13,12 @@ export default defineTool({
   handler: async ({ semester_id }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthorized();
     const supabase = supabaseForUser(ctx);
-    let q = supabase
+    const { data: me } = await supabase.from("students").select("id").eq("auth_user_id", ctx.getUserId()!).maybeSingle();
+    if (!me?.id) return { content: [{ type: "text", text: "Not a matriculated student." }], isError: true };
+    const q = supabase
       .from("course_registrations")
       .select("id,status,offering:course_offerings(id,semester_id,semester:semesters(name),course:courses(code,title,credit_units))")
-      .eq("student_id", ctx.getUserId()!);
+      .eq("student_id", me.id);
     const { data, error } = await q;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const filtered = semester_id ? (data ?? []).filter((r: any) => r.offering?.semester_id === semester_id) : (data ?? []);

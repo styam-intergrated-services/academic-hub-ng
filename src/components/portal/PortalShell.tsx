@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -64,6 +64,15 @@ export function PortalShell({ children }: { children: ReactNode }) {
     queryFn: () => getUser(),
     staleTime: 60_000,
   });
+
+  // First-login gate: any student who still has the default temporary password
+  // is forced to /first-login before they can reach anything else in the portal.
+  useEffect(() => {
+    if (!user?.student) return;
+    if (user.student.default_password_changed) return;
+    if (pathname === "/first-login") return;
+    navigate({ to: "/first-login", replace: true });
+  }, [user, pathname, navigate]);
 
   async function signOut() {
     await qc.cancelQueries();

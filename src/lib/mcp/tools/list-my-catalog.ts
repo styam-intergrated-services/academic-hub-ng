@@ -16,7 +16,7 @@ export default defineTool({
     const { data: student, error: se } = await supabase
       .from("students")
       .select("id,matric_number,current_level_id,programme:programmes(id,code,name,department_id,department:departments(code,name))")
-      .eq("id", userId)
+      .eq("auth_user_id", userId)
       .maybeSingle();
     if (se) return { content: [{ type: "text", text: se.message }], isError: true };
     if (!student) {

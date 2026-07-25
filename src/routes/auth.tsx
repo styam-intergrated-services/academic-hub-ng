@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
+import { matricToSyntheticEmail, normalizeMatric } from "@/lib/matric";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -83,6 +84,46 @@ function AuthPage() {
     setAwaitingVerify(email);
     toast.success("Check your email to confirm your account.");
   }
+  async function handleMatricSignIn(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    const matric = normalizeMatric(String(fd.get("matric") ?? ""));
+    const password = String(fd.get("password") ?? "");
+    if (!matric || !password) {
+      setLoading(false);
+      return toast.error("Enter your matric number and password");
+    }
+    const syntheticEmail = matricToSyntheticEmail(matric);
+
+    // Try normal sign-in first (already activated).
+    let attempt = await supabase.auth.signInWithPassword({ email: syntheticEmail, password });
+    if (attempt.error) {
+      // Fall back to activation: entry_year as temporary password creates the account.
+      try {
+        const resp = await fetch("/api/public/matric-login-init", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ matric, password }),
+        });
+        const payload = (await resp.json().catch(() => ({}))) as { error?: string };
+        if (!resp.ok) {
+          setLoading(false);
+          return toast.error(payload?.error ?? "Invalid matric number or password");
+        }
+        attempt = await supabase.auth.signInWithPassword({ email: syntheticEmail, password });
+      } catch {
+        setLoading(false);
+        return toast.error("Could not activate your account. Please try again.");
+      }
+    }
+    setLoading(false);
+    if (attempt.error) return toast.error(attempt.error.message);
+    toast.success("Welcome");
+    // PortalShell redirects to /first-login when default_password_changed is false.
+    window.location.href = dest;
+  }
+
 
   async function handleForgot(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -154,9 +195,10 @@ function AuthPage() {
               </div>
             ) : (
               <Tabs defaultValue="signin">
-                <TabsList className="grid grid-cols-2 w-full">
-                  <TabsTrigger value="signin">Sign in</TabsTrigger>
-                  <TabsTrigger value="signup">Create account</TabsTrigger>
+                <TabsList className="grid grid-cols-3 w-full">
+                  <TabsTrigger value="signin">Email</TabsTrigger>
+                  <TabsTrigger value="matric">Matric No.</TabsTrigger>
+                  <TabsTrigger value="signup">Sign up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin" className="space-y-4 mt-4">
                   <form onSubmit={handleSignIn} className="space-y-4">
@@ -172,6 +214,25 @@ function AuthPage() {
                     >
                       Forgot password?
                     </button>
+                  </form>
+                </TabsContent>
+                <TabsContent value="matric" className="space-y-4 mt-4">
+                  <form onSubmit={handleMatricSignIn} className="space-y-4">
+                    <div>
+                      <Label htmlFor="matric">Matric number</Label>
+                      <Input id="matric" name="matric" required placeholder="AKCOE/2022/0001" autoCapitalize="characters" />
+                    </div>
+                    <div>
+                      <Label htmlFor="matric-password">Password</Label>
+                      <Input id="matric-password" name="password" type="password" required autoComplete="current-password" />
+                    </div>
+                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in with matric"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      First time signing in? Use your <span className="font-medium">year of entry</span> (e.g. 2022) as your temporary password.
+                      You'll be asked to set a new password right after.
+                    </p>
                   </form>
                 </TabsContent>
                 <TabsContent value="signup" className="space-y-4 mt-4">

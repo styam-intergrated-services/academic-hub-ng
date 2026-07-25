@@ -1047,6 +1047,8 @@ export type Database = {
       }
       programmes: {
         Row: {
+          affiliated_institution: string | null
+          award_type: string
           code: string
           created_at: string
           department_id: string
@@ -1055,6 +1057,8 @@ export type Database = {
           name: string
         }
         Insert: {
+          affiliated_institution?: string | null
+          award_type?: string
           code: string
           created_at?: string
           department_id: string
@@ -1063,6 +1067,8 @@ export type Database = {
           name: string
         }
         Update: {
+          affiliated_institution?: string | null
+          award_type?: string
           code?: string
           created_at?: string
           department_id?: string
@@ -1330,9 +1336,11 @@ export type Database = {
       }
       students: {
         Row: {
+          auth_user_id: string | null
           cgpa: number
           created_at: string
           current_level_id: string
+          default_password_changed: boolean
           department_id: string
           entry_session_id: string | null
           entry_year: number | null
@@ -1346,13 +1354,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           cgpa?: number
           created_at?: string
           current_level_id: string
+          default_password_changed?: boolean
           department_id: string
           entry_session_id?: string | null
           entry_year?: number | null
-          id: string
+          id?: string
           is_active?: boolean
           matric_number: string
           programme_id: string
@@ -1362,9 +1372,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           cgpa?: number
           created_at?: string
           current_level_id?: string
+          default_password_changed?: boolean
           department_id?: string
           entry_session_id?: string | null
           entry_year?: number | null
@@ -1491,6 +1503,7 @@ export type Database = {
           grade_point: number
         }[]
       }
+      current_student_id: { Args: never; Returns: string }
       current_user_roles: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]

@@ -259,6 +259,9 @@ export const getMyResults = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const { data: student } = await supabase.from("students").select("id").eq("auth_user_id", userId).maybeSingle();
+    const studentId = student?.id;
+    if (!studentId) return { results: [], gpa: [] };
     const [{ data: results, error }, { data: gpa }] = await Promise.all([
       supabase.from("results")
         .select(`
@@ -268,10 +271,10 @@ export const getMyResults = createServerFn({ method: "GET" })
             semester:semesters!inner(type, session:academic_sessions(name))
           )
         `)
-        .eq("student_id", userId).eq("status", "published"),
+        .eq("student_id", studentId).eq("status", "published"),
       supabase.from("gpa_records")
         .select(`gpa, cgpa, credit_units, grade_points, standing, semester:semesters(type, session:academic_sessions(name))`)
-        .eq("student_id", userId)
+        .eq("student_id", studentId)
         .order("computed_at", { ascending: false }),
     ]);
     if (error) throw error;
