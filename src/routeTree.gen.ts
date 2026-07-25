@@ -20,12 +20,15 @@ import { Route as AuthenticatedTranscriptRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedStandingRouteImport } from './routes/_authenticated.standing'
+import { Route as AuthenticatedScopedResultsRouteImport } from './routes/_authenticated.scoped-results'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedGraduationRouteImport } from './routes/_authenticated.graduation'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated.fees'
+import { Route as AuthenticatedExamScheduleRouteImport } from './routes/_authenticated.exam-schedule'
+import { Route as AuthenticatedExamOfficersRouteImport } from './routes/_authenticated.exam-officers'
 import { Route as AuthenticatedDepartmentsRouteImport } from './routes/_authenticated.departments'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated.courses'
@@ -33,6 +36,7 @@ import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApplyRouteImport } from './routes/_authenticated.apply'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated.applications'
 import { Route as AuthenticatedAnnouncementsRouteImport } from './routes/_authenticated.announcements'
+import { Route as AuthenticatedAllocationsRouteImport } from './routes/_authenticated.allocations'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -98,6 +102,12 @@ const AuthenticatedStandingRoute = AuthenticatedStandingRouteImport.update({
   path: '/standing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedScopedResultsRoute =
+  AuthenticatedScopedResultsRouteImport.update({
+    id: '/scoped-results',
+    path: '/scoped-results',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   id: '/results',
   path: '/results',
@@ -129,6 +139,18 @@ const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
   path: '/fees',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedExamScheduleRoute =
+  AuthenticatedExamScheduleRouteImport.update({
+    id: '/exam-schedule',
+    path: '/exam-schedule',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamOfficersRoute =
+  AuthenticatedExamOfficersRouteImport.update({
+    id: '/exam-officers',
+    path: '/exam-officers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDepartmentsRoute =
   AuthenticatedDepartmentsRouteImport.update({
     id: '/departments',
@@ -165,6 +187,12 @@ const AuthenticatedAnnouncementsRoute =
   AuthenticatedAnnouncementsRouteImport.update({
     id: '/announcements',
     path: '/announcements',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAllocationsRoute =
+  AuthenticatedAllocationsRouteImport.update({
+    id: '/allocations',
+    path: '/allocations',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -227,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/allocations': typeof AuthenticatedAllocationsRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
@@ -234,12 +263,15 @@ export interface FileRoutesByFullPath {
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
+  '/exam-officers': typeof AuthenticatedExamOfficersRoute
+  '/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/standing': typeof AuthenticatedStandingRoute
   '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/teaching': typeof AuthenticatedTeachingRoute
@@ -261,6 +293,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/allocations': typeof AuthenticatedAllocationsRoute
   '/announcements': typeof AuthenticatedAnnouncementsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
@@ -268,12 +301,15 @@ export interface FileRoutesByTo {
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
+  '/exam-officers': typeof AuthenticatedExamOfficersRoute
+  '/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/standing': typeof AuthenticatedStandingRoute
   '/teaching': typeof AuthenticatedTeachingRoute
   '/transcript': typeof AuthenticatedTranscriptRoute
@@ -296,6 +332,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/allocations': typeof AuthenticatedAllocationsRoute
   '/_authenticated/announcements': typeof AuthenticatedAnnouncementsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/apply': typeof AuthenticatedApplyRoute
@@ -303,12 +340,15 @@ export interface FileRoutesById {
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/departments': typeof AuthenticatedDepartmentsRoute
+  '/_authenticated/exam-officers': typeof AuthenticatedExamOfficersRoute
+  '/_authenticated/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/graduation': typeof AuthenticatedGraduationRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/_authenticated/standing': typeof AuthenticatedStandingRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
   '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
@@ -332,6 +372,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/allocations'
     | '/announcements'
     | '/applications'
     | '/apply'
@@ -339,12 +380,15 @@ export interface FileRouteTypes {
     | '/courses'
     | '/dashboard'
     | '/departments'
+    | '/exam-officers'
+    | '/exam-schedule'
     | '/fees'
     | '/graduation'
     | '/profile'
     | '/registration'
     | '/reports'
     | '/results'
+    | '/scoped-results'
     | '/standing'
     | '/students'
     | '/teaching'
@@ -366,6 +410,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/allocations'
     | '/announcements'
     | '/applications'
     | '/apply'
@@ -373,12 +418,15 @@ export interface FileRouteTypes {
     | '/courses'
     | '/dashboard'
     | '/departments'
+    | '/exam-officers'
+    | '/exam-schedule'
     | '/fees'
     | '/graduation'
     | '/profile'
     | '/registration'
     | '/reports'
     | '/results'
+    | '/scoped-results'
     | '/standing'
     | '/teaching'
     | '/transcript'
@@ -400,6 +448,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/_authenticated/allocations'
     | '/_authenticated/announcements'
     | '/_authenticated/applications'
     | '/_authenticated/apply'
@@ -407,12 +456,15 @@ export interface FileRouteTypes {
     | '/_authenticated/courses'
     | '/_authenticated/dashboard'
     | '/_authenticated/departments'
+    | '/_authenticated/exam-officers'
+    | '/_authenticated/exam-schedule'
     | '/_authenticated/fees'
     | '/_authenticated/graduation'
     | '/_authenticated/profile'
     | '/_authenticated/registration'
     | '/_authenticated/reports'
     | '/_authenticated/results'
+    | '/_authenticated/scoped-results'
     | '/_authenticated/standing'
     | '/_authenticated/students'
     | '/_authenticated/teaching'
@@ -518,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStandingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/scoped-results': {
+      id: '/_authenticated/scoped-results'
+      path: '/scoped-results'
+      fullPath: '/scoped-results'
+      preLoaderRoute: typeof AuthenticatedScopedResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/results': {
       id: '/_authenticated/results'
       path: '/results'
@@ -558,6 +617,20 @@ declare module '@tanstack/react-router' {
       path: '/fees'
       fullPath: '/fees'
       preLoaderRoute: typeof AuthenticatedFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exam-schedule': {
+      id: '/_authenticated/exam-schedule'
+      path: '/exam-schedule'
+      fullPath: '/exam-schedule'
+      preLoaderRoute: typeof AuthenticatedExamScheduleRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exam-officers': {
+      id: '/_authenticated/exam-officers'
+      path: '/exam-officers'
+      fullPath: '/exam-officers'
+      preLoaderRoute: typeof AuthenticatedExamOfficersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/departments': {
@@ -607,6 +680,13 @@ declare module '@tanstack/react-router' {
       path: '/announcements'
       fullPath: '/announcements'
       preLoaderRoute: typeof AuthenticatedAnnouncementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/allocations': {
+      id: '/_authenticated/allocations'
+      path: '/allocations'
+      fullPath: '/allocations'
+      preLoaderRoute: typeof AuthenticatedAllocationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin': {
@@ -692,6 +772,7 @@ const AuthenticatedStudentsRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAllocationsRoute: typeof AuthenticatedAllocationsRoute
   AuthenticatedAnnouncementsRoute: typeof AuthenticatedAnnouncementsRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedApplyRoute: typeof AuthenticatedApplyRoute
@@ -699,12 +780,15 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDepartmentsRoute: typeof AuthenticatedDepartmentsRoute
+  AuthenticatedExamOfficersRoute: typeof AuthenticatedExamOfficersRoute
+  AuthenticatedExamScheduleRoute: typeof AuthenticatedExamScheduleRoute
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
   AuthenticatedGraduationRoute: typeof AuthenticatedGraduationRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedScopedResultsRoute: typeof AuthenticatedScopedResultsRoute
   AuthenticatedStandingRoute: typeof AuthenticatedStandingRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
   AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
@@ -717,6 +801,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAllocationsRoute: AuthenticatedAllocationsRoute,
   AuthenticatedAnnouncementsRoute: AuthenticatedAnnouncementsRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedApplyRoute: AuthenticatedApplyRoute,
@@ -724,12 +809,15 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDepartmentsRoute: AuthenticatedDepartmentsRoute,
+  AuthenticatedExamOfficersRoute: AuthenticatedExamOfficersRoute,
+  AuthenticatedExamScheduleRoute: AuthenticatedExamScheduleRoute,
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
   AuthenticatedGraduationRoute: AuthenticatedGraduationRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedScopedResultsRoute: AuthenticatedScopedResultsRoute,
   AuthenticatedStandingRoute: AuthenticatedStandingRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
   AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,

@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const APP_ROLES = [
-  "super_admin","ict_admin","provost","registry","bursary","dean","hod","lecturer","student","applicant",
+  "super_admin","ict_admin","provost","registry","bursary","dean","hod","lecturer","examination_officer","student","applicant",
 ] as const;
 
 export type AppRole = typeof APP_ROLES[number];
