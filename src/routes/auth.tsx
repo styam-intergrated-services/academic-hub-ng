@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -166,7 +166,9 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6 md:p-10 bg-background">
         <Card className="w-full max-w-md shadow-elegant">
           <CardHeader>
-            <CardTitle className="font-serif text-2xl">Welcome</CardTitle>
+            <h1 className="font-serif text-2xl font-semibold leading-none tracking-tight">Sign in to AKCOE Portal</h1>
+
+
             <CardDescription>Sign in to your AKCOE account.</CardDescription>
           </CardHeader>
           <CardContent>

@@ -1350,6 +1350,7 @@ export type Database = {
           department_id: string
           entry_session_id: string | null
           entry_year: number | null
+          full_name: string | null
           id: string
           is_active: boolean
           matric_number: string
@@ -1368,6 +1369,7 @@ export type Database = {
           department_id: string
           entry_session_id?: string | null
           entry_year?: number | null
+          full_name?: string | null
           id?: string
           is_active?: boolean
           matric_number: string
@@ -1386,6 +1388,7 @@ export type Database = {
           department_id?: string
           entry_session_id?: string | null
           entry_year?: number | null
+          full_name?: string | null
           id?: string
           is_active?: boolean
           matric_number?: string

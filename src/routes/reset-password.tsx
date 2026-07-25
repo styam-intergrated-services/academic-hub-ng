@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -47,7 +47,9 @@ function ResetPasswordPage() {
     <div className="min-h-screen grid place-items-center bg-background p-6">
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader>
-          <CardTitle className="font-serif text-2xl">Set a new password</CardTitle>
+          <h1 className="font-serif text-2xl font-semibold leading-none tracking-tight">Reset Your Password</h1>
+
+
           <CardDescription>
             {ready ? "Choose a new password for your AKCOE account." : "Verifying reset link…"}
           </CardDescription>
