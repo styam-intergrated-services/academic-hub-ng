@@ -1,10 +1,20 @@
-import type { PortalUser } from "@/lib/portal.functions";
+import { getLecturerTeachingCount, type PortalUser } from "@/lib/portal.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BookOpen, FileCheck2, Users, ClipboardList } from "lucide-react";
+import { BookOpen, FileCheck2, Users } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 export function LecturerDashboard({ user }: { user: PortalUser }) {
+  const teachingFn = useServerFn(getLecturerTeachingCount);
+  const { data, isLoading } = useQuery({
+    queryKey: ["portal", "lecturer-teaching-count", user.id],
+    queryFn: () => teachingFn(),
+    staleTime: 30_000,
+  });
+  const n = data?.count ?? 0;
+
   return (
     <div className="space-y-6">
       <section className="bg-hero-gradient text-white rounded-xl p-6 md:p-8 shadow-elegant">
@@ -17,10 +27,17 @@ export function LecturerDashboard({ user }: { user: PortalUser }) {
         <Card>
           <CardHeader><CardTitle className="font-serif">My teaching</CardTitle><CardDescription>Assigned courses this semester</CardDescription></CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Assigned courses will appear here once Registry links you.</p>
+            <p className="text-sm text-muted-foreground">
+              {isLoading
+                ? "Loading your assignments…"
+                : n > 0
+                  ? `You are teaching ${n} course${n === 1 ? "" : "s"} this semester.`
+                  : "No courses assigned yet. They will appear here once Registry links you."}
+            </p>
             <Link to="/teaching"><Button variant="secondary"><BookOpen className="h-4 w-4 mr-2" />Open teaching</Button></Link>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader><CardTitle className="font-serif">Result submission</CardTitle><CardDescription>Draft → Submit → HOD → Dean → Registry → Published</CardDescription></CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
