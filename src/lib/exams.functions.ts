@@ -374,20 +374,26 @@ export const listExamSchedules = createServerFn({ method: "POST" })
           course:courses!inner(id, code, title),
           semester:semesters!inner(id, type, session:academic_sessions(name))
         ),
-        invigilators:exam_invigilators(
-          id, staff_id,
-          profile:profiles!exam_invigilators_staff_id_fkey(id, full_name, email)
-        )
+        invigilators:exam_invigilators(id, staff_id)
       `)
       .order("exam_date");
     if (data.offering_ids?.length) q = q.in("offering_id", data.offering_ids);
     const { data: rows, error } = await q;
     if (error) throw error;
-    let filtered = rows ?? [];
+    let filtered = (rows ?? []) as any[];
     if (data.semester_id) {
       filtered = filtered.filter((r: any) => r.offering?.semester_id === data.semester_id);
     }
-    return filtered;
+    const ids = Array.from(new Set(filtered.flatMap((r: any) => (r.invigilators ?? []).map((iv: any) => iv.staff_id))));
+    const profMap = new Map<string, any>();
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      for (const p of profs ?? []) profMap.set(p.id, p);
+    }
+    return filtered.map((r: any) => ({
+      ...r,
+      invigilators: (r.invigilators ?? []).map((iv: any) => ({ ...iv, profile: profMap.get(iv.staff_id) ?? null })),
+    }));
   });
 
 export const assignInvigilator = createServerFn({ method: "POST" })
