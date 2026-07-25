@@ -64,7 +64,7 @@ function Landing() {
           <Link to="/" className="flex items-center gap-2">
             <img
               src={akceLogo.url}
-              alt="AKCOE"
+              alt="Aminu Kano College of Education logo"
               className="h-11 w-11 rounded-md object-cover bg-white p-0.5 shadow-sm"
             />
             <div className="leading-tight">
@@ -80,6 +80,7 @@ function Landing() {
         </div>
       </header>
 
+      <main>
       <section className="bg-hero-gradient text-white">
         <div className="mx-auto max-w-7xl px-4 py-20 md:py-28 grid md:grid-cols-2 gap-10 items-center">
           <div>
@@ -117,6 +118,7 @@ function Landing() {
           </div>
         </div>
       </section>
+      </main>
 
       <footer className="mt-auto border-t bg-background">
         <div className="mx-auto max-w-7xl px-4 py-6 text-sm text-muted-foreground flex justify-between">

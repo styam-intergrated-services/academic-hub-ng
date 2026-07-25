@@ -110,13 +110,13 @@ export function PortalShell({ children }: { children: ReactNode }) {
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={akceLogo.url} alt="AKCOE" className="h-10 w-10 rounded-md object-cover bg-white p-0.5" />
+            <img src={akceLogo.url} alt="Aminu Kano College of Education logo" className="h-10 w-10 rounded-md object-cover bg-white p-0.5" />
             <div className="leading-tight">
               <div className="font-serif font-bold text-sm">AKCOE Portal</div>
               <div className="text-[10px] uppercase tracking-widest opacity-70">Academic System</div>
             </div>
           </Link>
-          <button className="md:hidden" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button>
+          <button className="md:hidden" aria-label="Close navigation menu" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button>
         </div>
         <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
           {visible.map((item) => {
@@ -143,13 +143,13 @@ export function PortalShell({ children }: { children: ReactNode }) {
       <div className="md:pl-64">
         <header className="h-16 bg-background border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-2">
-            <button className="md:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
+            <button className="md:hidden" aria-label="Open navigation menu" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
             <h1 className="font-serif text-lg text-primary">
               {visible.find((n) => n.to === pathname)?.label ?? "Portal"}
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-md hover:bg-muted"><Bell className="h-5 w-5" /></button>
+            <button className="relative p-2 rounded-md hover:bg-muted" aria-label="Notifications"><Bell className="h-5 w-5" /></button>
             {isLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
