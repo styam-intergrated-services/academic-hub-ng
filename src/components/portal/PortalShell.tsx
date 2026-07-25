@@ -36,10 +36,7 @@ const NAV: NavItem[] = [
   { to: "/teaching", label: "My Teaching", icon: BookOpen, roles: ["lecturer"] },
   { to: "/upload-results", label: "Upload Results", icon: FileCheck2, roles: ["lecturer"] },
   { to: "/approvals", label: "Result Approvals", icon: FileCheck2, roles: ["hod","dean","registry","super_admin","provost"] },
-  { to: "/scoped-results", label: "Scoped Results", icon: Award, roles: ["examination_officer"] },
-  { to: "/exam-schedule", label: "Exam Timetable", icon: ClipboardList, roles: ["examination_officer","registry","dean","super_admin","ict_admin"] },
-  { to: "/allocations", label: "Course Allocation", icon: Users, roles: ["registry","hod","dean","super_admin","ict_admin"] },
-  { to: "/exam-officers", label: "Examination Officers", icon: Settings, roles: ["registry","provost","super_admin","ict_admin"] },
+  // Soft-launched (unlinked): /scoped-results, /exam-schedule, /allocations, /exam-officers
   { to: "/reports", label: "Reports", icon: TrendingUp, roles: ["provost","super_admin","ict_admin"] },
   { to: "/announcements", label: "Announcements", icon: Megaphone, roles: ["provost","registry","super_admin","ict_admin","dean"] },
   { to: "/applications", label: "Admissions", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
