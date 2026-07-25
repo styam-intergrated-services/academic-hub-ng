@@ -26,6 +26,7 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedGraduationRouteImport } from './routes/_authenticated.graduation'
+import { Route as AuthenticatedFirstLoginRouteImport } from './routes/_authenticated.first-login'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated.fees'
 import { Route as AuthenticatedExamScheduleRouteImport } from './routes/_authenticated.exam-schedule'
 import { Route as AuthenticatedExamOfficersRouteImport } from './routes/_authenticated.exam-officers'
@@ -133,6 +134,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
 const AuthenticatedGraduationRoute = AuthenticatedGraduationRouteImport.update({
   id: '/graduation',
   path: '/graduation',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFirstLoginRoute = AuthenticatedFirstLoginRouteImport.update({
+  id: '/first-login',
+  path: '/first-login',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/exam-officers': typeof AuthenticatedExamOfficersRoute
   '/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/fees': typeof AuthenticatedFeesRoute
+  '/first-login': typeof AuthenticatedFirstLoginRoute
   '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/exam-officers': typeof AuthenticatedExamOfficersRoute
   '/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/fees': typeof AuthenticatedFeesRoute
+  '/first-login': typeof AuthenticatedFirstLoginRoute
   '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
@@ -352,6 +360,7 @@ export interface FileRoutesById {
   '/_authenticated/exam-officers': typeof AuthenticatedExamOfficersRoute
   '/_authenticated/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
+  '/_authenticated/first-login': typeof AuthenticatedFirstLoginRoute
   '/_authenticated/graduation': typeof AuthenticatedGraduationRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
@@ -393,6 +402,7 @@ export interface FileRouteTypes {
     | '/exam-officers'
     | '/exam-schedule'
     | '/fees'
+    | '/first-login'
     | '/graduation'
     | '/profile'
     | '/registration'
@@ -432,6 +442,7 @@ export interface FileRouteTypes {
     | '/exam-officers'
     | '/exam-schedule'
     | '/fees'
+    | '/first-login'
     | '/graduation'
     | '/profile'
     | '/registration'
@@ -471,6 +482,7 @@ export interface FileRouteTypes {
     | '/_authenticated/exam-officers'
     | '/_authenticated/exam-schedule'
     | '/_authenticated/fees'
+    | '/_authenticated/first-login'
     | '/_authenticated/graduation'
     | '/_authenticated/profile'
     | '/_authenticated/registration'
@@ -624,6 +636,13 @@ declare module '@tanstack/react-router' {
       path: '/graduation'
       fullPath: '/graduation'
       preLoaderRoute: typeof AuthenticatedGraduationRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/first-login': {
+      id: '/_authenticated/first-login'
+      path: '/first-login'
+      fullPath: '/first-login'
+      preLoaderRoute: typeof AuthenticatedFirstLoginRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/fees': {
@@ -804,6 +823,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedExamOfficersRoute: typeof AuthenticatedExamOfficersRoute
   AuthenticatedExamScheduleRoute: typeof AuthenticatedExamScheduleRoute
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
+  AuthenticatedFirstLoginRoute: typeof AuthenticatedFirstLoginRoute
   AuthenticatedGraduationRoute: typeof AuthenticatedGraduationRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
@@ -833,6 +853,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedExamOfficersRoute: AuthenticatedExamOfficersRoute,
   AuthenticatedExamScheduleRoute: AuthenticatedExamScheduleRoute,
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
+  AuthenticatedFirstLoginRoute: AuthenticatedFirstLoginRoute,
   AuthenticatedGraduationRoute: AuthenticatedGraduationRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
