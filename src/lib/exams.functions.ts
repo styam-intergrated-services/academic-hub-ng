@@ -145,13 +145,16 @@ export const listExaminationOfficers = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("examination_officers")
-      .select(`
-        id, user_id, scope_type, scope_id, created_at,
-        profile:profiles!examination_officers_user_id_fkey(id, full_name, email)
-      `)
+      .select("id, user_id, scope_type, scope_id, created_at")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data ?? [];
+    const ids = Array.from(new Set((data ?? []).map((r: any) => r.user_id)));
+    const profMap = new Map<string, any>();
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      for (const p of profs ?? []) profMap.set(p.id, p);
+    }
+    return ((data ?? []) as any[]).map((r) => ({ ...r, profile: profMap.get(r.user_id) ?? null }));
   });
 
 export const setExaminationOfficerScope = createServerFn({ method: "POST" })
