@@ -20,12 +20,14 @@ import { Route as AuthenticatedTranscriptRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticated.teaching'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedStandingRouteImport } from './routes/_authenticated.standing'
+import { Route as AuthenticatedScopedResultsRouteImport } from './routes/_authenticated.scoped-results'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedGraduationRouteImport } from './routes/_authenticated.graduation'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated.fees'
+import { Route as AuthenticatedExamScheduleRouteImport } from './routes/_authenticated.exam-schedule'
 import { Route as AuthenticatedExamOfficersRouteImport } from './routes/_authenticated.exam-officers'
 import { Route as AuthenticatedDepartmentsRouteImport } from './routes/_authenticated.departments'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
@@ -100,6 +102,12 @@ const AuthenticatedStandingRoute = AuthenticatedStandingRouteImport.update({
   path: '/standing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedScopedResultsRoute =
+  AuthenticatedScopedResultsRouteImport.update({
+    id: '/scoped-results',
+    path: '/scoped-results',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   id: '/results',
   path: '/results',
@@ -131,6 +139,12 @@ const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
   path: '/fees',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedExamScheduleRoute =
+  AuthenticatedExamScheduleRouteImport.update({
+    id: '/exam-schedule',
+    path: '/exam-schedule',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedExamOfficersRoute =
   AuthenticatedExamOfficersRouteImport.update({
     id: '/exam-officers',
@@ -250,12 +264,14 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
   '/exam-officers': typeof AuthenticatedExamOfficersRoute
+  '/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/standing': typeof AuthenticatedStandingRoute
   '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/teaching': typeof AuthenticatedTeachingRoute
@@ -286,12 +302,14 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
   '/exam-officers': typeof AuthenticatedExamOfficersRoute
+  '/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/graduation': typeof AuthenticatedGraduationRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/standing': typeof AuthenticatedStandingRoute
   '/teaching': typeof AuthenticatedTeachingRoute
   '/transcript': typeof AuthenticatedTranscriptRoute
@@ -323,12 +341,14 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/departments': typeof AuthenticatedDepartmentsRoute
   '/_authenticated/exam-officers': typeof AuthenticatedExamOfficersRoute
+  '/_authenticated/exam-schedule': typeof AuthenticatedExamScheduleRoute
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/graduation': typeof AuthenticatedGraduationRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/_authenticated/standing': typeof AuthenticatedStandingRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
   '/_authenticated/teaching': typeof AuthenticatedTeachingRoute
@@ -361,12 +381,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/exam-officers'
+    | '/exam-schedule'
     | '/fees'
     | '/graduation'
     | '/profile'
     | '/registration'
     | '/reports'
     | '/results'
+    | '/scoped-results'
     | '/standing'
     | '/students'
     | '/teaching'
@@ -397,12 +419,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/exam-officers'
+    | '/exam-schedule'
     | '/fees'
     | '/graduation'
     | '/profile'
     | '/registration'
     | '/reports'
     | '/results'
+    | '/scoped-results'
     | '/standing'
     | '/teaching'
     | '/transcript'
@@ -433,12 +457,14 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/departments'
     | '/_authenticated/exam-officers'
+    | '/_authenticated/exam-schedule'
     | '/_authenticated/fees'
     | '/_authenticated/graduation'
     | '/_authenticated/profile'
     | '/_authenticated/registration'
     | '/_authenticated/reports'
     | '/_authenticated/results'
+    | '/_authenticated/scoped-results'
     | '/_authenticated/standing'
     | '/_authenticated/students'
     | '/_authenticated/teaching'
@@ -544,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStandingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/scoped-results': {
+      id: '/_authenticated/scoped-results'
+      path: '/scoped-results'
+      fullPath: '/scoped-results'
+      preLoaderRoute: typeof AuthenticatedScopedResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/results': {
       id: '/_authenticated/results'
       path: '/results'
@@ -584,6 +617,13 @@ declare module '@tanstack/react-router' {
       path: '/fees'
       fullPath: '/fees'
       preLoaderRoute: typeof AuthenticatedFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exam-schedule': {
+      id: '/_authenticated/exam-schedule'
+      path: '/exam-schedule'
+      fullPath: '/exam-schedule'
+      preLoaderRoute: typeof AuthenticatedExamScheduleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/exam-officers': {
@@ -741,12 +781,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDepartmentsRoute: typeof AuthenticatedDepartmentsRoute
   AuthenticatedExamOfficersRoute: typeof AuthenticatedExamOfficersRoute
+  AuthenticatedExamScheduleRoute: typeof AuthenticatedExamScheduleRoute
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
   AuthenticatedGraduationRoute: typeof AuthenticatedGraduationRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedScopedResultsRoute: typeof AuthenticatedScopedResultsRoute
   AuthenticatedStandingRoute: typeof AuthenticatedStandingRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
   AuthenticatedTeachingRoute: typeof AuthenticatedTeachingRoute
@@ -768,12 +810,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDepartmentsRoute: AuthenticatedDepartmentsRoute,
   AuthenticatedExamOfficersRoute: AuthenticatedExamOfficersRoute,
+  AuthenticatedExamScheduleRoute: AuthenticatedExamScheduleRoute,
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
   AuthenticatedGraduationRoute: AuthenticatedGraduationRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedScopedResultsRoute: AuthenticatedScopedResultsRoute,
   AuthenticatedStandingRoute: AuthenticatedStandingRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
   AuthenticatedTeachingRoute: AuthenticatedTeachingRoute,
