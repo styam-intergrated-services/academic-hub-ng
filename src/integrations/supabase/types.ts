@@ -500,6 +500,103 @@ export type Database = {
           },
         ]
       }
+      exam_invigilators: {
+        Row: {
+          created_at: string
+          id: string
+          schedule_id: string
+          staff_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          schedule_id: string
+          staff_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          schedule_id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_invigilators_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "exam_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_schedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_time: string
+          exam_date: string
+          id: string
+          offering_id: string
+          start_time: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          exam_date: string
+          id?: string
+          offering_id: string
+          start_time: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          exam_date?: string
+          id?: string
+          offering_id?: string
+          start_time?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_schedules_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "course_offerings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      examination_officers: {
+        Row: {
+          created_at: string
+          id: string
+          scope_id: string
+          scope_type: Database["public"]["Enums"]["exam_scope_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scope_id: string
+          scope_type: Database["public"]["Enums"]["exam_scope_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scope_id?: string
+          scope_type?: Database["public"]["Enums"]["exam_scope_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       faculties: {
         Row: {
           code: string
@@ -1398,6 +1495,10 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]
       }
+      eo_covers_offering: {
+        Args: { _offering_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -1439,12 +1540,14 @@ export type Database = {
         | "student"
         | "applicant"
         | "provost"
+        | "examination_officer"
       application_status:
         | "pending"
         | "under_review"
         | "approved"
         | "rejected"
         | "matriculated"
+      exam_scope_type: "programme" | "department" | "faculty"
       graduation_status: "draft" | "pending_senate" | "approved" | "rejected"
       payment_status: "pending" | "verified" | "failed" | "refunded"
       policy_status:
@@ -1612,6 +1715,7 @@ export const Constants = {
         "student",
         "applicant",
         "provost",
+        "examination_officer",
       ],
       application_status: [
         "pending",
@@ -1620,6 +1724,7 @@ export const Constants = {
         "rejected",
         "matriculated",
       ],
+      exam_scope_type: ["programme", "department", "faculty"],
       graduation_status: ["draft", "pending_senate", "approved", "rejected"],
       payment_status: ["pending", "verified", "failed", "refunded"],
       policy_status: [
