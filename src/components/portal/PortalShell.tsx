@@ -56,10 +56,23 @@ export function PortalShell({ children }: { children: ReactNode }) {
   const getUser = useServerFn(getPortalUser);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setHasSession(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setHasSession(!!session);
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, []);
+
   const { data: user, isLoading } = useQuery({
     queryKey: ["portal", "user"],
     queryFn: () => getUser(),
     staleTime: 60_000,
+    enabled: hasSession === true,
   });
 
   // First-login gate: any student who still has the default temporary password
