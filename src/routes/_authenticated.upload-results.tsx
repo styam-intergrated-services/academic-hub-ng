@@ -329,32 +329,35 @@ function ScoreRow({ row, existing, offeringId, onSave }: any) {
   const locked = existing && !EDITABLE_STATUSES.has(existing.status);
   const total = (Number(ca) || 0) + (Number(exam) || 0);
   return (
-    <TableRow>
-      <TableCell className="font-mono">{row.student?.matric_number}</TableCell>
-      <TableCell>
+    <TableRow className="even:bg-muted/30">
+      <TableCell className="font-mono text-xs">{row.student?.matric_number}</TableCell>
+      <TableCell className="min-w-0">
         {row.student?.profile?.full_name}
         {existing?.rejection_reason && !locked && (
-          <div className="text-[11px] text-rose-600 mt-0.5">↺ {existing.rejection_reason}</div>
+          <div className="mt-0.5 text-[11px] text-destructive">↺ {existing.rejection_reason}</div>
         )}
       </TableCell>
-      <TableCell><Input value={ca} onChange={(e) => setCa(e.target.value)} type="number" min={0} max={40} step={0.5} disabled={locked} className="w-24" /></TableCell>
-      <TableCell><Input value={exam} onChange={(e) => setExam(e.target.value)} type="number" min={0} max={60} step={0.5} disabled={locked} className="w-24" /></TableCell>
-      <TableCell>{ca || exam ? total.toFixed(1) : "—"}</TableCell>
-      <TableCell>{existing?.grade ?? "—"}</TableCell>
+      <TableCell><Input value={ca} onChange={(e) => setCa(e.target.value)} type="number" min={0} max={40} step={0.5} disabled={locked} className="w-20 tabular-nums" /></TableCell>
+      <TableCell><Input value={exam} onChange={(e) => setExam(e.target.value)} type="number" min={0} max={60} step={0.5} disabled={locked} className="w-20 tabular-nums" /></TableCell>
+      <TableCell className="text-right font-medium tabular-nums">{ca || exam ? total.toFixed(1) : "—"}</TableCell>
+      <TableCell><GradeBadge grade={existing?.grade} /></TableCell>
       <TableCell>
-        {existing ? <Badge variant="secondary" className="capitalize">{existing.status.replace("_"," ")}</Badge> : <Badge variant="outline">Empty</Badge>}
-        {!locked && (
-          <Button size="sm" variant="ghost" className="ml-2" onClick={() =>
-            onSave({
-              registration_id: row.id,
-              student_id: row.student_id,
-              offering_id: offeringId,
-              ca_score: ca === "" ? null : Number(ca),
-              exam_score: exam === "" ? null : Number(exam),
-            })
-          }><Save className="h-3 w-3 mr-1" />Save</Button>
-        )}
+        <div className="flex items-center gap-2">
+          {existing ? <StatusBadge status={existing.status} /> : <Badge variant="outline">Empty</Badge>}
+          {!locked && (
+            <Button size="sm" variant="ghost" onClick={() =>
+              onSave({
+                registration_id: row.id,
+                student_id: row.student_id,
+                offering_id: offeringId,
+                ca_score: ca === "" ? null : Number(ca),
+                exam_score: exam === "" ? null : Number(exam),
+              })
+            }><Save className="mr-1 size-3" />Save</Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
+
   );
 }
