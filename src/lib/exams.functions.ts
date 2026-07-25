@@ -33,16 +33,22 @@ export const listOfferingsForAllocation = createServerFn({ method: "POST" })
         id, semester_id,
         course:courses!inner(id, code, title, credit_units, department_id),
         semester:semesters!inner(id, type, session:academic_sessions(name)),
-        lecturers:course_lecturers(
-          is_lead, lecturer_id,
-          profile:profiles!course_lecturers_lecturer_id_fkey(id, full_name, email)
-        )
+        lecturers:course_lecturers(is_lead, lecturer_id)
       `)
       .order("id");
     if (data.semester_id) q = q.eq("semester_id", data.semester_id);
     const { data: rows, error } = await q;
     if (error) throw error;
-    return rows ?? [];
+    const ids = Array.from(new Set(((rows ?? []) as any[]).flatMap((r) => (r.lecturers ?? []).map((l: any) => l.lecturer_id))));
+    const profMap = new Map<string, any>();
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      for (const p of profs ?? []) profMap.set(p.id, p);
+    }
+    return ((rows ?? []) as any[]).map((r) => ({
+      ...r,
+      lecturers: (r.lecturers ?? []).map((l: any) => ({ ...l, profile: profMap.get(l.lecturer_id) ?? null })),
+    }));
   });
 
 export const searchStaff = createServerFn({ method: "POST" })
