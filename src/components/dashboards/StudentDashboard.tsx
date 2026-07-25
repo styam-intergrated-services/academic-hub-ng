@@ -1,12 +1,27 @@
-import type { PortalUser } from "@/lib/portal.functions";
+import { getStudentDashboardStats, type PortalUser } from "@/lib/portal.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Award, BookOpen, ClipboardList, Wallet, TrendingUp } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 export function StudentDashboard({ user }: { user: PortalUser }) {
   const s = user.student;
+  const statsFn = useServerFn(getStudentDashboardStats);
+  const { data: stats } = useQuery({
+    queryKey: ["portal", "student-stats", user.id],
+    queryFn: () => statsFn(),
+    enabled: !!s,
+    staleTime: 30_000,
+  });
+
+  const registered = s ? (stats?.registered_courses ?? "…") : "—";
+  const published = s ? (stats?.published_results ?? "…") : "—";
+  const creditsEarned = s ? s.total_credit_units : "—";
+  const gradePoints = s ? Number(s.total_grade_points).toFixed(1) : "—";
+
   return (
     <div className="space-y-6">
       <section className="bg-hero-gradient text-white rounded-xl p-6 md:p-8 shadow-elegant">
@@ -27,8 +42,8 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} />
-        <StatCard icon={BookOpen} label="Registered courses" value="—" />
-        <StatCard icon={ClipboardList} label="Published results" value="—" />
+        <StatCard icon={BookOpen} label="Registered courses" value={String(registered)} />
+        <StatCard icon={ClipboardList} label="Published results" value={String(published)} />
         <StatCard icon={Wallet} label="Fees status" value={s ? "View" : "—"} />
       </div>
 
@@ -48,8 +63,8 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
           <CardContent>
             {s ? (
               <div className="space-y-2 text-sm">
-                <p>Credit units earned: <b>{"—"}</b></p>
-                <p>Grade points: <b>{"—"}</b></p>
+                <p>Credit units earned: <b>{creditsEarned}</b></p>
+                <p>Grade points: <b>{gradePoints}</b></p>
                 <p>Standing: <Badge className="capitalize" variant={s.standing === "excellent" ? "default" : "secondary"}>{s.standing}</Badge></p>
                 <p className="text-muted-foreground pt-2">Results only appear after they have been fully approved and published by Registry.</p>
               </div>
