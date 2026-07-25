@@ -1244,9 +1244,11 @@ export type Database = {
       }
       semesters: {
         Row: {
+          contact_number: number | null
           end_date: string
           id: string
           is_current: boolean
+          label: string | null
           registration_end: string | null
           registration_open: boolean
           registration_start: string | null
@@ -1255,9 +1257,11 @@ export type Database = {
           type: Database["public"]["Enums"]["semester_type"]
         }
         Insert: {
+          contact_number?: number | null
           end_date: string
           id?: string
           is_current?: boolean
+          label?: string | null
           registration_end?: string | null
           registration_open?: boolean
           registration_start?: string | null
@@ -1266,9 +1270,11 @@ export type Database = {
           type: Database["public"]["Enums"]["semester_type"]
         }
         Update: {
+          contact_number?: number | null
           end_date?: string
           id?: string
           is_current?: boolean
+          label?: string | null
           registration_end?: string | null
           registration_open?: boolean
           registration_start?: string | null
@@ -1481,6 +1487,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_import_iss_lvt_2022: {
+        Args: { _dry_run?: boolean; _payload: Json }
+        Returns: Json
+      }
       check_graduation_eligibility: {
         Args: { _student_id: string }
         Returns: {
