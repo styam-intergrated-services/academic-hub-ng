@@ -1,6 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import issLvtPayload from "./iss-lvt-2022.data.json";
+
+type IssLvtPayload = {
+  session: string;
+  programme_name: string;
+  department: string;
+  entry_year: number;
+  contacts: { contact_no: number; level_code: string }[];
+  courses: { code: string; credit_units: number; category: string; contacts: number[] }[];
+  students: { matric_number: string; name: string; results: unknown[] }[];
+};
 
 const RunSchema = z.object({ dry_run: z.boolean() });
 
