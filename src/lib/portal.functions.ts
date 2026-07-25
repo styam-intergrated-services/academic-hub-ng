@@ -14,6 +14,7 @@ export interface PortalUser {
   roles: AppRole[];
   primary_role: AppRole;
   student?: {
+    id: string;
     matric_number: string;
     programme_id: string;
     department_id: string;
@@ -22,6 +23,7 @@ export interface PortalUser {
     standing: string;
     total_credit_units: number;
     total_grade_points: number;
+    default_password_changed: boolean;
   } | null;
 }
 
@@ -38,8 +40,8 @@ export const getPortalUser = createServerFn({ method: "GET" })
     const [{ data: profile }, { data: rolesData }, { data: student }] = await Promise.all([
       supabase.from("profiles").select("id,email,full_name,avatar_url").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("students").select("matric_number,programme_id,department_id,current_level_id,cgpa,standing,total_credit_units,total_grade_points")
-        .eq("id", userId).maybeSingle(),
+      supabase.from("students").select("id,matric_number,programme_id,department_id,current_level_id,cgpa,standing,total_credit_units,total_grade_points,default_password_changed")
+        .eq("auth_user_id", userId).maybeSingle(),
     ]);
 
     const roles = (rolesData ?? []).map((r) => r.role as AppRole);
@@ -63,6 +65,15 @@ export const getStudentDashboardStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
+    // Resolve student.id via auth link.
+    const { data: student } = await supabase
+      .from("students")
+      .select("id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+    if (!student?.id) return { registered_courses: 0, published_results: 0 };
+    const studentId = student.id;
+
     // Current semester id (if any)
     const { data: sem } = await supabase
       .from("semesters")
@@ -73,12 +84,11 @@ export const getStudentDashboardStats = createServerFn({ method: "GET" })
     const publishedP = supabase
       .from("results")
       .select("id", { count: "exact", head: true })
-      .eq("student_id", userId)
+      .eq("student_id", studentId)
       .eq("status", "published");
 
     let registeredCount = 0;
     if (sem?.id) {
-      // Filter registrations by current semester via offering.semester_id
       const { data: offerings } = await supabase
         .from("course_offerings")
         .select("id")
@@ -88,7 +98,7 @@ export const getStudentDashboardStats = createServerFn({ method: "GET" })
         const { count } = await supabase
           .from("course_registrations")
           .select("id", { count: "exact", head: true })
-          .eq("student_id", userId)
+          .eq("student_id", studentId)
           .in("offering_id", offeringIds)
           .in("status", ["pending", "approved"]);
         registeredCount = count ?? 0;
@@ -101,6 +111,19 @@ export const getStudentDashboardStats = createServerFn({ method: "GET" })
       registered_courses: registeredCount,
       published_results: publishedCount ?? 0,
     };
+  });
+
+// Called by the forced-password-change screen after a student sets their real password.
+export const markDefaultPasswordChanged = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("students")
+      .update({ default_password_changed: true })
+      .eq("auth_user_id", userId);
+    if (error) throw error;
+    return { ok: true };
   });
 
 // Count of course offerings the lecturer is assigned to in the current semester.
