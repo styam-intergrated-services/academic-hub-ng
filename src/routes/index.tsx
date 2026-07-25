@@ -55,7 +55,7 @@ function Landing() {
               Kano College of Education — all in one secure place.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth">
+              <Link to="/auth" search={{ next: undefined }}>
                 <Button size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90">
                   Access portal <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
