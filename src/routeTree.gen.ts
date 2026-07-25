@@ -41,6 +41,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated.students.index'
+import { Route as ApiPublicMatricLoginInitRouteImport } from './routes/api/public/matric-login-init'
 import { Route as AuthenticatedTranscriptsIdRouteImport } from './routes/_authenticated.transcripts.$id'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id'
 import { Route as AuthenticatedBroadsheetOfferingIdRouteImport } from './routes/_authenticated.broadsheet.$offeringId'
@@ -218,6 +219,12 @@ const AuthenticatedStudentsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedStudentsRoute,
   } as any)
+const ApiPublicMatricLoginInitRoute =
+  ApiPublicMatricLoginInitRouteImport.update({
+    id: '/api/public/matric-login-init',
+    path: '/api/public/matric-login-init',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedTranscriptsIdRoute =
   AuthenticatedTranscriptsIdRouteImport.update({
     id: '/transcripts/$id',
@@ -283,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
+  '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -320,6 +328,7 @@ export interface FileRoutesByTo {
   '/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
+  '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
@@ -360,6 +369,7 @@ export interface FileRoutesById {
   '/_authenticated/broadsheet/$offeringId': typeof AuthenticatedBroadsheetOfferingIdRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
+  '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/broadsheet/$offeringId'
     | '/students/$id'
     | '/transcripts/$id'
+    | '/api/public/matric-login-init'
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/broadsheet/$offeringId'
     | '/students/$id'
     | '/transcripts/$id'
+    | '/api/public/matric-login-init'
     | '/students'
   id:
     | '__root__'
@@ -476,6 +488,7 @@ export interface FileRouteTypes {
     | '/_authenticated/broadsheet/$offeringId'
     | '/_authenticated/students/$id'
     | '/_authenticated/transcripts/$id'
+    | '/api/public/matric-login-init'
     | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
@@ -489,6 +502,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicMatricLoginInitRoute: typeof ApiPublicMatricLoginInitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -717,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
       parentRoute: typeof AuthenticatedStudentsRoute
     }
+    '/api/public/matric-login-init': {
+      id: '/api/public/matric-login-init'
+      path: '/api/public/matric-login-init'
+      fullPath: '/api/public/matric-login-init'
+      preLoaderRoute: typeof ApiPublicMatricLoginInitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/transcripts/$id': {
       id: '/_authenticated/transcripts/$id'
       path: '/transcripts/$id'
@@ -844,6 +865,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicMatricLoginInitRoute: ApiPublicMatricLoginInitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
