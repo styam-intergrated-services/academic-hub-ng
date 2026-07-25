@@ -104,9 +104,12 @@ export const getTranscript = createServerFn({ method: "POST" })
     if (eStu) throw eStu;
     if (!student) throw new Error("Student not found");
 
-    const { data: profile } = await supabase.from("profiles")
-      .select("full_name, email, date_of_birth, gender, state_of_origin, phone")
-      .eq("id", targetId).maybeSingle();
+    const profileId = (student as any).auth_user_id as string | null;
+    const { data: profile } = profileId
+      ? await supabase.from("profiles")
+          .select("full_name, email, date_of_birth, gender, state_of_origin, phone")
+          .eq("id", profileId).maybeSingle()
+      : { data: null } as any;
 
     const { data: publishedResults, error: eRes } = await supabase.from("results")
       .select(`
