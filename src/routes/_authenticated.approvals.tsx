@@ -9,9 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Check, X, Rocket, FileText } from "lucide-react";
+import { Check, X, Rocket, FileText, ClipboardCheck } from "lucide-react";
+import { PageHeader } from "@/components/portal/PageHeader";
+import { EmptyState } from "@/components/portal/EmptyState";
+import { TableScroll, TableSkeleton } from "@/components/portal/TableSkeleton";
+import { GradeBadge, StatusBadge } from "@/components/portal/StatusBadges";
+
 
 const searchSchema = z.object({ status: z.string().optional() });
 
