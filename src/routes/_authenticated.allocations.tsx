@@ -79,7 +79,7 @@ function AllocationsPage() {
           <CardTitle className="font-serif text-lg">Filter</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row gap-3">
-          <Select value={semesterId} onValueChange={setSemesterId}>
+          <Select value={semesterId} onValueChange={(v) => setSemesterId(v === "__all__" ? "" : v)}>
             <SelectTrigger className="md:w-96"><SelectValue placeholder="All semesters" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">All semesters</SelectItem>
