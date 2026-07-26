@@ -60,7 +60,7 @@ function FirstLoginPage() {
           <CardTitle className="font-serif text-2xl">Set your new password</CardTitle>
           <CardDescription>
             {mandatory
-              ? "You signed in with the temporary password issued by the College (your phone number). Choose a personal password to continue — you won't be able to access the portal until this is done."
+              ? "You signed in with the temporary password issued by the College (your phone number). Choose a personal password to continue — you'll be prompted again each time you sign in until you do."
               : "You signed in with your temporary password (your year of entry). Choose a personal password to continue."}
           </CardDescription>
         </CardHeader>

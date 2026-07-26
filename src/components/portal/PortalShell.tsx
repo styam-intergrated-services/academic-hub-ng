@@ -110,6 +110,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
+    sessionStorage.removeItem("akcoe:skip-password-change");
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
