@@ -119,7 +119,8 @@ export const getStudentDashboardStats = createServerFn({ method: "GET" })
     };
   });
 
-// Called by the forced-password-change screen after a student sets their real password.
+// Called by the forced-password-change screen after a user sets their real password.
+// Clears both the student temp-password flag and the generic staff/admin-created flag.
 export const markDefaultPasswordChanged = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -129,6 +130,12 @@ export const markDefaultPasswordChanged = createServerFn({ method: "POST" })
       .update({ default_password_changed: true })
       .eq("auth_user_id", userId);
     if (error) throw error;
+    const { error: pErr } = await supabase
+      .from("profiles")
+      .update({ must_change_password: false })
+      .eq("id", userId);
+    if (pErr) throw pErr;
+
     return { ok: true };
   });
 
