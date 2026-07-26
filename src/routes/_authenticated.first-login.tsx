@@ -19,8 +19,16 @@ export const Route = createFileRoute("/_authenticated/first-login")({
 function FirstLoginPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const getUser = useServerFn(getPortalUser);
   const markChanged = useServerFn(markDefaultPasswordChanged);
   const [loading, setLoading] = useState(false);
+  const { data: user } = useQuery({
+    queryKey: ["portal", "user"],
+    queryFn: () => getUser(),
+    staleTime: 60_000,
+  });
+  const mandatory = !!user?.must_change_password;
+
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
