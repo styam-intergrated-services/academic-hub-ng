@@ -15,8 +15,9 @@ export interface PortalUser {
   primary_role: AppRole;
   staff_code: string | null;
   must_change_password: boolean;
-
+  student?: {
     id: string;
+
     matric_number: string;
     programme_id: string;
     department_id: string;
