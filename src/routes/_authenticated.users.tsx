@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, UserPlus, X } from "lucide-react";
+import { CreateStaffAccountCard } from "@/components/admin/CreateStaffAccountCard";
+
 
 const ROLES: AppRole[] = ["super_admin","ict_admin","registry","bursary","dean","hod","lecturer","student","applicant"];
 
