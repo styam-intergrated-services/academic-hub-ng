@@ -60,7 +60,7 @@ function FirstLoginPage() {
           <CardTitle className="font-serif text-2xl">Set your new password</CardTitle>
           <CardDescription>
             {mandatory
-              ? "You signed in with the temporary password issued by the College (your phone number). Choose a personal password to continue — you won't be able to access the portal until this is done."
+              ? "You signed in with the temporary password issued by the College (your phone number). Choose a personal password to continue — you'll be prompted again each time you sign in until you do."
               : "You signed in with your temporary password (your year of entry). Choose a personal password to continue."}
           </CardDescription>
         </CardHeader>
@@ -77,21 +77,19 @@ function FirstLoginPage() {
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save and continue"}
             </Button>
-            {mandatory ? null : (
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                disabled={loading}
-                onClick={() => {
-                  sessionStorage.setItem("akcoe:skip-password-change", "1");
-                  toast.info("You can change your password anytime from your profile.");
-                  navigate({ to: "/dashboard", replace: true });
-                }}
-              >
-                Skip for now
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={loading}
+              onClick={() => {
+                sessionStorage.setItem("akcoe:skip-password-change", "1");
+                toast.info("You can change your password anytime from your profile.");
+                navigate({ to: "/dashboard", replace: true });
+              }}
+            >
+              Skip for now
+            </Button>
 
           </form>
         </CardContent>
