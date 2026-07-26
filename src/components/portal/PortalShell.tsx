@@ -87,16 +87,23 @@ export function PortalShell({ children }: { children: ReactNode }) {
     enabled: hasSession === true,
   });
 
-  // First-login gate: any student who still has the default temporary password
-  // is forced to /first-login before they can reach anything else in the portal.
+  // First-login gate:
+  //  - staff/admin-created accounts (profiles.must_change_password) MUST change the
+  //    temporary password before reaching anything else;
+  //  - students on the default matric temp password are prompted but may postpone.
   useEffect(() => {
-    if (!user?.student) return;
-    if (user.student.default_password_changed) return;
+    if (!user) return;
     if (pathname === "/first-login") return;
-    // Students may postpone the change; we re-prompt on their next sign-in.
+    if (user.must_change_password) {
+      navigate({ to: "/first-login", replace: true });
+      return;
+    }
+    if (!user.student) return;
+    if (user.student.default_password_changed) return;
     if (sessionStorage.getItem("akcoe:skip-password-change") === "1") return;
     navigate({ to: "/first-login", replace: true });
   }, [user, pathname, navigate]);
+
 
   async function signOut() {
     await qc.cancelQueries();
