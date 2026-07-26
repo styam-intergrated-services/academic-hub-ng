@@ -51,6 +51,10 @@ function UsersPage() {
         <p className="text-sm text-muted-foreground">Search users and assign portal roles. Only super admins and ICT admins can modify roles.</p>
       </div>
 
+      <CreateStaffAccountCard />
+
+
+
       <Card>
         <CardHeader>
           <CardTitle className="font-serif text-lg">Directory</CardTitle>
