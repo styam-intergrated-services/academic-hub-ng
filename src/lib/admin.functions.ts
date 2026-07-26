@@ -342,3 +342,108 @@ export const deleteCourse = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ============ STAFF ONBOARDING ============
+
+const staffMemberSchema = z.object({
+  full_name: z.string().min(2).max(160),
+  email: z.string().email().max(200),
+  phone: z.string().min(6).max(32),
+  staff_code: z.string().max(32).optional(),
+  roles: z.array(z.enum(APP_ROLES)).max(6).default([]),
+  department_id: z.string().uuid().optional(),
+});
+
+export type StaffMemberInput = z.infer<typeof staffMemberSchema>;
+
+/**
+ * Create (or repair) staff auth accounts in bulk.
+ * - login email = provided email, initial password = provided phone digits
+ * - profiles.must_change_password = true → forced password change on first login
+ * - roles granted via user_roles; optional department_id sets departments.hod_id
+ */
+export const createStaffAccounts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ staff: z.array(staffMemberSchema).min(1).max(100) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const results: Array<{
+      email: string; user_id: string | null; created: boolean;
+      roles: string[]; department_linked: boolean; error?: string;
+    }> = [];
+
+    for (const person of data.staff) {
+      const email = person.email.trim().toLowerCase();
+      const password = person.phone.replace(/\s+/g, "");
+      try {
+        let userId: string | null = null;
+        let created = false;
+
+        const { data: createdUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: person.full_name, staff_code: person.staff_code ?? null },
+        });
+
+        if (createErr) {
+          // already registered → look the account up and reset the temp password
+          const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          const existing = list?.users?.find((u) => (u.email ?? "").toLowerCase() === email);
+          if (!existing) throw createErr;
+          userId = existing.id;
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            password,
+            user_metadata: { full_name: person.full_name, staff_code: person.staff_code ?? null },
+          });
+        } else {
+          userId = createdUser.user!.id;
+          created = true;
+        }
+
+        await supabaseAdmin.from("profiles").upsert(
+          {
+            id: userId!,
+            email,
+            full_name: person.full_name,
+            phone: person.phone,
+            staff_code: person.staff_code ?? null,
+            must_change_password: true,
+          },
+          { onConflict: "id" },
+        );
+
+        for (const role of person.roles) {
+          await supabaseAdmin.from("user_roles").upsert(
+            { user_id: userId!, role },
+            { onConflict: "user_id,role" },
+          );
+        }
+
+        let deptLinked = false;
+        if (person.department_id) {
+          const { error: deptErr } = await supabaseAdmin
+            .from("departments")
+            .update({ hod_id: userId! })
+            .eq("id", person.department_id);
+          deptLinked = !deptErr;
+        }
+
+        results.push({
+          email, user_id: userId, created,
+          roles: person.roles, department_linked: deptLinked,
+        });
+      } catch (e) {
+        results.push({
+          email, user_id: null, created: false, roles: [], department_linked: false,
+          error: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    }
+
+    return { results };
+  });
