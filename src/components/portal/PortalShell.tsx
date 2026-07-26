@@ -94,13 +94,15 @@ export function PortalShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     if (pathname === "/first-login") return;
+    const skipped = sessionStorage.getItem("akcoe:skip-password-change") === "1";
     if (user.must_change_password) {
+      if (skipped) return;
       navigate({ to: "/first-login", replace: true });
       return;
     }
     if (!user.student) return;
     if (user.student.default_password_changed) return;
-    if (sessionStorage.getItem("akcoe:skip-password-change") === "1") return;
+    if (skipped) return;
     navigate({ to: "/first-login", replace: true });
   }, [user, pathname, navigate]);
 
