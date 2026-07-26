@@ -1011,7 +1011,9 @@ export type Database = {
           gender: string | null
           id: string
           lga: string | null
+          must_change_password: boolean
           phone: string | null
+          staff_code: string | null
           state_of_origin: string | null
           updated_at: string
         }
@@ -1025,7 +1027,9 @@ export type Database = {
           gender?: string | null
           id: string
           lga?: string | null
+          must_change_password?: boolean
           phone?: string | null
+          staff_code?: string | null
           state_of_origin?: string | null
           updated_at?: string
         }
@@ -1039,7 +1043,9 @@ export type Database = {
           gender?: string | null
           id?: string
           lga?: string | null
+          must_change_password?: boolean
           phone?: string | null
+          staff_code?: string | null
           state_of_origin?: string | null
           updated_at?: string
         }
