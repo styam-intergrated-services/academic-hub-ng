@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, UserPlus, X } from "lucide-react";
+import { CreateStaffAccountCard } from "@/components/admin/CreateStaffAccountCard";
+
 
 const ROLES: AppRole[] = ["super_admin","ict_admin","registry","bursary","dean","hod","lecturer","student","applicant"];
 
@@ -50,6 +52,10 @@ function UsersPage() {
         <h2 className="font-serif text-2xl text-primary">Users &amp; Roles</h2>
         <p className="text-sm text-muted-foreground">Search users and assign portal roles. Only super admins and ICT admins can modify roles.</p>
       </div>
+
+      <CreateStaffAccountCard />
+
+
 
       <Card>
         <CardHeader>
