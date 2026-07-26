@@ -13,8 +13,11 @@ export interface PortalUser {
   avatar_url: string | null;
   roles: AppRole[];
   primary_role: AppRole;
+  staff_code: string | null;
+  must_change_password: boolean;
   student?: {
     id: string;
+
     matric_number: string;
     programme_id: string;
     department_id: string;
@@ -38,7 +41,7 @@ export const getPortalUser = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
 
     const [{ data: profile }, { data: rolesData }, { data: student }] = await Promise.all([
-      supabase.from("profiles").select("id,email,full_name,avatar_url").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("id,email,full_name,avatar_url,staff_code,must_change_password").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase.from("students").select("id,matric_number,programme_id,department_id,current_level_id,cgpa,standing,total_credit_units,total_grade_points,default_password_changed")
         .eq("auth_user_id", userId).maybeSingle(),
@@ -55,7 +58,10 @@ export const getPortalUser = createServerFn({ method: "GET" })
       avatar_url: profile?.avatar_url ?? null,
       roles,
       primary_role,
+      staff_code: profile?.staff_code ?? null,
+      must_change_password: profile?.must_change_password ?? false,
       student: student ?? null,
+
     };
   });
 
@@ -113,7 +119,8 @@ export const getStudentDashboardStats = createServerFn({ method: "GET" })
     };
   });
 
-// Called by the forced-password-change screen after a student sets their real password.
+// Called by the forced-password-change screen after a user sets their real password.
+// Clears both the student temp-password flag and the generic staff/admin-created flag.
 export const markDefaultPasswordChanged = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -123,6 +130,12 @@ export const markDefaultPasswordChanged = createServerFn({ method: "POST" })
       .update({ default_password_changed: true })
       .eq("auth_user_id", userId);
     if (error) throw error;
+    const { error: pErr } = await supabase
+      .from("profiles")
+      .update({ must_change_password: false })
+      .eq("id", userId);
+    if (pErr) throw pErr;
+
     return { ok: true };
   });
 

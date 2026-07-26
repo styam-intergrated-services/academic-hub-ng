@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { markDefaultPasswordChanged } from "@/lib/portal.functions";
+import { markDefaultPasswordChanged, getPortalUser } from "@/lib/portal.functions";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +20,16 @@ export const Route = createFileRoute("/_authenticated/first-login")({
 function FirstLoginPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const getUser = useServerFn(getPortalUser);
   const markChanged = useServerFn(markDefaultPasswordChanged);
   const [loading, setLoading] = useState(false);
+  const { data: user } = useQuery({
+    queryKey: ["portal", "user"],
+    queryFn: () => getUser(),
+    staleTime: 60_000,
+  });
+  const mandatory = !!user?.must_change_password;
+
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,8 +59,9 @@ function FirstLoginPage() {
         <CardHeader>
           <CardTitle className="font-serif text-2xl">Set your new password</CardTitle>
           <CardDescription>
-            You signed in with your temporary password (your year of entry). Choose a personal password to continue —
-            you won't be able to access the portal until this is done.
+            {mandatory
+              ? "You signed in with the temporary password issued by the College (your phone number). Choose a personal password to continue — you won't be able to access the portal until this is done."
+              : "You signed in with your temporary password (your year of entry). Choose a personal password to continue."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,19 +77,22 @@ function FirstLoginPage() {
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save and continue"}
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              disabled={loading}
-              onClick={() => {
-                sessionStorage.setItem("akcoe:skip-password-change", "1");
-                toast.info("You can change your password anytime from your profile.");
-                navigate({ to: "/dashboard", replace: true });
-              }}
-            >
-              Skip for now
-            </Button>
+            {mandatory ? null : (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                disabled={loading}
+                onClick={() => {
+                  sessionStorage.setItem("akcoe:skip-password-change", "1");
+                  toast.info("You can change your password anytime from your profile.");
+                  navigate({ to: "/dashboard", replace: true });
+                }}
+              >
+                Skip for now
+              </Button>
+            )}
+
           </form>
         </CardContent>
       </Card>
