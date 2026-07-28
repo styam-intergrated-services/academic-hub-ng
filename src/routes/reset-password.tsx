@@ -16,15 +16,46 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Supabase parses the recovery token from the URL hash automatically.
     const sub = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
-    supabase.auth.getSession().then(({ data }) => {
+
+    (async () => {
+      const url = new URL(window.location.href);
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const errDesc = url.searchParams.get("error_description") ?? hash.get("error_description");
+      if (errDesc) {
+        setLinkError(errDesc);
+        return;
+      }
+
+      // Newer recovery links use a PKCE ?code=, older ones a #access_token or ?token_hash.
+      const code = url.searchParams.get("code");
+      const tokenHash = url.searchParams.get("token_hash");
+      try {
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) setLinkError(error.message);
+        } else if (tokenHash) {
+          const { error } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+          if (error) setLinkError(error.message);
+        }
+      } catch (e) {
+        setLinkError(e instanceof Error ? e.message : "Could not verify the reset link");
+      }
+
+      // Strip tokens from the address bar once consumed.
+      if (code || tokenHash || url.hash) {
+        window.history.replaceState({}, "", url.pathname);
+      }
+
+      const { data } = await supabase.auth.getSession();
       if (data.session) setReady(true);
-    });
+    })();
+
     return () => sub.data.subscription.unsubscribe();
   }, []);
 
@@ -37,11 +68,21 @@ function ResetPasswordPage() {
     if (password !== confirm) return toast.error("Passwords do not match");
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+    // Clear any forced-change flag so the portal doesn't ask again.
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user.id;
+    if (uid) {
+      await supabase.from("profiles").update({ must_change_password: false }).eq("id", uid);
+    }
     setLoading(false);
-    if (error) return toast.error(error.message);
     toast.success("Password updated. Redirecting…");
     setTimeout(() => { window.location.href = "/dashboard"; }, 700);
   }
+
 
   return (
     <div className="min-h-screen grid place-items-center bg-background p-6">
@@ -51,11 +92,15 @@ function ResetPasswordPage() {
 
 
           <CardDescription>
-            {ready ? "Choose a new password for your AKCOE account." : "Verifying reset link…"}
+            {linkError
+              ? "This reset link is no longer valid."
+              : ready
+                ? "Choose a new password for your AKCOE account."
+                : "Verifying reset link…"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {ready ? (
+          {ready && !linkError ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="password">New password</Label>
@@ -71,10 +116,11 @@ function ResetPasswordPage() {
             </form>
           ) : (
             <div className="text-sm text-muted-foreground">
-              If nothing happens, the reset link may have expired.{" "}
+              {linkError ?? "If nothing happens, the reset link may have expired."}{" "}
               <a href="/auth" className="text-primary hover:underline">Request a new one</a>.
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>

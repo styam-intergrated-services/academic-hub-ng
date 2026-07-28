@@ -185,10 +185,35 @@ function AuthPage() {
       redirectTo: window.location.origin + "/reset-password",
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message, "email"));
     toast.success("If an account exists, a reset link has been sent.");
     setForgotOpen(false);
   }
+
+  /** Students sign in with a matric number (no mailbox) — Registry approves the reset. */
+  async function handleForgotMatric(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    const matric = normalizeMatric(String(fd.get("matric") ?? ""));
+    const contact = String(fd.get("contact") ?? "");
+    if (!matric) { setLoading(false); return toast.error("Enter your matric number"); }
+    try {
+      const resp = await fetch("/api/public/password-reset-request", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ matric, contact }),
+      });
+      setLoading(false);
+      if (!resp.ok) return toast.error("Could not send your request. Please try again.");
+      toast.success("Request sent. Registry will reset your password — then sign in with your year of entry.");
+      setForgotOpen(false);
+    } catch {
+      setLoading(false);
+      toast.error("Network problem — check your connection and try again.");
+    }
+  }
+
 
   void navigate;
 
@@ -219,19 +244,52 @@ function AuthPage() {
           </CardHeader>
           <CardContent>
             {forgotOpen ? (
-              <form onSubmit={handleForgot} method="post" className="space-y-4">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="forgot-email">Email</Label>
-                  <Input id="forgot-email" name="email" type="email" required autoComplete="email" />
-                  <p className="text-xs text-muted-foreground mt-2">We'll email you a link to set a new password.</p>
+                  <p className="font-medium text-sm">Forgot your password?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Staff and admins reset by email. Students who sign in with a matric number request a reset from Registry.
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={busy} className="flex-1 bg-primary text-primary-foreground">
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={() => setForgotOpen(false)}>Back</Button>
-                </div>
-              </form>
+                <Tabs defaultValue="email">
+                  <TabsList className="grid grid-cols-2 w-full">
+                    <TabsTrigger value="email">By email</TabsTrigger>
+                    <TabsTrigger value="matric">By matric no.</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="email" className="mt-4">
+                    <form onSubmit={handleForgot} method="post" className="space-y-4">
+                      <div>
+                        <Label htmlFor="forgot-email">Email</Label>
+                        <Input id="forgot-email" name="email" type="email" required autoComplete="email" />
+                        <p className="text-xs text-muted-foreground mt-2">We'll email you a link to set a new password.</p>
+                      </div>
+                      <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Send reset link"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                  <TabsContent value="matric" className="mt-4">
+                    <form onSubmit={handleForgotMatric} method="post" className="space-y-4">
+                      <div>
+                        <Label htmlFor="forgot-matric">Matric number</Label>
+                        <Input id="forgot-matric" name="matric" required placeholder="AKCOE/2022/0001" autoCapitalize="characters" />
+                      </div>
+                      <div>
+                        <Label htmlFor="forgot-contact">Phone or email (optional)</Label>
+                        <Input id="forgot-contact" name="contact" placeholder="So Registry can reach you" />
+                      </div>
+                      <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Request password reset"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Once approved, sign in with your <span className="font-medium">year of entry</span> and you'll be asked to set a new password.
+                      </p>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+                <Button type="button" variant="ghost" className="w-full" onClick={() => setForgotOpen(false)}>Back to sign in</Button>
+              </div>
+
             ) : awaitingVerify ? (
               <div className="space-y-3 text-sm">
                 <p className="font-medium">Verify your email</p>
@@ -277,6 +335,13 @@ function AuthPage() {
                     <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Sign in with matric"}
                     </Button>
+                    <button
+                      type="button"
+                      onClick={() => setForgotOpen(true)}
+                      className="text-xs text-primary hover:underline block w-full text-center"
+                    >
+                      Forgot password?
+                    </button>
                     <p className="text-xs text-muted-foreground">
                       First time signing in? Use your <span className="font-medium">year of entry</span> (e.g. 2022) as your temporary password.
                       You'll be asked to set a new password right after.

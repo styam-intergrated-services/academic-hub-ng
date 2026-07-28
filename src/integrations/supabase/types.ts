@@ -885,6 +885,53 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_requests: {
+        Row: {
+          contact: string | null
+          created_at: string
+          id: string
+          matric_number: string | null
+          note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          student_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          matric_number?: string | null
+          note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          student_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          matric_number?: string | null
+          note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          student_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "password_reset_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
