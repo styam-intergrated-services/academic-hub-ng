@@ -1,51 +1,38 @@
-## What I found in the live data first
+## What you can tell your client today
 
-I queried the database before writing this plan. Current state:
+Verified against the live database and the actual routes in the app.
 
-| Check | Result |
-|---|---|
-| Graduation lists | 3 approved lists: Sociology 2022/2023 (7), Sociology 2024/2025 (17), Business Management 2024/2025 (39) — 63 entries total, all with CGPA, credits and class |
-| Students | 61 BA-ISL-LVT, 39 BSC-BSM-TOPUP, 24 BSC-SOC-TOPUP, 1 test NCE student |
-| `results` table | **0 rows** |
-| `course_registrations` | **0 rows** |
-| `gpa_records` | **0 rows** |
-| `semesters` | only 3 rows |
-| Logins for the 63 top-up graduates | **0 activated** (activation happens on first matric login, which is expected) |
+### Working end-to-end
 
-Two things follow from this, and they change what "publish the imported results" can mean:
+- **Student login by matric number** — students sign in with matric number + entry year, get a forced/skippable password change, and land on their dashboard. 125 student records loaded.
+- **Students see their results** — 2,159 course results are loaded and all 2,159 are in `published` state, so they are visible to students. Course-by-course scores, grades, grade points and CGPA all render.
+- **Transcripts** — student transcript view exists with a print button (browser print → PDF), and the registry-side transcript issue flow with official serials (`AKCOE/TR/YYYY/NNNN`) works; 1 serial already issued.
+- **Graduation lists** — three approved lists (Sociology 2022/23, Sociology 2024/25, Business Management 2024/25) with PDF/CSV export.
+- **Approval workflow** — Lecturer → HOD → Dean → Registry → Published chain is implemented, with rejection reasons, correction requests and a full audit trail (`result_history`, immutable).
+- **Result upload** — manual entry plus bulk CSV import/export, broadsheet per course offering.
+- **Admin/Provost dashboards, users & roles, staff accounts** — 11 real staff accounts created with forced password change; departments/HOD wiring done.
 
-1. **The 2,159 Islamic Studies (LVT) per-course results are no longer in the database.** The students, their CGPA and their credit totals are still there, but the results, registrations and contact-semester rows are gone. They need re-importing from `src/lib/imports/iss-lvt-2022.data.json` before anything can be published.
-2. **The 63 Top-Up graduates never had per-course results** — that import was summary-only by agreement (CGPA, total credits, classification). There is nothing per-course to publish for them, and no course catalogue for those two programmes. Their dashboards can show CGPA, credits and graduation class, but the results table will legitimately be empty unless we later get their per-course transcripts.
+### Not ready — three gaps, all data/setup rather than broken code
 
-## Plan
+1. **No lecturer is assigned to any course.** `course_lecturers` has **0 rows** while there are 85 course offerings. A lecturer signing in today sees an empty "My Teaching" page and cannot upload anything. The allocation screen exists; the allocations just have not been made.
+2. **No current semester is set.** `semesters.is_current` is false for every row. Several screens (upload targets, provost/current-term widgets, registration windows) key off the current semester and will look empty.
+3. **Semester GPA history is empty.** The per-semester GPA table has 0 rows, so student profile pages show "No GPA records yet" even though the overall CGPA is correct. The imported historical results were loaded as final marks without per-semester GPA rows being generated.
 
-### 1. Re-import and publish the Islamic Studies (LVT) results
-- Run the existing `admin_import_iss_lvt_2022` importer (dry run first, then live) from the hidden `/admin/import-iss-lvt-2022` page, signed in as super admin.
-- The importer already writes results as `published` with `status_code = OK` and recomputes CGPA, so they land in the correct 2022/2023 session and per-contact semesters and appear under "published results" for entry year 2022.
-- Confirm the registry/dean approval columns are consistent for historical records (published, with the import audit log as provenance) rather than pushing 2,159 archived rows back through a live approval queue.
+Also still deliberately hidden behind feature flags (not a defect): **Course Registration** and **Fees/Payments**.
 
-### 2. Validation checks
-Run a scripted set of read-only checks and report a pass/fail table:
-- Every student row points to a real programme, department, level and entry session (no dangling foreign keys).
-- Every graduation list entry points to an existing student, and the entry's CGPA/classification matches the student record and the 6-tier scale.
-- Programme/session pairing is correct: Sociology 2022/2023 students on the 2022/2023 list, Sociology and BSM 2024/2025 on the 2024/2025 lists.
-- For LVT: every result has a matching registration and offering; every offering has a semester in the 2022/2023 session; recomputed CGPA matches the stored CGPA and the source file; counts equal 61 students / 2,159 results.
-- Duplicate matric numbers, missing entry years, and students with no graduation entry where one is expected.
+## Proposed work before you announce rollout
 
-### 3. PDF and CSV graduation reports
-- Generate one CSV per graduation list plus one combined CSV: serial no., matric number, name, gender, programme, session, total credits, CGPA, classification.
-- Generate a matching PDF per list in the college's identity (AKCOE navy/gold, logo, title block, session and programme header, signature lines for Registrar/Provost, page numbers).
-- Deliver these as downloadable files in this chat. If you also want an in-app "Export list (PDF/CSV)" button on the `/graduation` page, say so and I'll add it — this plan produces the files themselves.
+1. Mark the correct session/semester as current so term-scoped screens populate.
+2. Allocate lecturers to their course offerings (bulk assign from the existing allocations screen, or a one-off import if you give me the lecturer↔course mapping).
+3. Backfill per-semester GPA rows for the imported cohorts by running the existing recompute routine over each student/semester pair, so profile pages and standing history are complete.
+4. Re-verify as a real lecturer account: sign in → see assigned course → enter/upload scores → submit → HOD approves → published, and confirm the student sees the new grade.
 
-### 4. Login and dashboard verification
-- Activate and sign in as a sample graduate from each of the three lists (matric number + entry year: 2022 or 2024) through the real login flow in a headless browser.
-- Screenshot each student dashboard and confirm matric, CGPA, credit units and standing match the source spreadsheet, and that a graduating student sees their class.
-- Do the same for one Islamic Studies student to confirm the re-imported per-course results, grades and CGPA render on `/results`.
-- Report anything that doesn't line up, including the expected empty results table for Top-Up graduates.
+### Technical notes
 
-## Technical notes
+- Gap 1/2 are pure data operations against `course_lecturers` and `semesters`; no code changes.
+- Gap 3 uses the existing `recompute_semester_gpa` / `recompute_student_cgpa` functions in a backfill migration; CGPA values already match recalculation, so this only adds the missing per-semester rows and must not alter any final CGPA.
+- No changes to grading, classification, graduation or standing logic.
 
-- Re-import uses the existing `admin_import_iss_lvt_2022(_payload, _dry_run)` function; no schema changes.
-- Validation is read-only SQL; reports are generated by a script writing to your downloads area.
-- No changes to grading, classification, graduation-eligibility or academic-standing logic.
-- Login checks use the existing `/api/public/matric-login-init` activation endpoint — no new auth paths.
+## Recommendation
+
+Tell the client the **student-facing side (login, results, transcript printing) is ready to pilot now**. Hold the **lecturer-facing announcement** until lecturer allocations and the current semester are set — that's a short setup task, not new development.
