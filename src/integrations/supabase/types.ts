@@ -813,6 +813,24 @@ export type Database = {
           },
         ]
       }
+      import_payloads: {
+        Row: {
+          created_at: string
+          key: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       levels: {
         Row: {
           code: string

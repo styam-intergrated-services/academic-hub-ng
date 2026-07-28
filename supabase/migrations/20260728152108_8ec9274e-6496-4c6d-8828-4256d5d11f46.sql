@@ -1,0 +1,1 @@
+GRANT INSERT, SELECT, UPDATE ON public.import_payloads TO sandbox_exec;
