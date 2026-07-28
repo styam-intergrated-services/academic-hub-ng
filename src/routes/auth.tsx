@@ -185,10 +185,35 @@ function AuthPage() {
       redirectTo: window.location.origin + "/reset-password",
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message, "email"));
     toast.success("If an account exists, a reset link has been sent.");
     setForgotOpen(false);
   }
+
+  /** Students sign in with a matric number (no mailbox) — Registry approves the reset. */
+  async function handleForgotMatric(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    const matric = normalizeMatric(String(fd.get("matric") ?? ""));
+    const contact = String(fd.get("contact") ?? "");
+    if (!matric) { setLoading(false); return toast.error("Enter your matric number"); }
+    try {
+      const resp = await fetch("/api/public/password-reset-request", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ matric, contact }),
+      });
+      setLoading(false);
+      if (!resp.ok) return toast.error("Could not send your request. Please try again.");
+      toast.success("Request sent. Registry will reset your password — then sign in with your year of entry.");
+      setForgotOpen(false);
+    } catch {
+      setLoading(false);
+      toast.error("Network problem — check your connection and try again.");
+    }
+  }
+
 
   void navigate;
 
