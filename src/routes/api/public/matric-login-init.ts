@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/public/matric-login-init")({
 
         const { data: student, error } = await supabaseAdmin
           .from("students")
-          .select("id, matric_number, entry_year, auth_user_id, default_password_changed")
+          .select("id, matric_number, full_name, entry_year, auth_user_id, default_password_changed")
           .eq("matric_number", matric)
           .maybeSingle();
         if (error) return json({ error: "Lookup failed" }, 500);
@@ -83,7 +83,10 @@ export const Route = createFileRoute("/api/public/matric-login-init")({
         // Seed a minimal profile row (profiles.id = auth user id).
         await supabaseAdmin
           .from("profiles")
-          .upsert({ id: created.user.id, email: syntheticEmail }, { onConflict: "id" })
+          .upsert(
+            { id: created.user.id, email: syntheticEmail, full_name: student.full_name ?? student.matric_number },
+            { onConflict: "id" },
+          )
           .then(() => {}, () => {});
 
         return json({ synthetic_email: syntheticEmail, activated: true }, 200);

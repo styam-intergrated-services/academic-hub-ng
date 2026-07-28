@@ -1,33 +1,51 @@
-## Goal
+## What I found in the live data first
 
-Load the three official graduation spreadsheets into the portal as real college data: 63 graduating students across Sociology and Business Management degree programmes, each with a records page, a portal login, and an approved graduation list per session.
+I queried the database before writing this plan. Current state:
 
-## What the files contain
+| Check | Result |
+|---|---|
+| Graduation lists | 3 approved lists: Sociology 2022/2023 (7), Sociology 2024/2025 (17), Business Management 2024/2025 (39) — 63 entries total, all with CGPA, credits and class |
+| Students | 61 BA-ISL-LVT, 39 BSC-BSM-TOPUP, 24 BSC-SOC-TOPUP, 1 test NCE student |
+| `results` table | **0 rows** |
+| `course_registrations` | **0 rows** |
+| `gpa_records` | **0 rows** |
+| `semesters` | only 3 rows |
+| Logins for the 63 top-up graduates | **0 activated** (activation happens on first matric login, which is expected) |
 
-Each file has the same layout: S/N, Matric No., Name, Gender, Date of Birth, State of Origin, Current Level, Entry Level, Entry Mode, Year Admitted, TCE (total credits earned), CGPA, Class, Remark. No per-course results — summary only.
+Two things follow from this, and they change what "publish the imported results" can mean:
 
-| File | Programme | Session | Students |
-|---|---|---|---|
-| 2022-2023 Sociology | B.Sc. Sociology (Top-Up) | 2022/2023 | 7 |
-| 2024-2025 Sociology | B.Sc. Sociology (Top-Up) | 2024/2025 | 17 |
-| 2024/2025 BSM | B.Sc. Business Management (Top-Up) — new | 2024/2025 | 39 |
+1. **The 2,159 Islamic Studies (LVT) per-course results are no longer in the database.** The students, their CGPA and their credit totals are still there, but the results, registrations and contact-semester rows are gone. They need re-importing from `src/lib/imports/iss-lvt-2022.data.json` before anything can be published.
+2. **The 63 Top-Up graduates never had per-course results** — that import was summary-only by agreement (CGPA, total credits, classification). There is nothing per-course to publish for them, and no course catalogue for those two programmes. Their dashboards can show CGPA, credits and graduation class, but the results table will legitimately be empty unless we later get their per-course transcripts.
 
-The 2024/2025 Sociology file uses short matric numbers (`FUDMA/AKCOE/1265`) while the others use the full form (`FUDMA/AKCOE/24/BSM/0902`); both are kept verbatim as the login identifier.
+## Plan
 
-## Steps
+### 1. Re-import and publish the Islamic Studies (LVT) results
+- Run the existing `admin_import_iss_lvt_2022` importer (dry run first, then live) from the hidden `/admin/import-iss-lvt-2022` page, signed in as super admin.
+- The importer already writes results as `published` with `status_code = OK` and recomputes CGPA, so they land in the correct 2022/2023 session and per-contact semesters and appear under "published results" for entry year 2022.
+- Confirm the registry/dean approval columns are consistent for historical records (published, with the import audit log as provenance) rather than pushing 2,159 archived rows back through a live approval queue.
 
-1. **Add the missing programme** — create `BSC-BSM-TOPUP`, "B.Sc. Business Management (Top-Up)", degree, 4 years, FUDMA-affiliated, under the existing Business Management department. Mirrors the Sociology Top-Up record.
+### 2. Validation checks
+Run a scripted set of read-only checks and report a pass/fail table:
+- Every student row points to a real programme, department, level and entry session (no dangling foreign keys).
+- Every graduation list entry points to an existing student, and the entry's CGPA/classification matches the student record and the 6-tier scale.
+- Programme/session pairing is correct: Sociology 2022/2023 students on the 2022/2023 list, Sociology and BSM 2024/2025 on the 2024/2025 lists.
+- For LVT: every result has a matching registration and offering; every offering has a semester in the 2022/2023 session; recomputed CGPA matches the stored CGPA and the source file; counts equal 61 students / 2,159 results.
+- Duplicate matric numbers, missing entry years, and students with no graduation entry where one is expected.
 
-2. **Create the student records** — one row per student with matric number, full name, programme, department, current level (L400), entry session, entry year, gender/DOB/state on the profile, CGPA and total credits taken straight from the sheet, standing set from the CGPA, and marked inactive-on-graduation only after the list is approved (they stay active for now so their dashboards work).
+### 3. PDF and CSV graduation reports
+- Generate one CSV per graduation list plus one combined CSV: serial no., matric number, name, gender, programme, session, total credits, CGPA, classification.
+- Generate a matching PDF per list in the college's identity (AKCOE navy/gold, logo, title block, session and programme header, signature lines for Registrar/Provost, page numbers).
+- Deliver these as downloadable files in this chat. If you also want an in-app "Export list (PDF/CSV)" button on the `/graduation` page, say so and I'll add it — this plan produces the files themselves.
 
-3. **Build the graduation lists** — three lists, one per file, titled e.g. "2024/2025 B.Sc. Business Management Graduation List", status `approved`, each containing its students with the CGPA and the classification exactly as printed in the file (Second Class Upper / Second Class Lower — the sheet's own wording, not recomputed).
+### 4. Login and dashboard verification
+- Activate and sign in as a sample graduate from each of the three lists (matric number + entry year: 2022 or 2024) through the real login flow in a headless browser.
+- Screenshot each student dashboard and confirm matric, CGPA, credit units and standing match the source spreadsheet, and that a graduating student sees their class.
+- Do the same for one Islamic Studies student to confirm the re-imported per-course results, grades and CGPA render on `/results`.
+- Report anything that doesn't line up, including the expected empty results table for Top-Up graduates.
 
-4. **Create logins** — one auth account per student using the same synthetic-email matric login already used for the Islamic Studies cohort. Temporary password = year admitted (2022 or 2024), with the existing forced password-change-on-first-login flow and its "Skip for now" option.
+## Technical notes
 
-5. **Verify** — confirm counts (7 / 17 / 39), spot-check a few CGPAs and classifications against the sheets, and sign in as one student to confirm the dashboard and record page render.
-
-## Notes and constraints
-
-- Grading, classification, graduation-eligibility and academic-standing logic is left untouched. Because these files carry no course results, the automatic eligibility engine would report these students as blocked; the imported classification and CGPA are stored as historical fact from the official list rather than recomputed.
-- The existing Islamic Studies 2022/2023 data is not modified.
-- The header text inside all three sheets reads "B.sc BUSINESS ADMINISTRATIVE" — that appears to be a copy-paste artefact in the source documents; I'll use the programme implied by the filename and matric prefix (SOC / BSM) instead. Tell me if that's wrong.
+- Re-import uses the existing `admin_import_iss_lvt_2022(_payload, _dry_run)` function; no schema changes.
+- Validation is read-only SQL; reports are generated by a script writing to your downloads area.
+- No changes to grading, classification, graduation-eligibility or academic-standing logic.
+- Login checks use the existing `/api/public/matric-login-init` activation endpoint — no new auth paths.
