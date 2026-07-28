@@ -1518,6 +1518,7 @@ export type Database = {
         Args: { _dry_run?: boolean; _payload: Json }
         Returns: Json
       }
+      bulk_import_results: { Args: { p_data: Json }; Returns: number }
       check_graduation_eligibility: {
         Args: { _student_id: string }
         Returns: {
