@@ -24,6 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import akceLogo from "@/assets/akce-logo.asset.json";
 import { FEATURE_FLAGS } from "@/lib/feature-flags";
+import { ThemeToggle } from "@/components/portal/ThemeToggle";
+
 
 type NavGroup = "Overview" | "Academics" | "Results" | "Administration";
 
