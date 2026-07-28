@@ -41,25 +41,34 @@ export const Route = createFileRoute("/api/public/matric-login-init")({
         if (!student) return json({ error: "No student found with that matric number" }, 404);
 
         const syntheticEmail = matricToSyntheticEmail(student.matric_number);
+        const entryYear = student.entry_year != null ? String(student.entry_year) : "";
+        // Auth requires a stronger secret than a bare 4-digit year, so the account
+        // password is derived from the year. Students still only ever type the year.
+        const derived = entryYear ? `AKCOE@${entryYear}` : "";
+        const typedIsTemp = !!entryYear && (password === entryYear || password === derived);
 
-        // Already activated → the browser should just call signInWithPassword directly.
+        // Already activated → hand back the derived secret when the student is still
+        // on the temporary password, so the browser can complete sign-in.
         if (student.auth_user_id) {
+          if (typedIsTemp && student.default_password_changed === false) {
+            return json({ synthetic_email: syntheticEmail, signin_password: derived, activated: false }, 200);
+          }
           return json({ synthetic_email: syntheticEmail, activated: false }, 200);
         }
 
         // First-login: only the entry_year works as the temporary password.
-        const expected = student.entry_year != null ? String(student.entry_year) : "";
-        if (!expected || password !== expected) {
+        if (!typedIsTemp) {
           return json({ error: "Invalid matric number or temporary password" }, 401);
         }
 
-        // Create the auth user with the same password, then link it.
+        // Create the auth user with the derived password, then link it.
         const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
           email: syntheticEmail,
-          password,
+          password: derived,
           email_confirm: true,
           user_metadata: { matric_number: student.matric_number, synthetic: true },
         });
+
         if (createErr || !created?.user) {
           return json({ error: createErr?.message ?? "Failed to create account" }, 500);
         }
@@ -89,7 +98,7 @@ export const Route = createFileRoute("/api/public/matric-login-init")({
           )
           .then(() => {}, () => {});
 
-        return json({ synthetic_email: syntheticEmail, activated: true }, 200);
+        return json({ synthetic_email: syntheticEmail, signin_password: derived, activated: true }, 200);
       },
     },
   },
