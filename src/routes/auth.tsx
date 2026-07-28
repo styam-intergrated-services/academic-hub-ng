@@ -99,7 +99,7 @@ function AuthPage() {
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message, "email"));
     toast.success("Welcome back");
     window.location.href = dest;
   }
@@ -123,7 +123,7 @@ function AuthPage() {
       options: { emailRedirectTo: window.location.origin + dest, data: { full_name } },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message, "email"));
     setAwaitingVerify(email);
     toast.success("Check your email to confirm your account.");
   }
@@ -164,7 +164,7 @@ function AuthPage() {
       }
     }
     setLoading(false);
-    if (attempt.error) return toast.error(attempt.error.message);
+    if (attempt.error) return toast.error(friendlyAuthError(attempt.error.message, "matric"));
     toast.success("Welcome");
     // PortalShell redirects to /first-login when default_password_changed is false.
     window.location.href = dest;
