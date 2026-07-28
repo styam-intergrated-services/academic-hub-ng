@@ -43,6 +43,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated.students.index'
+import { Route as ApiPublicPasswordResetRequestRouteImport } from './routes/api/public/password-reset-request'
 import { Route as ApiPublicMatricLoginInitRouteImport } from './routes/api/public/matric-login-init'
 import { Route as AuthenticatedTranscriptsIdRouteImport } from './routes/_authenticated.transcripts.$id'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id'
@@ -232,6 +233,12 @@ const AuthenticatedStudentsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedStudentsRoute,
   } as any)
+const ApiPublicPasswordResetRequestRoute =
+  ApiPublicPasswordResetRequestRouteImport.update({
+    id: '/api/public/password-reset-request',
+    path: '/api/public/password-reset-request',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMatricLoginInitRoute =
   ApiPublicMatricLoginInitRouteImport.update({
     id: '/api/public/matric-login-init',
@@ -313,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
   '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
+  '/api/public/password-reset-request': typeof ApiPublicPasswordResetRequestRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -354,6 +362,7 @@ export interface FileRoutesByTo {
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
   '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
+  '/api/public/password-reset-request': typeof ApiPublicPasswordResetRequestRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
@@ -398,6 +407,7 @@ export interface FileRoutesById {
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/transcripts/$id': typeof AuthenticatedTranscriptsIdRoute
   '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
+  '/api/public/password-reset-request': typeof ApiPublicPasswordResetRequestRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/students/$id'
     | '/transcripts/$id'
     | '/api/public/matric-login-init'
+    | '/api/public/password-reset-request'
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -483,6 +494,7 @@ export interface FileRouteTypes {
     | '/students/$id'
     | '/transcripts/$id'
     | '/api/public/matric-login-init'
+    | '/api/public/password-reset-request'
     | '/students'
   id:
     | '__root__'
@@ -526,6 +538,7 @@ export interface FileRouteTypes {
     | '/_authenticated/students/$id'
     | '/_authenticated/transcripts/$id'
     | '/api/public/matric-login-init'
+    | '/api/public/password-reset-request'
     | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
@@ -541,6 +554,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMatricLoginInitRoute: typeof ApiPublicMatricLoginInitRoute
+  ApiPublicPasswordResetRequestRoute: typeof ApiPublicPasswordResetRequestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -783,6 +797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
       parentRoute: typeof AuthenticatedStudentsRoute
     }
+    '/api/public/password-reset-request': {
+      id: '/api/public/password-reset-request'
+      path: '/api/public/password-reset-request'
+      fullPath: '/api/public/password-reset-request'
+      preLoaderRoute: typeof ApiPublicPasswordResetRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/matric-login-init': {
       id: '/api/public/matric-login-init'
       path: '/api/public/matric-login-init'
@@ -940,6 +961,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMatricLoginInitRoute: ApiPublicMatricLoginInitRoute,
+  ApiPublicPasswordResetRequestRoute: ApiPublicPasswordResetRequestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
