@@ -1,48 +1,31 @@
-## Goal
+## What I verified
 
-Produce one complete, printable list of login details for every user of the portal — staff (Provost, Exam Director, HODs, Registry/ICT, lecturers, admin) and students — so you can hand out credentials.
+I tested the real accounts against the authentication service and drove the live site (www.akcoekano.com) in a browser:
 
-## The one blocker
+- All 11 staff accounts (Provost, Exam Director, 9 HODs) authenticate correctly with their phone-number temporary passwords.
+- Student matric login works: `FUDMA/AKCOE/22/ISL/0210` + `2022` signs in and reaches the password-setup screen.
+- Staff login works: `danladiabdu4@gmail.com` + `08064662008` signs in as HOD.
 
-Passwords are stored hashed, so no one (including me) can read an existing password back out of the system. For any account where the password was never recorded, the only way to give you a usable credential is to set a fresh known one.
+So the accounts and backend are fine. The one failure I could reproduce is in the sign-in page itself.
 
-## What I'll do
+## The bug
 
-**1. Standardise temporary passwords**
+On my first live attempt, tapping **Sign in** silently did nothing — the page reloaded with `?email=...&password=...` in the address bar.
 
-- Staff (Provost, Exam Director, 9 HODs, Registry/ICT, lecturers, admin): temporary password = their registered phone number, matching the existing rule. Where a phone number is missing, generate a strong readable one (e.g. `Akcoe@2026`).
-- Students: no change needed — matric-number login with year of entry as the temporary password already works for every imported student.
-- Every staff account keeps the forced password change on first sign-in, so the temporary password only works once.
+The sign-in page is server-rendered and its form only becomes interactive after the page's JavaScript loads. Tapping Sign in before that (common on a phone with a slow connection) makes the browser do a plain form submission: nothing reaches the auth service, no error appears, and the typed password ends up visible in the URL.
 
-**2. Fill the lecturer gap**
+The "invalid login credentials" entries in the auth logs are separate and consistent with mistyped passwords, plus one never-confirmed account created with a typo'd email (`musbahumukhtar219@…` vs the correct `musbahmukhtar219@…`).
 
-Only one account currently carries the `lecturer` role, so result upload can't be demonstrated broadly. I'll grant the `lecturer` role to each HOD (they teach as well as approve) so every department has a working uploader.
+## Fix
 
-**3. Generate the credentials sheet**
+1. **Stop pre-hydration submits** in `src/routes/auth.tsx` (email sign-in, matric sign-in, sign-up, forgot password): gate the submit buttons on a `hydrated` flag so they can't fall through to a native browser submit, with a brief loading state until the page is interactive.
+2. **Never leak passwords into the URL**: add `method="post"` as a safety net, and on mount strip any `email`/`password` query parameters via `history.replaceState`, pre-filling only the email field.
+3. **Clear error feedback**: friendly messages for wrong password, unconfirmed account, and matric mistakes ("use your year of entry as the temporary password"), so a failed attempt is never silent.
+4. **Delete the typo account** `musbahumukhtar219@gmail.com` (unconfirmed, never signed in) so the Exam Director only has the correct `musbahmukhtar219@gmail.com` account.
+5. **Re-verify after publishing**: student matric login, staff email login, and a deliberate wrong password showing a visible error.
 
-A single document (PDF + CSV) with these columns, grouped by role:
+## Technical details
 
-```text
-Name | Staff code | Login (email or matric) | Temporary password | Role | Dashboard they land on
-```
-
-Sections:
-- Provost
-- Examination Director
-- Heads of Department (9)
-- Registry / ICT Admin / Super Admin
-- Lecturers
-- Students — a per-programme sheet (Islamic Studies LVT, Sociology Top-Up, Business Management Top-Up, NCE) listing matric number and entry-year password
-
-Files land in your downloads area as `AKCOE_Portal_Logins.pdf` and `AKCOE_Portal_Logins.csv`.
-
-**4. Sanity check**
-
-Sign in as one staff account and one student account against the live preview to confirm the sheet's credentials actually work and route to the right dashboard.
-
-## Technical notes
-
-- Password resets go through the admin auth API in a server function; no schema change is needed.
-- `must_change_password` stays `true` for staff so the first-login screen still fires.
-- Nothing in grading, classification, graduation, standing, or the imported results data is touched.
-- The credentials sheet contains live passwords — treat it as confidential and rotate anything shared broadly.
+- Frontend change is confined to `src/routes/auth.tsx`; no schema, RLS, or auth-configuration changes.
+- `hydrated` state set in `useEffect` controls `disabled` on submit buttons (disabled during SSR, enabled after hydration).
+- The typo account removal is an auth-admin delete of an unconfirmed user with no linked profile data.
