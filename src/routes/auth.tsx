@@ -219,15 +219,15 @@ function AuthPage() {
           </CardHeader>
           <CardContent>
             {forgotOpen ? (
-              <form onSubmit={handleForgot} className="space-y-4">
+              <form onSubmit={handleForgot} method="post" className="space-y-4">
                 <div>
                   <Label htmlFor="forgot-email">Email</Label>
                   <Input id="forgot-email" name="email" type="email" required autoComplete="email" />
                   <p className="text-xs text-muted-foreground mt-2">We'll email you a link to set a new password.</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={loading} className="flex-1 bg-primary text-primary-foreground">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
+                  <Button type="submit" disabled={busy} className="flex-1 bg-primary text-primary-foreground">
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
                   </Button>
                   <Button type="button" variant="ghost" onClick={() => setForgotOpen(false)}>Back</Button>
                 </div>
@@ -249,11 +249,11 @@ function AuthPage() {
                   <TabsTrigger value="signup">Sign up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin" className="space-y-4 mt-4">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" /></div>
+                  <form onSubmit={handleSignIn} method="post" className="space-y-4">
+                    <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" defaultValue={prefillEmail} key={prefillEmail} /></div>
                     <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
-                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
+                    <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Sign in"}
                     </Button>
                     <button
                       type="button"
@@ -265,7 +265,7 @@ function AuthPage() {
                   </form>
                 </TabsContent>
                 <TabsContent value="matric" className="space-y-4 mt-4">
-                  <form onSubmit={handleMatricSignIn} className="space-y-4">
+                  <form onSubmit={handleMatricSignIn} method="post" className="space-y-4">
                     <div>
                       <Label htmlFor="matric">Matric number</Label>
                       <Input id="matric" name="matric" required placeholder="AKCOE/2022/0001" autoCapitalize="characters" />
@@ -274,8 +274,8 @@ function AuthPage() {
                       <Label htmlFor="matric-password">Password</Label>
                       <Input id="matric-password" name="password" type="password" required autoComplete="current-password" />
                     </div>
-                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in with matric"}
+                    <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Sign in with matric"}
                     </Button>
                     <p className="text-xs text-muted-foreground">
                       First time signing in? Use your <span className="font-medium">year of entry</span> (e.g. 2022) as your temporary password.
@@ -284,16 +284,18 @@ function AuthPage() {
                   </form>
                 </TabsContent>
                 <TabsContent value="signup" className="space-y-4 mt-4">
-                  <form onSubmit={handleSignUp} className="space-y-4">
+                  <form onSubmit={handleSignUp} method="post" className="space-y-4">
                     <div><Label htmlFor="full_name">Full name</Label><Input id="full_name" name="full_name" required /></div>
                     <div><Label htmlFor="email2">Email</Label><Input id="email2" name="email" type="email" required autoComplete="email" /></div>
                     <div><Label htmlFor="password2">Password</Label><Input id="password2" name="password" type="password" required minLength={8} autoComplete="new-password" /></div>
-                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
+                    <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Create account"}
                     </Button>
                     <p className="text-xs text-muted-foreground">You'll receive an email to confirm your address before you can sign in.</p>
                   </form>
                 </TabsContent>
+              </Tabs>
+            )}
               </Tabs>
             )}
           </CardContent>
