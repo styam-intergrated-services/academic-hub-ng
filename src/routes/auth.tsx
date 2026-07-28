@@ -335,6 +335,13 @@ function AuthPage() {
                     <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Sign in with matric"}
                     </Button>
+                    <button
+                      type="button"
+                      onClick={() => setForgotOpen(true)}
+                      className="text-xs text-primary hover:underline block w-full text-center"
+                    >
+                      Forgot password?
+                    </button>
                     <p className="text-xs text-muted-foreground">
                       First time signing in? Use your <span className="font-medium">year of entry</span> (e.g. 2022) as your temporary password.
                       You'll be asked to set a new password right after.
