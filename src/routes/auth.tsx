@@ -28,6 +28,26 @@ function safeNext(next: string | undefined): string {
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
 const passwordSchema = z.string().min(8, "At least 8 characters").max(72);
 
+/** Turn raw auth errors into something a student or staff member can act on. */
+function friendlyAuthError(message: string | undefined, mode: "email" | "matric"): string {
+  const m = (message ?? "").toLowerCase();
+  if (m.includes("invalid login credentials")) {
+    return mode === "matric"
+      ? "Incorrect matric number or password. First time signing in? Use your year of entry (e.g. 2022)."
+      : "Incorrect email or password. Please check and try again.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "This account hasn't been confirmed yet. Check your inbox for the confirmation link.";
+  }
+  if (m.includes("rate limit") || m.includes("too many")) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  if (m.includes("failed to fetch") || m.includes("network")) {
+    return "Network problem — check your connection and try again.";
+  }
+  return message || "Sign in failed. Please try again.";
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { next } = Route.useSearch();
@@ -35,12 +55,35 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [awaitingVerify, setAwaitingVerify] = useState<string | null>(null);
+  // The page is server-rendered: until React hydrates, a tap on a submit button
+  // would fall through to a native form GET (silent failure + password in the URL).
+  const [hydrated, setHydrated] = useState(false);
+  const [prefillEmail, setPrefillEmail] = useState("");
 
   useEffect(() => {
+    setHydrated(true);
+
+    // Clean up credentials left in the URL by a pre-hydration native submit.
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("email") || url.searchParams.has("password")) {
+        setPrefillEmail(url.searchParams.get("email") ?? "");
+        url.searchParams.delete("email");
+        url.searchParams.delete("password");
+        url.searchParams.delete("matric");
+        url.searchParams.delete("full_name");
+        window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      }
+    } catch {
+      /* ignore */
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) window.location.href = dest;
     });
   }, [dest]);
+
+  const busy = loading || !hydrated;
 
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -56,7 +99,7 @@ function AuthPage() {
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message, "email"));
     toast.success("Welcome back");
     window.location.href = dest;
   }
@@ -80,7 +123,7 @@ function AuthPage() {
       options: { emailRedirectTo: window.location.origin + dest, data: { full_name } },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyAuthError(error.message, "email"));
     setAwaitingVerify(email);
     toast.success("Check your email to confirm your account.");
   }
@@ -121,7 +164,7 @@ function AuthPage() {
       }
     }
     setLoading(false);
-    if (attempt.error) return toast.error(attempt.error.message);
+    if (attempt.error) return toast.error(friendlyAuthError(attempt.error.message, "matric"));
     toast.success("Welcome");
     // PortalShell redirects to /first-login when default_password_changed is false.
     window.location.href = dest;
@@ -176,15 +219,15 @@ function AuthPage() {
           </CardHeader>
           <CardContent>
             {forgotOpen ? (
-              <form onSubmit={handleForgot} className="space-y-4">
+              <form onSubmit={handleForgot} method="post" className="space-y-4">
                 <div>
                   <Label htmlFor="forgot-email">Email</Label>
                   <Input id="forgot-email" name="email" type="email" required autoComplete="email" />
                   <p className="text-xs text-muted-foreground mt-2">We'll email you a link to set a new password.</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={loading} className="flex-1 bg-primary text-primary-foreground">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
+                  <Button type="submit" disabled={busy} className="flex-1 bg-primary text-primary-foreground">
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
                   </Button>
                   <Button type="button" variant="ghost" onClick={() => setForgotOpen(false)}>Back</Button>
                 </div>
@@ -206,11 +249,11 @@ function AuthPage() {
                   <TabsTrigger value="signup">Sign up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin" className="space-y-4 mt-4">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" /></div>
+                  <form onSubmit={handleSignIn} method="post" className="space-y-4">
+                    <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" defaultValue={prefillEmail} key={prefillEmail} /></div>
                     <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
-                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
+                    <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Sign in"}
                     </Button>
                     <button
                       type="button"
@@ -222,7 +265,7 @@ function AuthPage() {
                   </form>
                 </TabsContent>
                 <TabsContent value="matric" className="space-y-4 mt-4">
-                  <form onSubmit={handleMatricSignIn} className="space-y-4">
+                  <form onSubmit={handleMatricSignIn} method="post" className="space-y-4">
                     <div>
                       <Label htmlFor="matric">Matric number</Label>
                       <Input id="matric" name="matric" required placeholder="AKCOE/2022/0001" autoCapitalize="characters" />
@@ -231,8 +274,8 @@ function AuthPage() {
                       <Label htmlFor="matric-password">Password</Label>
                       <Input id="matric-password" name="password" type="password" required autoComplete="current-password" />
                     </div>
-                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in with matric"}
+                    <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Sign in with matric"}
                     </Button>
                     <p className="text-xs text-muted-foreground">
                       First time signing in? Use your <span className="font-medium">year of entry</span> (e.g. 2022) as your temporary password.
@@ -241,12 +284,12 @@ function AuthPage() {
                   </form>
                 </TabsContent>
                 <TabsContent value="signup" className="space-y-4 mt-4">
-                  <form onSubmit={handleSignUp} className="space-y-4">
+                  <form onSubmit={handleSignUp} method="post" className="space-y-4">
                     <div><Label htmlFor="full_name">Full name</Label><Input id="full_name" name="full_name" required /></div>
                     <div><Label htmlFor="email2">Email</Label><Input id="email2" name="email" type="email" required autoComplete="email" /></div>
                     <div><Label htmlFor="password2">Password</Label><Input id="password2" name="password" type="password" required minLength={8} autoComplete="new-password" /></div>
-                    <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
+                    <Button type="submit" disabled={busy} className="w-full bg-primary text-primary-foreground">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hydrated ? "Loading…" : "Create account"}
                     </Button>
                     <p className="text-xs text-muted-foreground">You'll receive an email to confirm your address before you can sign in.</p>
                   </form>
