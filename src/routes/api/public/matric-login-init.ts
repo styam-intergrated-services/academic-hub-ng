@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/public/matric-login-init")({
 
         const { data: student, error } = await supabaseAdmin
           .from("students")
-          .select("id, matric_number, entry_year, auth_user_id, default_password_changed")
+          .select("id, matric_number, full_name, entry_year, auth_user_id, default_password_changed")
           .eq("matric_number", matric)
           .maybeSingle();
         if (error) return json({ error: "Lookup failed" }, 500);
