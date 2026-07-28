@@ -28,6 +28,26 @@ function safeNext(next: string | undefined): string {
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
 const passwordSchema = z.string().min(8, "At least 8 characters").max(72);
 
+/** Turn raw auth errors into something a student or staff member can act on. */
+function friendlyAuthError(message: string | undefined, mode: "email" | "matric"): string {
+  const m = (message ?? "").toLowerCase();
+  if (m.includes("invalid login credentials")) {
+    return mode === "matric"
+      ? "Incorrect matric number or password. First time signing in? Use your year of entry (e.g. 2022)."
+      : "Incorrect email or password. Please check and try again.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "This account hasn't been confirmed yet. Check your inbox for the confirmation link.";
+  }
+  if (m.includes("rate limit") || m.includes("too many")) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  if (m.includes("failed to fetch") || m.includes("network")) {
+    return "Network problem — check your connection and try again.";
+  }
+  return message || "Sign in failed. Please try again.";
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { next } = Route.useSearch();
@@ -35,12 +55,35 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [awaitingVerify, setAwaitingVerify] = useState<string | null>(null);
+  // The page is server-rendered: until React hydrates, a tap on a submit button
+  // would fall through to a native form GET (silent failure + password in the URL).
+  const [hydrated, setHydrated] = useState(false);
+  const [prefillEmail, setPrefillEmail] = useState("");
 
   useEffect(() => {
+    setHydrated(true);
+
+    // Clean up credentials left in the URL by a pre-hydration native submit.
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("email") || url.searchParams.has("password")) {
+        setPrefillEmail(url.searchParams.get("email") ?? "");
+        url.searchParams.delete("email");
+        url.searchParams.delete("password");
+        url.searchParams.delete("matric");
+        url.searchParams.delete("full_name");
+        window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      }
+    } catch {
+      /* ignore */
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) window.location.href = dest;
     });
   }, [dest]);
+
+  const busy = loading || !hydrated;
 
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
