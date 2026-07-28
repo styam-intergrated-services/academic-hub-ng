@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, UserPlus, X } from "lucide-react";
 import { CreateStaffAccountCard } from "@/components/admin/CreateStaffAccountCard";
+import { PasswordResetRequestsCard } from "@/components/admin/PasswordResetRequestsCard";
 
 
 const ROLES: AppRole[] = ["super_admin","ict_admin","registry","bursary","dean","hod","lecturer","student","applicant"];
@@ -54,6 +55,8 @@ function UsersPage() {
       </div>
 
       <CreateStaffAccountCard />
+
+      <PasswordResetRequestsCard />
 
 
 
