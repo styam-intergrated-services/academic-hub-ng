@@ -92,11 +92,15 @@ function ResetPasswordPage() {
 
 
           <CardDescription>
-            {ready ? "Choose a new password for your AKCOE account." : "Verifying reset link…"}
+            {linkError
+              ? "This reset link is no longer valid."
+              : ready
+                ? "Choose a new password for your AKCOE account."
+                : "Verifying reset link…"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {ready ? (
+          {ready && !linkError ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="password">New password</Label>
@@ -112,10 +116,11 @@ function ResetPasswordPage() {
             </form>
           ) : (
             <div className="text-sm text-muted-foreground">
-              If nothing happens, the reset link may have expired.{" "}
+              {linkError ?? "If nothing happens, the reset link may have expired."}{" "}
               <a href="/auth" className="text-primary hover:underline">Request a new one</a>.
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
