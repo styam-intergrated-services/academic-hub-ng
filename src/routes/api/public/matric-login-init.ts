@@ -98,7 +98,7 @@ export const Route = createFileRoute("/api/public/matric-login-init")({
           )
           .then(() => {}, () => {});
 
-        return json({ synthetic_email: syntheticEmail, activated: true }, 200);
+        return json({ synthetic_email: syntheticEmail, signin_password: derived, activated: true }, 200);
       },
     },
   },

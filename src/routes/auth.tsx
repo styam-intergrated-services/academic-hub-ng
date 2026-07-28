@@ -106,12 +106,15 @@ function AuthPage() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ matric, password }),
         });
-        const payload = (await resp.json().catch(() => ({}))) as { error?: string };
+        const payload = (await resp.json().catch(() => ({}))) as { error?: string; signin_password?: string };
         if (!resp.ok) {
           setLoading(false);
           return toast.error(payload?.error ?? "Invalid matric number or password");
         }
-        attempt = await supabase.auth.signInWithPassword({ email: syntheticEmail, password });
+        attempt = await supabase.auth.signInWithPassword({
+          email: syntheticEmail,
+          password: payload.signin_password ?? password,
+        });
       } catch {
         setLoading(false);
         return toast.error("Could not activate your account. Please try again.");
