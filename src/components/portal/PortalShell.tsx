@@ -228,6 +228,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
@@ -236,6 +237,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
             >
               <Bell className="size-5" />
             </Button>
+
             {isLoading ? (
               <Skeleton className="h-9 w-9 rounded-full sm:w-32" />
             ) : (
