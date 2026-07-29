@@ -1,32 +1,91 @@
 ## Goal
 
-Take the `2022-2023_DE_AKCOE_HAU.xlsx` workbook and add it to the results already in the portal — no separate system, same tables, same archive, same transcripts. Every student in that file gets a student record, a profile, a login, and a working dashboard, exactly like the Islamic Studies cohort.
+Two things, in order:
+1. Take the whole portal from "2019 bootstrap" to a 2026 editorial-tech look — real imagery, depth, motion, text-reveal animations.
+2. Build the admissions/application journey as **front end only** — screens, states and flows with local mock data, no backend wiring.
 
-## What the file contains (already inspected)
+Nothing about existing results, auth, roles or database logic changes.
 
-- `REG.` sheet: 124 students, matric numbers in the form `FUDMA/AKCOE/HAU/22/XXXX`, all Direct Entry.
-- `SCR(CONT1)` … `SCR(CONT6)`: raw CA and Exam scores per course for Contacts 1–6 of the 2022/2023 session.
-- Courses: HAU 111–161, HAU 211–261, ENG 112/132, GST 111–131, GST 211–221 and the later contacts, mostly 2 credit units.
-- Contacts 2–6 also carry a "CARRYOVER COURSES" block — resits of earlier courses.
+---
 
-None of these 124 students, and no B.A. Hausa (LVT) programme, exist in the portal yet.
+## Part 1 — Visual system refresh
 
-## Steps
+**Palette & tokens** (`src/styles.css`)
+- Keep the Navy & Gold identity but deepen it: richer navy surfaces, a brighter champagne-gold accent, warmer ivory, plus new tokens for glass surfaces, glow, mesh gradient and elevated shadows.
+- Add tokens: `--gradient-mesh`, `--glass-bg`, `--glass-border`, `--shadow-glow`, `--shadow-lift`.
+- Typography scale bump: larger display sizes, tighter tracking, better line heights. Playfair Display stays for headings, Inter for body.
+- Dark mode gets the same treatment, not an afterthought.
 
-1. **Extract the workbook** into a data file (`src/lib/imports/akcoe-hau-2022.data.json`) holding the 124 students and every course score, the same way the Islamic Studies import works. Scores are kept as separate CA and Exam values since the file provides both.
+**Motion layer**
+- Install `motion` (Motion for React) for reveal/stagger/layout animation.
+- Build reusable primitives in `src/components/motion/`:
+  - `TextReveal` — word-by-word or line-by-line masked reveal for headings
+  - `Reveal` — scroll-triggered fade/slide with stagger support
+  - `Counter` — animated number count-up for stats
+  - `Marquee`, `Spotlight` (cursor-follow glow on cards), `Magnetic` (buttons)
+- All motion respects `prefers-reduced-motion`.
 
-2. **Create the programme** — B.A. Hausa (LVT), FUDMA-affiliated, under the Hausa Language department (created if it isn't there), so these students sit in the right place in the department/level hierarchy.
+**Imagery** — the site currently has zero images. Generate a branded set:
+- Campus/hero photography-style images (lecture hall, students, library, graduation)
+- Abstract navy/gold gradient textures for section backgrounds
+- Programme-card thumbnails for the schools listing
+- Subtle noise/grain overlay utility
 
-3. **Create the 124 student records** with their names, matric numbers, entry year 2022, and the correct level based on how far they progressed.
+**Pages reworked**
+- `/` — full-bleed cinematic hero with layered image + mesh gradient, animated headline reveal, animated stat counters, bento grid of portal features, schools showcase with imagery, CTA band.
+- `/about` — editorial layout: pull-quotes for vision/mission, scroll-revealed values, school cards with images and hover depth (replaces the flat card grid).
+- `/contact` — split layout, map-style visual, animated form fields, staggered contact cards.
+- `/auth` — split-screen: brand imagery panel + polished form with motion feedback.
+- `SiteLayout` — glass sticky header that condenses on scroll, mobile sheet nav (currently nav links are hidden on mobile), richer footer.
+- Portal shell + dashboards — refined sidebar with active-state motion, animated stat cards, skeleton polish, page transitions on route change. Layout and data stay as-is; presentation only.
 
-4. **Import the results** into the existing results table as published records, so they immediately appear in the Results Archive, transcripts, broadsheets and reports alongside the 2,056 results already there. Where a course was resat in a carryover block, the later score replaces the earlier one so the final grade is the one that counts. Any result that already exists is skipped rather than duplicated.
+---
 
-5. **Recompute GPA/CGPA and standing** for each student from the published results.
+## Part 2 — Admissions front end (no backend)
 
-6. **Create logins and profiles** — one account per student, signing in with their matric number and the standard temporary password `AKCOE@2022`, flagged to prompt a password change on first sign-in. A profile row carrying the student's full name is created so the dashboard greets them correctly.
+New route group under `/admissions`, driven entirely by local mock data in `src/lib/mock/admissions.ts`.
 
-7. **Verify** by signing in as one of the Hausa students and confirming the dashboard shows their courses, grades, GPA/CGPA and transcript, and that the Results Archive now lists Hausa Language alongside Islamic Studies.
+```text
+/admissions            marketing page: how to apply, requirements, timeline, fees
+/admissions/apply      multi-step application wizard
+/admissions/status     applicant status tracker
+/admissions/review     staff review queue (UI shell)
+/admissions/letter     admission letter preview + print
+```
+
+**Apply wizard** — 5 animated steps with progress rail:
+1. Personal details
+2. Contact & origin
+3. Academic history (O'level grid, prior qualifications)
+4. Programme choice (1st and 2nd choice with programme cards)
+5. Documents + review & submit → animated success screen with mock application number
+
+Client-side validation with zod + react-hook-form, state held in the wizard, no persistence.
+
+**Status tracker** — animated stepper: Submitted → Under review → Screening → Decision → Admitted, with a mock timeline.
+
+**Review queue** — table of mock applications with filters, a detail drawer, and approve/reject/waitlist buttons that mutate local state only.
+
+**Admission letter** — print-ready A4 letter with crest, matric number, programme, session, signature block; uses the existing print CSS.
+
+Every screen is clearly separated from the live `/apply` route so nothing existing breaks.
+
+---
 
 ## Technical notes
 
-The import runs through the existing `admin_bulk_import_results` routine (extended slightly to accept a full name and a programme hint for new students) rather than a new one-off function, so future score sheets from other departments follow the same path. Account creation reuses the same bulk auth-provisioning approach used for the 119 existing student accounts. A dry-run pass is done first to surface any bad rows before anything is written.
+- New dependency: `motion`. No other runtime additions.
+- All colors via semantic tokens in `src/styles.css` — no hardcoded hex or `text-white` in components.
+- Images generated as assets and imported directly; hero image URL also wired into `og:image`/`twitter:image` on the routes that render it.
+- Each new route gets its own `head()` with unique title/description/OG tags; new routes added to `sitemap.xml`.
+- Zero changes to server functions, migrations, RLS or auth. The admissions module imports no Supabase client.
+
+---
+
+## Suggested order
+
+1. Tokens, typography, motion primitives, image generation
+2. Public pages: `/`, `/about`, `/contact`, `/auth`, `SiteLayout`
+3. Portal shell + dashboard presentation polish
+4. Admissions front end (5 screens)
+5. Responsive + reduced-motion + dark-mode pass
