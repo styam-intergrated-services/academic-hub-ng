@@ -24,6 +24,7 @@ function DashboardRouter() {
   switch (user.primary_role) {
     case "student":     return <StudentDashboard user={user} />;
     case "lecturer":    return <LecturerDashboard user={user} />;
+    case "examination_officer": return <ExamOfficerDashboard user={user} />;
     case "provost":     return <ProvostDashboard user={user} />;
     case "hod":
     case "dean":
