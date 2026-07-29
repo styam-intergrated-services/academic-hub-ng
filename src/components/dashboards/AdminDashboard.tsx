@@ -13,6 +13,7 @@ import { PipelineWidget } from "@/components/dashboards/widgets/PipelineWidget";
 import { ApprovalsShortcut } from "@/components/dashboards/widgets/ApprovalsShortcut";
 import { SessionBanner } from "@/components/dashboards/widgets/SessionBanner";
 import { GpaTrendsCard } from "@/components/dashboards/widgets/GpaTrendsCard";
+import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
 
 export function AdminDashboard({ user }: { user: PortalUser }) {
   const stats = useServerFn(getManagementStats);
