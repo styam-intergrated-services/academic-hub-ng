@@ -1585,6 +1585,7 @@ export type Database = {
           total_credits_earned: number
         }[]
       }
+      claim_pending_role_grants: { Args: never; Returns: number }
       compute_grade: {
         Args: { _score: number }
         Returns: {
