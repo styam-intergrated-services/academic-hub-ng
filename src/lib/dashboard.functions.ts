@@ -243,7 +243,7 @@ export const getStudentExtras = createServerFn({ method: "GET" })
       }));
     }
 
-    return { recentResults, semesterGpa, upcomingExams, outstandingFees: 0 };
+    return { recentResults, semesterGpa, upcomingExams, outstandingFees: 0, academic, graduation };
   });
 
 export interface LecturerClass {
