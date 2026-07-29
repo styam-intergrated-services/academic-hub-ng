@@ -134,6 +134,8 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
         {isFinancial && <QuickCard title="Fees & Payments" desc="Fee structures and payment verification" to="/fees" icon={Wallet} />}
         <QuickCard title="Administration" desc="Sessions, semesters and general settings" to="/admin" icon={Settings} />
       </div>
+
+      <NotificationsCard />
     </div>
   );
 }
