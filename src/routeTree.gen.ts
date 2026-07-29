@@ -36,6 +36,7 @@ import { Route as AuthenticatedExamOfficersRouteImport } from './routes/_authent
 import { Route as AuthenticatedDepartmentsRouteImport } from './routes/_authenticated.departments'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticated.courses'
+import { Route as AuthenticatedBulkResultsRouteImport } from './routes/_authenticated.bulk-results'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated.approvals'
 import { Route as AuthenticatedApplyRouteImport } from './routes/_authenticated.apply'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated.applications'
@@ -196,6 +197,12 @@ const AuthenticatedCoursesRoute = AuthenticatedCoursesRouteImport.update({
   path: '/courses',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedBulkResultsRoute =
+  AuthenticatedBulkResultsRouteImport.update({
+    id: '/bulk-results',
+    path: '/bulk-results',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
   id: '/approvals',
   path: '/approvals',
@@ -308,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/bulk-results': typeof AuthenticatedBulkResultsRoute
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
@@ -353,6 +361,7 @@ export interface FileRoutesByTo {
   '/applications': typeof AuthenticatedApplicationsRoute
   '/apply': typeof AuthenticatedApplyRoute
   '/approvals': typeof AuthenticatedApprovalsRoute
+  '/bulk-results': typeof AuthenticatedBulkResultsRoute
   '/courses': typeof AuthenticatedCoursesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departments': typeof AuthenticatedDepartmentsRoute
@@ -399,6 +408,7 @@ export interface FileRoutesById {
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/apply': typeof AuthenticatedApplyRoute
   '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
+  '/_authenticated/bulk-results': typeof AuthenticatedBulkResultsRoute
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/departments': typeof AuthenticatedDepartmentsRoute
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/applications'
     | '/apply'
     | '/approvals'
+    | '/bulk-results'
     | '/courses'
     | '/dashboard'
     | '/departments'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/applications'
     | '/apply'
     | '/approvals'
+    | '/bulk-results'
     | '/courses'
     | '/dashboard'
     | '/departments'
@@ -536,6 +548,7 @@ export interface FileRouteTypes {
     | '/_authenticated/applications'
     | '/_authenticated/apply'
     | '/_authenticated/approvals'
+    | '/_authenticated/bulk-results'
     | '/_authenticated/courses'
     | '/_authenticated/dashboard'
     | '/_authenticated/departments'
@@ -774,6 +787,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoursesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bulk-results': {
+      id: '/_authenticated/bulk-results'
+      path: '/bulk-results'
+      fullPath: '/bulk-results'
+      preLoaderRoute: typeof AuthenticatedBulkResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/approvals': {
       id: '/_authenticated/approvals'
       path: '/approvals'
@@ -930,6 +950,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedApplyRoute: typeof AuthenticatedApplyRoute
   AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
+  AuthenticatedBulkResultsRoute: typeof AuthenticatedBulkResultsRoute
   AuthenticatedCoursesRoute: typeof AuthenticatedCoursesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDepartmentsRoute: typeof AuthenticatedDepartmentsRoute
@@ -962,6 +983,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedApplyRoute: AuthenticatedApplyRoute,
   AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
+  AuthenticatedBulkResultsRoute: AuthenticatedBulkResultsRoute,
   AuthenticatedCoursesRoute: AuthenticatedCoursesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDepartmentsRoute: AuthenticatedDepartmentsRoute,

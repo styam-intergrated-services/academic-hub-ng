@@ -205,3 +205,106 @@ export const getResultsArchive = createServerFn({ method: "GET" })
 
     return { scope: full ? "college" : "scoped", rows, truncated };
   });
+
+/* -------------------------------------------------------------------------
+ * Graduating / summary-only records.
+ *
+ * Some cohorts were handed over as graduation lists (final CGPA, credits
+ * earned, class of degree) with no course-by-course score sheets. Those
+ * students would otherwise be invisible in the archive, which groups by
+ * course result. This exposes them as a separate, clearly-labelled section.
+ * ---------------------------------------------------------------------- */
+
+export type SummaryRow = {
+  student_id: string;
+  matric_number: string;
+  student_name: string;
+  department_id: string;
+  department_name: string;
+  programme_id: string | null;
+  programme_name: string | null;
+  level_code: string;
+  entry_year: number | null;
+  cgpa: number;
+  total_credit_units: number;
+  standing: string;
+  classification: string;
+  has_course_results: boolean;
+};
+
+/** 6-tier NCE/degree classification from CGPA (5-point scale). */
+function classify(cgpa: number): string {
+  if (cgpa >= 4.5) return "First Class";
+  if (cgpa >= 3.5) return "Second Class Upper";
+  if (cgpa >= 2.4) return "Second Class Lower";
+  if (cgpa >= 1.5) return "Third Class";
+  if (cgpa >= 1.0) return "Pass";
+  return "Unclassified";
+}
+
+export const getSummaryRecords = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SummaryRow[]> => {
+    const { supabase, userId } = context;
+    const roles = await getRoles(supabase, userId);
+    const allowed = roles.some((r) =>
+      (FULL_ACCESS as readonly string[]).includes(r) || r === "examination_officer"
+    );
+    if (!allowed) throw new Error("Forbidden: results archive is restricted");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: students, error } = await supabaseAdmin
+      .from("students")
+      .select(`
+        id, matric_number, full_name, auth_user_id, cgpa, total_credit_units,
+        standing, entry_year,
+        department:departments(id, name),
+        programme:programmes(id, name),
+        level:levels!students_current_level_id_fkey(code)
+      `)
+      .order("matric_number");
+    if (error) throw error;
+
+    const ids = (students ?? []).map((s: any) => s.id);
+    const withResults = new Set<string>();
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data } = await supabaseAdmin
+        .from("results")
+        .select("student_id")
+        .in("student_id", ids.slice(i, i + 200));
+      for (const r of data ?? []) withResults.add(r.student_id);
+    }
+
+    const authIds = Array.from(
+      new Set((students ?? []).map((s: any) => s.auth_user_id).filter(Boolean))
+    ) as string[];
+    const nameByAuthId = new Map<string, string>();
+    for (let i = 0; i < authIds.length; i += 500) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", authIds.slice(i, i + 500));
+      for (const p of profs ?? []) if (p.full_name) nameByAuthId.set(p.id, p.full_name);
+    }
+
+    return (students ?? []).map((s: any) => {
+      const cgpa = Number(s.cgpa ?? 0);
+      return {
+        student_id: s.id,
+        matric_number: s.matric_number,
+        student_name: s.full_name || nameByAuthId.get(s.auth_user_id) || "—",
+        department_id: s.department?.id ?? "",
+        department_name: s.department?.name ?? "Unassigned department",
+        programme_id: s.programme?.id ?? null,
+        programme_name: s.programme?.name ?? null,
+        level_code: s.level?.code ?? "—",
+        entry_year: s.entry_year ?? null,
+        cgpa,
+        total_credit_units: s.total_credit_units ?? 0,
+        standing: s.standing ?? "good",
+        classification: classify(cgpa),
+        has_course_results: withResults.has(s.id),
+      };
+    });
+  });

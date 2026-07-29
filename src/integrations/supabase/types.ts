@@ -1561,6 +1561,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_bulk_import_results: {
+        Args: { _dry_run?: boolean; _payload: Json }
+        Returns: Json
+      }
       admin_import_iss_lvt_2022: {
         Args: { _dry_run?: boolean; _payload: Json }
         Returns: Json
