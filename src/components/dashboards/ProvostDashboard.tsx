@@ -110,6 +110,10 @@ export function ProvostDashboard({ user }: { user: PortalUser }) {
         </Card>
       </div>
 
+      <GpaTrendsCard />
+
+
+
       <Card>
         <CardHeader>
           <CardTitle className="font-serif text-lg">Executive quick access</CardTitle>
