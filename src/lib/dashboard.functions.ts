@@ -62,7 +62,24 @@ export interface StudentExtras {
     venue: string;
   }[];
   outstandingFees: number;
+  academic: {
+    matric_number: string;
+    programme: string;
+    department: string;
+    level: string;
+    entry_year: number | null;
+    cgpa: number;
+    total_credit_units: number;
+  } | null;
+  graduation: {
+    id: string;
+    title: string;
+    status: string;
+    cgpa: number | null;
+    classification: string | null;
+  }[];
 }
+
 
 export const getStudentExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
