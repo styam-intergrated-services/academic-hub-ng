@@ -251,6 +251,8 @@ function ResultsArchivePage() {
           ))}
         </Accordion>
       )}
+
+      <SummaryOnlySection />
     </div>
   );
 }
