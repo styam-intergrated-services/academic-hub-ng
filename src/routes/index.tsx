@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GraduationCap, ShieldCheck, BookOpen, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import akceLogo from "@/assets/akce-logo.asset.json";
+import { SiteLayout } from "@/components/site/SiteLayout";
 
 const SITE_URL = "https://academic-hub-ng.lovable.app";
 const OG_IMAGE =
@@ -58,29 +58,8 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
-        <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src={akceLogo.url}
-              alt="Aminu Kano College of Education logo"
-              className="h-11 w-11 rounded-md object-cover bg-white p-0.5 shadow-sm"
-            />
-            <div className="leading-tight">
-              <div className="font-serif font-bold text-primary">AKCOE Portal</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Aminu Kano College of Education
-              </div>
-            </div>
-          </Link>
-          <Link to="/auth">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign in</Button>
-          </Link>
-        </div>
-      </header>
-
-      <main>
+    <SiteLayout>
+      <>
       <section className="bg-hero-gradient text-white">
         <div className="mx-auto max-w-7xl px-4 py-20 md:py-28 grid md:grid-cols-2 gap-10 items-center">
           <div>
@@ -118,14 +97,8 @@ function Landing() {
           </div>
         </div>
       </section>
-      </main>
-
-      <footer className="mt-auto border-t bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-6 text-sm text-muted-foreground flex justify-between">
-          <span>© {new Date().getFullYear()} Aminu Kano College of Education</span>
-          <span>AKCOE Portal</span>
-        </div>
-      </footer>
-    </div>
+      </>
+    </SiteLayout>
   );
 }
+
