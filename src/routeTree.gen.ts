@@ -24,6 +24,7 @@ import { Route as AuthenticatedStandingRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedScopedResultsRouteImport } from './routes/_authenticated.scoped-results'
 import { Route as AuthenticatedResultsArchiveRouteImport } from './routes/_authenticated.results-archive'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
+import { Route as AuthenticatedResultCycleRouteImport } from './routes/_authenticated.result-cycle'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
@@ -130,6 +131,12 @@ const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   path: '/results',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedResultCycleRoute =
+  AuthenticatedResultCycleRouteImport.update({
+    id: '/result-cycle',
+    path: '/result-cycle',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -312,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/result-cycle': typeof AuthenticatedResultCycleRoute
   '/results': typeof AuthenticatedResultsRoute
   '/results-archive': typeof AuthenticatedResultsArchiveRoute
   '/scoped-results': typeof AuthenticatedScopedResultsRoute
@@ -356,6 +364,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/result-cycle': typeof AuthenticatedResultCycleRoute
   '/results': typeof AuthenticatedResultsRoute
   '/results-archive': typeof AuthenticatedResultsArchiveRoute
   '/scoped-results': typeof AuthenticatedScopedResultsRoute
@@ -401,6 +410,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/result-cycle': typeof AuthenticatedResultCycleRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
   '/_authenticated/results-archive': typeof AuthenticatedResultsArchiveRoute
   '/_authenticated/scoped-results': typeof AuthenticatedScopedResultsRoute
@@ -447,6 +457,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/registration'
     | '/reports'
+    | '/result-cycle'
     | '/results'
     | '/results-archive'
     | '/scoped-results'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/registration'
     | '/reports'
+    | '/result-cycle'
     | '/results'
     | '/results-archive'
     | '/scoped-results'
@@ -535,6 +547,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/registration'
     | '/_authenticated/reports'
+    | '/_authenticated/result-cycle'
     | '/_authenticated/results'
     | '/_authenticated/results-archive'
     | '/_authenticated/scoped-results'
@@ -675,6 +688,13 @@ declare module '@tanstack/react-router' {
       path: '/results'
       fullPath: '/results'
       preLoaderRoute: typeof AuthenticatedResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/result-cycle': {
+      id: '/_authenticated/result-cycle'
+      path: '/result-cycle'
+      fullPath: '/result-cycle'
+      preLoaderRoute: typeof AuthenticatedResultCycleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/reports': {
@@ -921,6 +941,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedResultCycleRoute: typeof AuthenticatedResultCycleRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
   AuthenticatedResultsArchiveRoute: typeof AuthenticatedResultsArchiveRoute
   AuthenticatedScopedResultsRoute: typeof AuthenticatedScopedResultsRoute
@@ -952,6 +973,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedResultCycleRoute: AuthenticatedResultCycleRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
   AuthenticatedResultsArchiveRoute: AuthenticatedResultsArchiveRoute,
   AuthenticatedScopedResultsRoute: AuthenticatedScopedResultsRoute,
