@@ -22,6 +22,7 @@ import { Route as AuthenticatedTeachingRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated.students'
 import { Route as AuthenticatedStandingRouteImport } from './routes/_authenticated.standing'
 import { Route as AuthenticatedScopedResultsRouteImport } from './routes/_authenticated.scoped-results'
+import { Route as AuthenticatedResultsArchiveRouteImport } from './routes/_authenticated.results-archive'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated.results'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
 import { Route as AuthenticatedRegistrationRouteImport } from './routes/_authenticated.registration'
@@ -116,6 +117,12 @@ const AuthenticatedScopedResultsRoute =
   AuthenticatedScopedResultsRouteImport.update({
     id: '/scoped-results',
     path: '/scoped-results',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedResultsArchiveRoute =
+  AuthenticatedResultsArchiveRouteImport.update({
+    id: '/results-archive',
+    path: '/results-archive',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
@@ -306,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/results-archive': typeof AuthenticatedResultsArchiveRoute
   '/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/standing': typeof AuthenticatedStandingRoute
   '/students': typeof AuthenticatedStudentsRouteWithChildren
@@ -349,6 +357,7 @@ export interface FileRoutesByTo {
   '/registration': typeof AuthenticatedRegistrationRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/results': typeof AuthenticatedResultsRoute
+  '/results-archive': typeof AuthenticatedResultsArchiveRoute
   '/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/standing': typeof AuthenticatedStandingRoute
   '/teaching': typeof AuthenticatedTeachingRoute
@@ -393,6 +402,7 @@ export interface FileRoutesById {
   '/_authenticated/registration': typeof AuthenticatedRegistrationRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
+  '/_authenticated/results-archive': typeof AuthenticatedResultsArchiveRoute
   '/_authenticated/scoped-results': typeof AuthenticatedScopedResultsRoute
   '/_authenticated/standing': typeof AuthenticatedStandingRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/registration'
     | '/reports'
     | '/results'
+    | '/results-archive'
     | '/scoped-results'
     | '/standing'
     | '/students'
@@ -481,6 +492,7 @@ export interface FileRouteTypes {
     | '/registration'
     | '/reports'
     | '/results'
+    | '/results-archive'
     | '/scoped-results'
     | '/standing'
     | '/teaching'
@@ -524,6 +536,7 @@ export interface FileRouteTypes {
     | '/_authenticated/registration'
     | '/_authenticated/reports'
     | '/_authenticated/results'
+    | '/_authenticated/results-archive'
     | '/_authenticated/scoped-results'
     | '/_authenticated/standing'
     | '/_authenticated/students'
@@ -648,6 +661,13 @@ declare module '@tanstack/react-router' {
       path: '/scoped-results'
       fullPath: '/scoped-results'
       preLoaderRoute: typeof AuthenticatedScopedResultsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/results-archive': {
+      id: '/_authenticated/results-archive'
+      path: '/results-archive'
+      fullPath: '/results-archive'
+      preLoaderRoute: typeof AuthenticatedResultsArchiveRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/results': {
@@ -902,6 +922,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRegistrationRoute: typeof AuthenticatedRegistrationRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
+  AuthenticatedResultsArchiveRoute: typeof AuthenticatedResultsArchiveRoute
   AuthenticatedScopedResultsRoute: typeof AuthenticatedScopedResultsRoute
   AuthenticatedStandingRoute: typeof AuthenticatedStandingRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
@@ -932,6 +953,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRegistrationRoute: AuthenticatedRegistrationRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
+  AuthenticatedResultsArchiveRoute: AuthenticatedResultsArchiveRoute,
   AuthenticatedScopedResultsRoute: AuthenticatedScopedResultsRoute,
   AuthenticatedStandingRoute: AuthenticatedStandingRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
