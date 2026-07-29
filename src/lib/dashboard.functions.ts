@@ -62,21 +62,78 @@ export interface StudentExtras {
     venue: string;
   }[];
   outstandingFees: number;
+  academic: {
+    matric_number: string;
+    programme: string;
+    department: string;
+    level: string;
+    entry_year: number | null;
+    cgpa: number;
+    total_credit_units: number;
+  } | null;
+  graduation: {
+    id: string;
+    title: string;
+    status: string;
+    cgpa: number | null;
+    classification: string | null;
+  }[];
 }
+
 
 export const getStudentExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<StudentExtras> => {
     const { supabase, userId } = context;
-    const empty: StudentExtras = { recentResults: [], semesterGpa: [], upcomingExams: [], outstandingFees: 0 };
+    const empty: StudentExtras = {
+      recentResults: [], semesterGpa: [], upcomingExams: [], outstandingFees: 0,
+      academic: null, graduation: [],
+    };
 
     const { data: student } = await supabase
       .from("students")
-      .select("id")
+      .select("id,matric_number,entry_year,cgpa,total_credit_units,programme_id,department_id,current_level_id")
       .eq("auth_user_id", userId)
       .maybeSingle();
     if (!student?.id) return empty;
     const sid = student.id;
+
+    const [{ data: prog }, { data: dept }, { data: lvl }] = await Promise.all([
+      supabase.from("programmes").select("name").eq("id", student.programme_id).maybeSingle(),
+      supabase.from("departments").select("name").eq("id", student.department_id).maybeSingle(),
+      supabase.from("levels").select("name").eq("id", student.current_level_id).maybeSingle(),
+    ]);
+    const academic: StudentExtras["academic"] = {
+      matric_number: student.matric_number,
+      programme: prog?.name ?? "—",
+      department: dept?.name ?? "—",
+      level: lvl?.name ?? "—",
+      entry_year: student.entry_year,
+      cgpa: Number(student.cgpa ?? 0),
+      total_credit_units: student.total_credit_units ?? 0,
+    };
+
+    const { data: gradEntries } = await supabase
+      .from("graduation_list_entries")
+      .select("id,cgpa,classification,list_id")
+      .eq("student_id", sid);
+    const listIds = Array.from(new Set((gradEntries ?? []).map((g) => g.list_id)));
+    const listMap = new Map<string, { title: string; status: string }>();
+    if (listIds.length > 0) {
+      const { data: lists } = await supabase
+        .from("graduation_lists")
+        .select("id,title,status")
+        .in("id", listIds);
+      for (const l of lists ?? []) listMap.set(l.id, { title: l.title, status: l.status });
+    }
+    const graduation = (gradEntries ?? []).map((g) => ({
+      id: g.id,
+      title: listMap.get(g.list_id)?.title ?? "Graduation record",
+      status: listMap.get(g.list_id)?.status ?? "draft",
+      cgpa: g.cgpa === null ? null : Number(g.cgpa),
+      classification: g.classification,
+    }));
+
 
     const { data: results } = await supabase
       .from("results")
@@ -186,7 +243,7 @@ export const getStudentExtras = createServerFn({ method: "GET" })
       }));
     }
 
-    return { recentResults, semesterGpa, upcomingExams, outstandingFees: 0 };
+    return { recentResults, semesterGpa, upcomingExams, outstandingFees: 0, academic, graduation };
   });
 
 export interface LecturerClass {

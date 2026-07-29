@@ -129,6 +129,78 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
+            <CardTitle className="font-serif">Academic record</CardTitle>
+            <CardDescription>Your department and programme on file</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {extrasLoading ? (
+              <Skeleton className="h-32" />
+            ) : !extras?.academic ? (
+              <EmptyState title="No record" description="No student record is linked to this account yet." />
+            ) : (
+              <dl className="space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3 border-b pb-2">
+                  <dt className="text-muted-foreground">Department</dt>
+                  <dd className="text-right font-medium">{extras.academic.department}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b pb-2">
+                  <dt className="text-muted-foreground">Programme</dt>
+                  <dd className="text-right font-medium">{extras.academic.programme}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b pb-2">
+                  <dt className="text-muted-foreground">Level</dt>
+                  <dd className="text-right font-medium">{extras.academic.level}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b pb-2">
+                  <dt className="text-muted-foreground">Year of entry</dt>
+                  <dd className="text-right font-medium tabular-nums">{extras.academic.entry_year ?? "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted-foreground">Matric number</dt>
+                  <dd className="text-right font-mono text-xs">{extras.academic.matric_number}</dd>
+                </div>
+              </dl>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif">Graduation record</CardTitle>
+            <CardDescription>Final CGPA and class of degree as approved</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {extrasLoading ? (
+              <Skeleton className="h-32" />
+            ) : (extras?.graduation.length ?? 0) === 0 ? (
+              <EmptyState
+                title="No graduation record"
+                description="A graduation record appears here once your final results are approved."
+              />
+            ) : (
+              extras!.graduation.map((g) => (
+                <div key={g.id} className="rounded-lg border p-3 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{g.title}</span>
+                    <Badge variant={g.status === "approved" ? "default" : "secondary"} className="capitalize">
+                      {g.status.replace("_", " ")}
+                    </Badge>
+                  </div>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                    <span>Final CGPA <b className="tabular-nums text-foreground">{g.cgpa?.toFixed(2) ?? "—"}</b></span>
+                    <span className="truncate">Class <b className="text-foreground">{g.classification ?? "—"}</b></span>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
             <CardTitle className="font-serif">Recent results</CardTitle>
             <CardDescription>Latest published course scores</CardDescription>
           </CardHeader>
