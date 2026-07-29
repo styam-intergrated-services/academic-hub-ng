@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getResultsArchive, type ArchiveRow } from "@/lib/results-archive.functions";
+import { getResultsArchive, getSummaryRecords, type ArchiveRow, type SummaryRow } from "@/lib/results-archive.functions";
 import { PageHeader } from "@/components/portal/PageHeader";
 import { GradeBadge, StatusBadge } from "@/components/portal/StatusBadges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -405,4 +405,101 @@ function printArchive(groups: DeptGroup[], total: number) {
   win.document.close();
   win.focus();
   setTimeout(() => win.print(), 400);
+}
+
+/* ---------- graduating cohorts handed over as summary-only records ---------- */
+
+function SummaryOnlySection() {
+  const fetchSummaries = useServerFn(getSummaryRecords);
+  const { data } = useQuery({
+    queryKey: ["results", "summary-records"],
+    queryFn: () => fetchSummaries(),
+    staleTime: 300_000,
+  });
+
+  const rows = (data ?? []).filter((r) => !r.has_course_results && r.cgpa > 0);
+  const grouped = useMemo(() => {
+    const m = new Map<string, { name: string; rows: SummaryRow[] }>();
+    for (const r of rows) {
+      const key = r.programme_name || r.department_name;
+      const g = m.get(key) ?? { name: key, rows: [] };
+      g.rows.push(r);
+      m.set(key, g);
+    }
+    return Array.from(m.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [data]);
+
+  if (grouped.length === 0) return null;
+
+  function exportCsv() {
+    const header = [
+      "Programme", "Department", "Matric no", "Student", "Level",
+      "Entry year", "Credits earned", "CGPA", "Classification", "Standing",
+    ];
+    const body = rows.map((r) => [
+      r.programme_name ?? "", r.department_name, r.matric_number, r.student_name, r.level_code,
+      r.entry_year, r.total_credit_units, r.cgpa, r.classification, r.standing,
+    ]);
+    downloadCsv(`akcoe-graduating-records-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([header, ...body]));
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+        <div>
+          <CardTitle className="font-serif text-base">Graduating records (summary only)</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cohorts handed over as graduation lists — final CGPA, credits earned and class of degree are on
+            record, but course-by-course score sheets have not been uploaded yet, so these students do not
+            appear in the course groupings above.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={exportCsv} className="shrink-0">
+          <Download className="mr-2 size-4" /> CSV
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <Accordion type="multiple" className="space-y-2">
+          {grouped.map((g) => (
+            <AccordionItem key={g.name} value={g.name} className="rounded-md border bg-muted/30 px-3">
+              <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                  <span className="truncate font-medium">{g.name}</span>
+                  <Badge variant="secondary" className="shrink-0">{g.rows.length} students</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <div className="overflow-x-auto rounded-md border bg-background">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Matric no</TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Level</TableHead>
+                        <TableHead className="text-right">Credits</TableHead>
+                        <TableHead className="text-right">CGPA</TableHead>
+                        <TableHead>Classification</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {g.rows.map((r) => (
+                        <TableRow key={r.student_id}>
+                          <TableCell className="font-mono text-xs">{r.matric_number}</TableCell>
+                          <TableCell className="max-w-[220px] truncate">{r.student_name}</TableCell>
+                          <TableCell>{r.level_code}</TableCell>
+                          <TableCell className="text-right">{r.total_credit_units}</TableCell>
+                          <TableCell className="text-right font-medium">{r.cgpa.toFixed(2)}</TableCell>
+                          <TableCell><Badge variant="outline">{r.classification}</Badge></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </CardContent>
+    </Card>
+  );
 }
