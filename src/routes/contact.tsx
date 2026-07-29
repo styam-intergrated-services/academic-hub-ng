@@ -90,7 +90,7 @@ function ContactPage() {
               request access or a role change.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Link to="/auth">
+              <Link to="/auth" search={{ next: undefined }}>
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign in to the portal</Button>
               </Link>
               <Link to="/about">

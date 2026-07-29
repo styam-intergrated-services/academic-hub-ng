@@ -120,7 +120,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
     qc.clear();
     sessionStorage.removeItem("akcoe:skip-password-change");
     await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/auth", search: { next: undefined }, replace: true });
   }
 
   const visible = NAV.filter(

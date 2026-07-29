@@ -17,6 +17,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdmissionsIndexRouteImport } from './routes/admissions.index'
+import { Route as AdmissionsStatusRouteImport } from './routes/admissions.status'
+import { Route as AdmissionsApplyRouteImport } from './routes/admissions.apply'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated.users'
 import { Route as AuthenticatedUploadResultsRouteImport } from './routes/_authenticated.upload-results'
 import { Route as AuthenticatedTranscriptRouteImport } from './routes/_authenticated.transcript'
@@ -94,6 +97,21 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdmissionsIndexRoute = AdmissionsIndexRouteImport.update({
+  id: '/admissions/',
+  path: '/admissions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdmissionsStatusRoute = AdmissionsStatusRouteImport.update({
+  id: '/admissions/status',
+  path: '/admissions/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdmissionsApplyRoute = AdmissionsApplyRouteImport.update({
+  id: '/admissions/apply',
+  path: '/admissions/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
@@ -351,6 +369,9 @@ export interface FileRoutesByFullPath {
   '/transcript': typeof AuthenticatedTranscriptRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/admissions/apply': typeof AdmissionsApplyRoute
+  '/admissions/status': typeof AdmissionsStatusRoute
+  '/admissions/': typeof AdmissionsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/import-iss-lvt-2022': typeof AuthenticatedAdminImportIssLvt2022Route
@@ -398,6 +419,9 @@ export interface FileRoutesByTo {
   '/transcript': typeof AuthenticatedTranscriptRoute
   '/upload-results': typeof AuthenticatedUploadResultsRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/admissions/apply': typeof AdmissionsApplyRoute
+  '/admissions/status': typeof AdmissionsStatusRoute
+  '/admissions': typeof AdmissionsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/import-iss-lvt-2022': typeof AuthenticatedAdminImportIssLvt2022Route
@@ -448,6 +472,9 @@ export interface FileRoutesById {
   '/_authenticated/transcript': typeof AuthenticatedTranscriptRoute
   '/_authenticated/upload-results': typeof AuthenticatedUploadResultsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/admissions/apply': typeof AdmissionsApplyRoute
+  '/admissions/status': typeof AdmissionsStatusRoute
+  '/admissions/': typeof AdmissionsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/import-iss-lvt-2022': typeof AuthenticatedAdminImportIssLvt2022Route
@@ -498,6 +525,9 @@ export interface FileRouteTypes {
     | '/transcript'
     | '/upload-results'
     | '/users'
+    | '/admissions/apply'
+    | '/admissions/status'
+    | '/admissions/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/import-iss-lvt-2022'
@@ -545,6 +575,9 @@ export interface FileRouteTypes {
     | '/transcript'
     | '/upload-results'
     | '/users'
+    | '/admissions/apply'
+    | '/admissions/status'
+    | '/admissions'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/import-iss-lvt-2022'
@@ -594,6 +627,9 @@ export interface FileRouteTypes {
     | '/_authenticated/transcript'
     | '/_authenticated/upload-results'
     | '/_authenticated/users'
+    | '/admissions/apply'
+    | '/admissions/status'
+    | '/admissions/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/import-iss-lvt-2022'
@@ -616,6 +652,9 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AdmissionsApplyRoute: typeof AdmissionsApplyRoute
+  AdmissionsStatusRoute: typeof AdmissionsStatusRoute
+  AdmissionsIndexRoute: typeof AdmissionsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMatricLoginInitRoute: typeof ApiPublicMatricLoginInitRoute
@@ -678,6 +717,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admissions/': {
+      id: '/admissions/'
+      path: '/admissions'
+      fullPath: '/admissions/'
+      preLoaderRoute: typeof AdmissionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admissions/status': {
+      id: '/admissions/status'
+      path: '/admissions/status'
+      fullPath: '/admissions/status'
+      preLoaderRoute: typeof AdmissionsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admissions/apply': {
+      id: '/admissions/apply'
+      path: '/admissions/apply'
+      fullPath: '/admissions/apply'
+      preLoaderRoute: typeof AdmissionsApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/users': {
@@ -1066,6 +1126,9 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AdmissionsApplyRoute: AdmissionsApplyRoute,
+  AdmissionsStatusRoute: AdmissionsStatusRoute,
+  AdmissionsIndexRoute: AdmissionsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMatricLoginInitRoute: ApiPublicMatricLoginInitRoute,
