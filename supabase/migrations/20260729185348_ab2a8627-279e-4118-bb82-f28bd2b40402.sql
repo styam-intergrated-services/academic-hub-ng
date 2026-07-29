@@ -1,0 +1,2 @@
+ALTER TABLE public.programmes DROP CONSTRAINT IF EXISTS programmes_award_type_chk;
+ALTER TABLE public.programmes ADD CONSTRAINT programmes_award_type_chk CHECK (award_type = ANY (ARRAY['nce'::text,'diploma'::text,'degree'::text,'pgde'::text]));
