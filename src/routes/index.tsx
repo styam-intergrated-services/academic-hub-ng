@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GraduationCap, ShieldCheck, BookOpen, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import akceLogo from "@/assets/akce-logo.asset.json";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 const SITE_URL = "https://academic-hub-ng.lovable.app";
