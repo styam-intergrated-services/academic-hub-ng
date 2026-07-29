@@ -12,6 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pi
 import { PipelineWidget } from "@/components/dashboards/widgets/PipelineWidget";
 import { ApprovalsShortcut } from "@/components/dashboards/widgets/ApprovalsShortcut";
 import { SessionBanner } from "@/components/dashboards/widgets/SessionBanner";
+import { GpaTrendsCard } from "@/components/dashboards/widgets/GpaTrendsCard";
 
 export function AdminDashboard({ user }: { user: PortalUser }) {
   const stats = useServerFn(getManagementStats);
