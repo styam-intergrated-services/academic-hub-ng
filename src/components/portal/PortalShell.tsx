@@ -53,7 +53,10 @@ const NAV: NavItem[] = [
   { to: "/results-archive", label: "Results Archive", group: "Results", icon: Archive, roles: ["super_admin","ict_admin","registry","examination_officer"] },
   { to: "/result-cycle", label: "Semester Cycle", group: "Results", icon: CalendarRange, roles: ["super_admin","ict_admin","registry"] },
   { to: "/bulk-results", label: "Bulk Result Upload", group: "Results", icon: Upload, roles: ["super_admin","ict_admin","registry"] },
-  // Soft-launched (unlinked): /scoped-results, /exam-schedule, /allocations, /exam-officers
+  { to: "/scoped-results", label: "Scoped Results", group: "Results", icon: FileCheck2, roles: ["examination_officer"] },
+  { to: "/exam-schedule", label: "Exam Timetable", group: "Results", icon: CalendarRange, roles: ["examination_officer","registry","super_admin","ict_admin"] },
+  { to: "/allocations", label: "Lecturer Allocations", group: "Academics", icon: Users, roles: ["examination_officer","registry","super_admin","ict_admin"] },
+  // Soft-launched (unlinked): /exam-officers
   { to: "/reports", label: "Reports", group: "Administration", icon: TrendingUp, roles: ["provost","super_admin","ict_admin"] },
   { to: "/announcements", label: "Announcements", group: "Administration", icon: Megaphone, roles: ["provost","registry","super_admin","ict_admin","dean"] },
   { to: "/applications", label: "Admissions", group: "Administration", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },

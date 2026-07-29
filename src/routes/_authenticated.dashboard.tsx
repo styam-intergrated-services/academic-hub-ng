@@ -7,6 +7,7 @@ import { LecturerDashboard } from "@/components/dashboards/LecturerDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ApplicantDashboard } from "@/components/dashboards/ApplicantDashboard";
 import { ProvostDashboard } from "@/components/dashboards/ProvostDashboard";
+import { ExamOfficerDashboard } from "@/components/dashboards/ExamOfficerDashboard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardRouter,
@@ -23,6 +24,7 @@ function DashboardRouter() {
   switch (user.primary_role) {
     case "student":     return <StudentDashboard user={user} />;
     case "lecturer":    return <LecturerDashboard user={user} />;
+    case "examination_officer": return <ExamOfficerDashboard user={user} />;
     case "provost":     return <ProvostDashboard user={user} />;
     case "hod":
     case "dean":
