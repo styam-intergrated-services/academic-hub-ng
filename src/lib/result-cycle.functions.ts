@@ -21,7 +21,7 @@ const MANAGERS = ["registry", "super_admin", "ict_admin"] as const;
 
 async function requireManager(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  const roles = (data ?? []).map((r: any) => r.role as string);
+  const roles = ((data ?? []) as { role: string }[]).map((r) => r.role);
   if (!roles.some((r) => (MANAGERS as readonly string[]).includes(r))) {
     throw new Error("Forbidden: Registry or administrator role required");
   }
