@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "academic-hub-ng": {
+      "type": "http",
+      "url": "https://academic-hub-ng.lovable.app/mcp"
+    }
+  }
+}
