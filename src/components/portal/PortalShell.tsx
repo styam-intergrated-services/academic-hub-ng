@@ -51,6 +51,7 @@ const NAV: NavItem[] = [
   { to: "/upload-results", label: "Upload Results", group: "Results", icon: FileCheck2, roles: ["lecturer"] },
   { to: "/approvals", label: "Result Approvals", group: "Results", icon: FileCheck2, roles: ["hod","dean","registry","super_admin","provost"] },
   { to: "/results-archive", label: "Results Archive", group: "Results", icon: Archive, roles: ["super_admin","ict_admin","registry","examination_officer"] },
+  { to: "/result-cycle", label: "Semester Cycle", group: "Results", icon: CalendarRange, roles: ["super_admin","ict_admin","registry"] },
   // Soft-launched (unlinked): /scoped-results, /exam-schedule, /allocations, /exam-officers
   { to: "/reports", label: "Reports", group: "Administration", icon: TrendingUp, roles: ["provost","super_admin","ict_admin"] },
   { to: "/announcements", label: "Announcements", group: "Administration", icon: Megaphone, roles: ["provost","registry","super_admin","ict_admin","dean"] },
