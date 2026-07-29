@@ -1,31 +1,32 @@
-## What I verified
+## Goal
 
-I tested the real accounts against the authentication service and drove the live site (www.akcoekano.com) in a browser:
+Give Super Admin, Registry and Examination Officers a dedicated place to browse all published results (2,056 records), organised department by department, level by level.
 
-- All 11 staff accounts (Provost, Exam Director, 9 HODs) authenticate correctly with their phone-number temporary passwords.
-- Student matric login works: `FUDMA/AKCOE/22/ISL/0210` + `2022` signs in and reaches the password-setup screen.
-- Staff login works: `danladiabdu4@gmail.com` + `08064662008` signs in as HOD.
+## New page: Results Archive (`/results-archive`)
 
-So the accounts and backend are fine. The one failure I could reproduce is in the sign-in page itself.
+Visible in the sidebar under **Results** for `super_admin`, `ict_admin`, `registry` and `examination_officer`.
 
-## The bug
+Layout:
+1. **Filter bar** — Session, Semester/Contact, Department, Programme, Level, Course, Status code (OK/ABS/INC/WH), and a free-text search for matric number or student name.
+2. **Summary strip** — total records matching the filter, number of students, number of courses, pass rate and grade distribution (A–F counts).
+3. **Grouped browser** — collapsible accordion: Department → Level → Course, each row showing course code/title, credit units, number of results and average score. Expanding a course reveals its result rows (matric, name, CA, exam, total, grade, status) with a link to the existing broadsheet.
+4. **Flat table view** — a toggle to see the same filtered set as one paginated table (server-side pagination, 100 rows per page) for quick scanning and export.
 
-On my first live attempt, tapping **Sign in** silently did nothing — the page reloaded with `?email=...&password=...` in the address bar.
+## Access rules
 
-The sign-in page is server-rendered and its form only becomes interactive after the page's JavaScript loads. Tapping Sign in before that (common on a phone with a slow connection) makes the browser do a plain form submission: nothing reaches the auth service, no error appears, and the typed password ends up visible in the URL.
+- `super_admin`, `ict_admin`, `registry`: all results, college-wide.
+- `examination_officer`: identical page and features, but the query is restricted to offerings inside their assigned department/faculty/programme scope (reuses the existing `eo_covers_offering` scope logic). No change to their current permissions.
+- Everyone else: no nav entry and the page returns an unauthorised message.
+- Read-only throughout — no editing, approving or deleting from this page.
 
-The "invalid login credentials" entries in the auth logs are separate and consistent with mistyped passwords, plus one never-confirmed account created with a typo'd email (`musbahumukhtar219@…` vs the correct `musbahmukhtar219@…`).
+## Exports
 
-## Fix
+- **CSV** — exports the full filtered set (not just the visible page), one row per result: session, semester, department, programme, level, course code/title, credit units, matric, student name, CA, exam, total, grade, grade point, status.
+- **Printable PDF** — a departmental result sheet rendered in-browser through a print-optimised layout, with the AKCOE crest, department/level/course headings and a signature block, so Registry can print per department or per course.
 
-1. **Stop pre-hydration submits** in `src/routes/auth.tsx` (email sign-in, matric sign-in, sign-up, forgot password): gate the submit buttons on a `hydrated` flag so they can't fall through to a native browser submit, with a brief loading state until the page is interactive.
-2. **Never leak passwords into the URL**: add `method="post"` as a safety net, and on mount strip any `email`/`password` query parameters via `history.replaceState`, pre-filling only the email field.
-3. **Clear error feedback**: friendly messages for wrong password, unconfirmed account, and matric mistakes ("use your year of entry as the temporary password"), so a failed attempt is never silent.
-4. **Delete the typo account** `musbahumukhtar219@gmail.com` (unconfirmed, never signed in) so the Exam Director only has the correct `musbahmukhtar219@gmail.com` account.
-5. **Re-verify after publishing**: student matric login, staff email login, and a deliberate wrong password showing a visible error.
+## Technical notes
 
-## Technical details
-
-- Frontend change is confined to `src/routes/auth.tsx`; no schema, RLS, or auth-configuration changes.
-- `hydrated` state set in `useEffect` controls `disabled` on submit buttons (disabled during SSR, enabled after hydration).
-- The typo account removal is an auth-admin delete of an unconfirmed user with no linked profile data.
+- New `src/lib/results-archive.functions.ts` with authenticated server functions: `getResultsArchiveFilters` (dropdown options), `getResultsArchive` (filtered + paginated rows plus grouped aggregates), and `exportResultsArchive` (full filtered set for CSV). Each resolves the caller's roles server-side and applies the exam-officer scope when applicable.
+- New route `src/routes/_authenticated.results-archive.tsx` plus small presentational components under `src/components/results/`.
+- One nav entry added to `src/components/portal/PortalShell.tsx`.
+- No database migration and no change to existing results, approval or upload flows.
