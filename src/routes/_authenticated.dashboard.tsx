@@ -7,6 +7,7 @@ import { LecturerDashboard } from "@/components/dashboards/LecturerDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ApplicantDashboard } from "@/components/dashboards/ApplicantDashboard";
 import { ProvostDashboard } from "@/components/dashboards/ProvostDashboard";
+import { ExamOfficerDashboard } from "@/components/dashboards/ExamOfficerDashboard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardRouter,
