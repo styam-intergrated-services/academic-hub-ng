@@ -2,7 +2,19 @@
   "mcpServers": {
     "academic-hub-ng": {
       "type": "http",
-      "url": "https://academic-hub-ng.lovable.app/mcp"
+      "url": "https://academic-hub-ng.lovable.app/mcp",
+      "httpUrl": "https://academic-hub-ng.lovable.app/mcp",
+      "description": "AKCOE College Management Portal — students, results, registrations, course catalogue.",
+      "trust": false,
+      "timeout": 60000
+    },
+    "academic-hub-ng-preview": {
+      "type": "http",
+      "url": "https://www.akcoekano.com/mcp",
+      "httpUrl": "https://www.akcoekano.com/mcp",
+      "description": "Same AKCOE portal MCP server on the custom domain.",
+      "trust": false,
+      "timeout": 60000
     }
   }
 }
