@@ -12,6 +12,7 @@ import {
   FileCheck2, BookOpenCheck, CalendarDays, Megaphone, ShieldCheck, Bell,
 } from "lucide-react";
 import { FEATURE_FLAGS } from "@/lib/feature-flags";
+import { GpaTrendsCard } from "@/components/dashboards/widgets/GpaTrendsCard";
 
 const NGN = (n: number) => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
 
@@ -109,6 +110,10 @@ export function ProvostDashboard({ user }: { user: PortalUser }) {
           </CardContent>
         </Card>
       </div>
+
+      <GpaTrendsCard />
+
+
 
       <Card>
         <CardHeader>
