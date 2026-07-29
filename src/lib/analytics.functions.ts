@@ -118,21 +118,20 @@ export const getGpaTrends = createServerFn({ method: "POST" })
     const raw: Raw[] = [];
     const PAGE = 1000;
     for (let from = 0; ; from += PAGE) {
-      let q = supabaseAdmin
+      const { data: batch, error } = await supabaseAdmin
         .from("results")
         .select(select)
         .eq("status", "published")
         .eq("status_code", "OK")
         .order("id")
         .range(from, from + PAGE - 1);
-      if (scopeDeptIds) q = q.in("offering.course.department_id", scopeDeptIds);
-      const { data: batch, error } = await q;
       if (error) throw error;
       const list = (batch ?? []) as any[];
       for (const r of list) {
         const course = r.offering?.course ?? {};
         const sem = r.offering?.semester ?? {};
         const session = sem.session ?? {};
+        if (scopeDeptIds && !scopeDeptIds.includes(course.department_id)) continue;
         raw.push({
           student_id: r.student_id,
           cu: course.credit_units ?? 0,
