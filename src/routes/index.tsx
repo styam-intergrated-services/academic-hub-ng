@@ -97,14 +97,8 @@ function Landing() {
           </div>
         </div>
       </section>
-      </main>
-
-      <footer className="mt-auto border-t bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-6 text-sm text-muted-foreground flex justify-between">
-          <span>© {new Date().getFullYear()} Aminu Kano College of Education</span>
-          <span>AKCOE Portal</span>
-        </div>
-      </footer>
-    </div>
+      </>
+    </SiteLayout>
   );
 }
+
