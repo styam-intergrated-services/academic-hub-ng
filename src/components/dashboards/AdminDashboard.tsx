@@ -69,6 +69,10 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
         </div>
       )}
 
+      <GpaTrendsCard />
+
+
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
