@@ -67,11 +67,22 @@ export const runBulkResultImport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<ImportReport> => {
     await assertAllowed(context.supabase, context.userId);
 
+    // Drop null/blank keys: the importer distinguishes "ca/exam supplied"
+    // from "single score supplied" by key presence.
+    const rows = data.rows.map((r) => {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(r)) {
+        if (v === null || v === undefined || v === "") continue;
+        out[k] = v;
+      }
+      return out;
+    });
+
     const { data: report, error } = await context.supabase.rpc("admin_bulk_import_results", {
       _payload: {
         session_name: data.session_name,
         publish: data.publish ?? true,
-        rows: data.rows,
+        rows,
       } as any,
       _dry_run: data.dry_run,
     });
