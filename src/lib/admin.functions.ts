@@ -160,6 +160,113 @@ export const listAcademicStructure = createServerFn({ method: "GET" })
     };
   });
 
+// ============ AUDIT LOG ============
+
+export const STAFF_AUDIT_ACTIONS = [
+  "staff_account_created",
+  "staff_assignment_updated",
+  "role_granted",
+  "role_revoked",
+] as const;
+
+export type AuditMetadata = {
+  role?: string;
+  roles?: string[];
+  email?: string;
+  staff_code?: string | null;
+  department_id?: string | null;
+  department_name?: string | null;
+  hod_linked?: boolean;
+  at?: string;
+};
+
+export type AuditLogRow = {
+  id: string;
+  created_at: string;
+  action: string;
+  entity: string;
+  entity_id: string | null;
+  metadata: AuditMetadata | null;
+  actor_id: string | null;
+  actor_name: string | null;
+  actor_email: string | null;
+  target_name: string | null;
+  target_email: string | null;
+};
+
+
+export const listAuditLogs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    action: z.string().max(60).optional(),
+    staff_only: z.boolean().optional().default(true),
+    search: z.string().max(120).optional().default(""),
+    from: z.string().max(30).optional(),
+    to: z.string().max(30).optional(),
+    limit: z.number().int().min(1).max(500).optional().default(150),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }): Promise<AuditLogRow[]> => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    let q = supabase
+      .from("audit_logs")
+      .select("id, created_at, action, entity, entity_id, metadata, actor_id")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (data.action) q = q.eq("action", data.action);
+    else if (data.staff_only) q = q.in("action", STAFF_AUDIT_ACTIONS as unknown as string[]);
+    if (data.from) q = q.gte("created_at", new Date(data.from).toISOString());
+    if (data.to) q = q.lte("created_at", new Date(`${data.to}T23:59:59`).toISOString());
+
+    const { data: logs, error } = await q;
+    if (error) throw error;
+
+    const ids = new Set<string>();
+    for (const l of logs ?? []) {
+      if (l.actor_id) ids.add(l.actor_id);
+      if (l.entity_id) ids.add(l.entity_id);
+    }
+    const people = new Map<string, { full_name: string | null; email: string }>();
+    if (ids.size) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", [...ids]);
+      for (const p of profiles ?? []) people.set(p.id, { full_name: p.full_name, email: p.email });
+    }
+
+    let rows: AuditLogRow[] = (logs ?? []).map((l) => {
+      const actor = l.actor_id ? people.get(l.actor_id) : undefined;
+      const target = l.entity_id ? people.get(l.entity_id) : undefined;
+      const meta = (l.metadata ?? null) as AuditMetadata | null;
+      return {
+        id: l.id,
+        created_at: l.created_at,
+        action: l.action,
+        entity: l.entity,
+        entity_id: l.entity_id,
+        metadata: meta,
+        actor_id: l.actor_id,
+        actor_name: actor?.full_name ?? null,
+        actor_email: actor?.email ?? null,
+        target_name: target?.full_name ?? null,
+        target_email: target?.email ?? (typeof meta?.email === "string" ? (meta.email as string) : null),
+      };
+    });
+
+    const s = data.search.trim().toLowerCase();
+    if (s) {
+      rows = rows.filter((r) =>
+        [r.actor_name, r.actor_email, r.target_name, r.target_email, r.action, JSON.stringify(r.metadata ?? {})]
+          .some((v) => (v ?? "").toString().toLowerCase().includes(s)),
+      );
+    }
+    return rows;
+  });
+
+
 // ============ FACULTIES ============
 const facultySchema = z.object({
   id: z.string().uuid().optional(),
@@ -374,14 +481,27 @@ export const deleteCourse = createServerFn({ method: "POST" })
 
 // ============ STAFF ONBOARDING ============
 
+const STUDENT_ONLY_ROLES: AppRole[] = ["student", "applicant"];
+
 const staffMemberSchema = z.object({
-  full_name: z.string().min(2).max(160),
-  email: z.string().email().max(200),
-  phone: z.string().min(6).max(32),
-  staff_code: z.string().max(32).optional(),
-  roles: z.array(z.enum(APP_ROLES)).max(6).default([]),
+  full_name: z.string().trim().min(3, "Full name must be at least 3 characters").max(160)
+    .refine((v) => /^[\p{L}][\p{L}\s.'’-]+$/u.test(v), "Full name contains invalid characters"),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address").max(200),
+  phone: z.string().trim().min(6).max(32)
+    .refine((v) => v.replace(/\D/g, "").length >= 7, "Phone must contain at least 7 digits"),
+  staff_code: z.string().trim().max(32)
+    .refine((v) => v === "" || /^[A-Za-z0-9/-]{2,32}$/.test(v), "Staff code may only contain letters, numbers, / and -")
+    .optional(),
+  roles: z.array(z.enum(APP_ROLES)).min(1, "Select at least one role").max(6),
   department_id: z.string().uuid().optional(),
-});
+})
+  .refine((v) => !v.roles.some((r) => STUDENT_ONLY_ROLES.includes(r)),
+    { message: "Student and applicant roles cannot be assigned through staff onboarding", path: ["roles"] })
+  .refine((v) => !v.roles.includes("hod") || !!v.department_id,
+    { message: "Select the department this HOD leads", path: ["department_id"] })
+  .refine((v) => !v.department_id || v.roles.includes("hod"),
+    { message: "Department headship requires the HOD role", path: ["roles"] });
+
 
 export type StaffMemberInput = z.infer<typeof staffMemberSchema>;
 
@@ -402,16 +522,19 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
 
     const results: Array<{
       email: string; user_id: string | null; created: boolean;
-      roles: string[]; department_linked: boolean; error?: string;
+      roles: string[]; department_linked: boolean; error?: string; rolled_back?: boolean;
     }> = [];
 
     for (const person of data.staff) {
       const email = person.email.trim().toLowerCase();
       const password = person.phone.replace(/\s+/g, "");
-      try {
-        let userId: string | null = null;
-        let created = false;
 
+      // Undo stack — executed newest-first when any step of this staff member fails.
+      const rollback: Array<() => Promise<void>> = [];
+      let userId: string | null = null;
+      let created = false;
+
+      try {
         const { data: createdUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
           email,
           password,
@@ -432,9 +555,18 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         } else {
           userId = createdUser.user!.id;
           created = true;
+          const newUserId = userId;
+          rollback.push(async () => { await supabaseAdmin.auth.admin.deleteUser(newUserId); });
         }
 
-        await supabaseAdmin.from("profiles").upsert(
+        // Snapshot the profile so an existing staff record can be restored on failure.
+        const { data: prevProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("id, email, full_name, phone, staff_code, must_change_password")
+          .eq("id", userId!)
+          .maybeSingle();
+
+        const { error: profileErr } = await supabaseAdmin.from("profiles").upsert(
           {
             id: userId!,
             email,
@@ -445,29 +577,57 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
           },
           { onConflict: "id" },
         );
+        if (profileErr) throw profileErr;
+        if (prevProfile) {
+          rollback.push(async () => { await supabaseAdmin.from("profiles").upsert(prevProfile, { onConflict: "id" }); });
+        } else if (!created) {
+          const uid = userId!;
+          rollback.push(async () => { await supabaseAdmin.from("profiles").delete().eq("id", uid); });
+        }
+
+        // Only revoke roles that this call actually added.
+        const { data: existingRoles } = await supabaseAdmin
+          .from("user_roles").select("role").eq("user_id", userId!);
+        const had = new Set((existingRoles ?? []).map((r) => r.role as AppRole));
 
         for (const role of person.roles) {
-          await supabaseAdmin.from("user_roles").upsert(
+          const { error: roleErr } = await supabaseAdmin.from("user_roles").upsert(
             { user_id: userId!, role },
             { onConflict: "user_id,role" },
           );
+          if (roleErr) throw roleErr;
+          if (!had.has(role)) {
+            const uid = userId!;
+            rollback.push(async () => {
+              await supabaseAdmin.from("user_roles").delete().eq("user_id", uid).eq("role", role);
+            });
+          }
         }
 
         let deptLinked = false;
         let deptName: string | null = null;
         if (person.department_id) {
-          const { data: dept, error: deptErr } = await supabaseAdmin
+          const { data: prevDept } = await supabaseAdmin
+            .from("departments").select("id, name, hod_id").eq("id", person.department_id).maybeSingle();
+          if (!prevDept) throw new Error("Selected department no longer exists");
+
+          const { error: deptErr } = await supabaseAdmin
             .from("departments")
             .update({ hod_id: userId! })
-            .eq("id", person.department_id)
-            .select("name")
-            .maybeSingle();
-          deptLinked = !deptErr;
-          deptName = dept?.name ?? null;
+            .eq("id", person.department_id);
+          if (deptErr) throw deptErr;
+
+          deptLinked = true;
+          deptName = prevDept.name;
+          const previousHod = prevDept.hod_id;
+          const deptId = prevDept.id;
+          rollback.push(async () => {
+            await supabaseAdmin.from("departments").update({ hod_id: previousHod }).eq("id", deptId);
+          });
         }
 
         // Audit trail: who changed roles/department, and when.
-        await supabaseAdmin.from("audit_logs").insert({
+        const { error: auditErr } = await supabaseAdmin.from("audit_logs").insert({
           actor_id: context.userId,
           action: created ? "staff_account_created" : "staff_assignment_updated",
           entity: "profiles",
@@ -482,11 +642,10 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
             at: new Date().toISOString(),
           },
         });
+        if (auditErr) throw auditErr;
 
         // In-app notification confirming the assignment + first-login prompt.
-        const roleText = person.roles.length
-          ? person.roles.map((r) => r.replace("_", " ")).join(" and ")
-          : "staff";
+        const roleText = person.roles.map((r) => r.replace("_", " ")).join(" and ");
         await supabaseAdmin.from("notifications").insert({
           user_id: userId!,
           title: "Your portal access is ready",
@@ -503,12 +662,22 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         });
 
       } catch (e) {
+        let rolledBack = true;
+        for (const undo of rollback.reverse()) {
+          try { await undo(); } catch { rolledBack = false; }
+        }
         results.push({
           email, user_id: null, created: false, roles: [], department_linked: false,
-          error: e instanceof Error ? e.message : "Unknown error",
+          rolled_back: rolledBack,
+          error:
+            (e instanceof Error ? e.message : "Unknown error") +
+            (rolledBack
+              ? " — no changes were saved (all partial changes were reverted)."
+              : " — some partial changes could not be reverted automatically; review this account manually."),
         });
       }
     }
+
 
     return { results };
   });
