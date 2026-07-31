@@ -481,14 +481,27 @@ export const deleteCourse = createServerFn({ method: "POST" })
 
 // ============ STAFF ONBOARDING ============
 
+const STUDENT_ONLY_ROLES: AppRole[] = ["student", "applicant"];
+
 const staffMemberSchema = z.object({
-  full_name: z.string().min(2).max(160),
-  email: z.string().email().max(200),
-  phone: z.string().min(6).max(32),
-  staff_code: z.string().max(32).optional(),
-  roles: z.array(z.enum(APP_ROLES)).max(6).default([]),
+  full_name: z.string().trim().min(3, "Full name must be at least 3 characters").max(160)
+    .refine((v) => /^[\p{L}][\p{L}\s.'’-]+$/u.test(v), "Full name contains invalid characters"),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address").max(200),
+  phone: z.string().trim().min(6).max(32)
+    .refine((v) => v.replace(/\D/g, "").length >= 7, "Phone must contain at least 7 digits"),
+  staff_code: z.string().trim().max(32)
+    .refine((v) => v === "" || /^[A-Za-z0-9/-]{2,32}$/.test(v), "Staff code may only contain letters, numbers, / and -")
+    .optional(),
+  roles: z.array(z.enum(APP_ROLES)).min(1, "Select at least one role").max(6),
   department_id: z.string().uuid().optional(),
-});
+})
+  .refine((v) => !v.roles.some((r) => STUDENT_ONLY_ROLES.includes(r)),
+    { message: "Student and applicant roles cannot be assigned through staff onboarding", path: ["roles"] })
+  .refine((v) => !v.roles.includes("hod") || !!v.department_id,
+    { message: "Select the department this HOD leads", path: ["department_id"] })
+  .refine((v) => !v.department_id || v.roles.includes("hod"),
+    { message: "Department headship requires the HOD role", path: ["roles"] });
+
 
 export type StaffMemberInput = z.infer<typeof staffMemberSchema>;
 
