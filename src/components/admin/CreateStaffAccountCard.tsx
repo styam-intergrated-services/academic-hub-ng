@@ -10,10 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Select as _S } from "@/components/ui/select";
 import { UserPlus, ArrowLeft, ArrowRight, Check, AlertCircle, ShieldCheck } from "lucide-react";
-
-void _S;
 
 const STAFF_ROLES: AppRole[] = [
   "provost", "registry", "bursary", "dean", "hod", "lecturer", "examination_officer", "ict_admin",
