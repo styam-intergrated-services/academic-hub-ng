@@ -48,7 +48,7 @@ function AuditLogPage() {
     staleTime: 10_000,
   });
 
-  const rows = useMemo<AuditLogRow[]>(() => data ?? [], [data]);
+  const rows = useMemo<AuditLogRow[]>(() => (data as AuditLogRow[] | undefined) ?? [], [data]);
 
   function exportCsv() {
     const header = ["When", "Action", "Staff", "Staff email", "Roles", "Department", "Changed by"];

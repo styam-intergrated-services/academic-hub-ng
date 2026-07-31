@@ -63,6 +63,8 @@ const NAV: NavItem[] = [
   { to: "/students", label: "Students", group: "Academics", icon: GraduationCap, roles: ["hod","dean","registry","super_admin","ict_admin","provost"] },
   { to: "/departments", label: "Departments", group: "Administration", icon: Building2, roles: ["super_admin","ict_admin","registry","dean","provost"] },
   { to: "/users", label: "Users & Roles", group: "Administration", icon: Users, roles: ["super_admin","ict_admin"] },
+  { to: "/audit-logs", label: "Audit Log", group: "Administration", icon: ClipboardList, roles: ["super_admin","ict_admin"] },
+
   { to: "/graduation", label: "Graduation", group: "Results", icon: GraduationCap, roles: ["registry","super_admin","ict_admin","provost"] },
   { to: "/standing", label: "Academic Standing", group: "Results", icon: AlertTriangle, roles: ["registry","super_admin","ict_admin","provost","dean","hod"] },
   { to: "/admin", label: "Administration", group: "Administration", icon: Settings, roles: ["super_admin","ict_admin","registry"] },
