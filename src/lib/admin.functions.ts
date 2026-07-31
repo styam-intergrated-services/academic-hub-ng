@@ -160,6 +160,101 @@ export const listAcademicStructure = createServerFn({ method: "GET" })
     };
   });
 
+// ============ AUDIT LOG ============
+
+export const STAFF_AUDIT_ACTIONS = [
+  "staff_account_created",
+  "staff_assignment_updated",
+  "role_granted",
+  "role_revoked",
+] as const;
+
+export type AuditLogRow = {
+  id: string;
+  created_at: string;
+  action: string;
+  entity: string;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  actor_id: string | null;
+  actor_name: string | null;
+  actor_email: string | null;
+  target_name: string | null;
+  target_email: string | null;
+};
+
+export const listAuditLogs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    action: z.string().max(60).optional(),
+    staff_only: z.boolean().optional().default(true),
+    search: z.string().max(120).optional().default(""),
+    from: z.string().max(30).optional(),
+    to: z.string().max(30).optional(),
+    limit: z.number().int().min(1).max(500).optional().default(150),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }): Promise<AuditLogRow[]> => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    let q = supabase
+      .from("audit_logs")
+      .select("id, created_at, action, entity, entity_id, metadata, actor_id")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (data.action) q = q.eq("action", data.action);
+    else if (data.staff_only) q = q.in("action", STAFF_AUDIT_ACTIONS as unknown as string[]);
+    if (data.from) q = q.gte("created_at", new Date(data.from).toISOString());
+    if (data.to) q = q.lte("created_at", new Date(`${data.to}T23:59:59`).toISOString());
+
+    const { data: logs, error } = await q;
+    if (error) throw error;
+
+    const ids = new Set<string>();
+    for (const l of logs ?? []) {
+      if (l.actor_id) ids.add(l.actor_id);
+      if (l.entity_id) ids.add(l.entity_id);
+    }
+    const people = new Map<string, { full_name: string | null; email: string }>();
+    if (ids.size) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", [...ids]);
+      for (const p of profiles ?? []) people.set(p.id, { full_name: p.full_name, email: p.email });
+    }
+
+    let rows: AuditLogRow[] = (logs ?? []).map((l) => {
+      const actor = l.actor_id ? people.get(l.actor_id) : undefined;
+      const target = l.entity_id ? people.get(l.entity_id) : undefined;
+      const meta = (l.metadata ?? null) as Record<string, unknown> | null;
+      return {
+        id: l.id,
+        created_at: l.created_at,
+        action: l.action,
+        entity: l.entity,
+        entity_id: l.entity_id,
+        metadata: meta,
+        actor_id: l.actor_id,
+        actor_name: actor?.full_name ?? null,
+        actor_email: actor?.email ?? null,
+        target_name: target?.full_name ?? null,
+        target_email: target?.email ?? (typeof meta?.email === "string" ? (meta.email as string) : null),
+      };
+    });
+
+    const s = data.search.trim().toLowerCase();
+    if (s) {
+      rows = rows.filter((r) =>
+        [r.actor_name, r.actor_email, r.target_name, r.target_email, r.action, JSON.stringify(r.metadata ?? {})]
+          .some((v) => (v ?? "").toString().toLowerCase().includes(s)),
+      );
+    }
+    return rows;
+  });
+
+
 // ============ FACULTIES ============
 const facultySchema = z.object({
   id: z.string().uuid().optional(),
