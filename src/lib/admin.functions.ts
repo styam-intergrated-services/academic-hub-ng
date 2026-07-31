@@ -240,7 +240,7 @@ export const listAuditLogs = createServerFn({ method: "POST" })
     let rows: AuditLogRow[] = (logs ?? []).map((l) => {
       const actor = l.actor_id ? people.get(l.actor_id) : undefined;
       const target = l.entity_id ? people.get(l.entity_id) : undefined;
-      const meta = (l.metadata ?? null) as Record<string, unknown> | null;
+      const meta = (l.metadata ?? null) as AuditMetadata | null;
       return {
         id: l.id,
         created_at: l.created_at,

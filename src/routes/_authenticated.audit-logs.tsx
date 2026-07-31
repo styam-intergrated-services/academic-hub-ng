@@ -51,20 +51,19 @@ function AuditLogPage() {
   const rows = useMemo<AuditLogRow[]>(() => data ?? [], [data]);
 
   function exportCsv() {
-    const csv = toCsv(
-      rows.map((r) => ({
-        when: new Date(r.created_at).toISOString(),
-        action: ACTION_LABEL[r.action] ?? r.action,
-        staff: r.target_name ?? "",
-        staff_email: r.target_email ?? "",
-        roles: rolesOf(r),
-        department: departmentOf(r) ?? "",
-        changed_by: r.actor_name ?? r.actor_email ?? "",
-      })),
-      ["when", "action", "staff", "staff_email", "roles", "department", "changed_by"],
-    );
-    downloadCsv("akcoe-staff-audit-log.csv", csv);
+    const header = ["When", "Action", "Staff", "Staff email", "Roles", "Department", "Changed by"];
+    const body = rows.map((r) => [
+      new Date(r.created_at).toISOString(),
+      ACTION_LABEL[r.action] ?? r.action,
+      r.target_name ?? "",
+      r.target_email ?? "",
+      rolesOf(r),
+      departmentOf(r) ?? "",
+      r.actor_name ?? r.actor_email ?? "",
+    ]);
+    downloadCsv("akcoe-staff-audit-log.csv", toCsv([header, ...body]));
   }
+
 
   return (
     <div className="space-y-6">
