@@ -522,16 +522,19 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
 
     const results: Array<{
       email: string; user_id: string | null; created: boolean;
-      roles: string[]; department_linked: boolean; error?: string;
+      roles: string[]; department_linked: boolean; error?: string; rolled_back?: boolean;
     }> = [];
 
     for (const person of data.staff) {
       const email = person.email.trim().toLowerCase();
       const password = person.phone.replace(/\s+/g, "");
-      try {
-        let userId: string | null = null;
-        let created = false;
 
+      // Undo stack — executed newest-first when any step of this staff member fails.
+      const rollback: Array<() => Promise<void>> = [];
+      let userId: string | null = null;
+      let created = false;
+
+      try {
         const { data: createdUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
           email,
           password,
@@ -552,9 +555,18 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         } else {
           userId = createdUser.user!.id;
           created = true;
+          const newUserId = userId;
+          rollback.push(async () => { await supabaseAdmin.auth.admin.deleteUser(newUserId); });
         }
 
-        await supabaseAdmin.from("profiles").upsert(
+        // Snapshot the profile so an existing staff record can be restored on failure.
+        const { data: prevProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("id, email, full_name, phone, staff_code, must_change_password")
+          .eq("id", userId!)
+          .maybeSingle();
+
+        const { error: profileErr } = await supabaseAdmin.from("profiles").upsert(
           {
             id: userId!,
             email,
@@ -565,29 +577,57 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
           },
           { onConflict: "id" },
         );
+        if (profileErr) throw profileErr;
+        if (prevProfile) {
+          rollback.push(async () => { await supabaseAdmin.from("profiles").upsert(prevProfile, { onConflict: "id" }); });
+        } else if (!created) {
+          const uid = userId!;
+          rollback.push(async () => { await supabaseAdmin.from("profiles").delete().eq("id", uid); });
+        }
+
+        // Only revoke roles that this call actually added.
+        const { data: existingRoles } = await supabaseAdmin
+          .from("user_roles").select("role").eq("user_id", userId!);
+        const had = new Set((existingRoles ?? []).map((r) => r.role as AppRole));
 
         for (const role of person.roles) {
-          await supabaseAdmin.from("user_roles").upsert(
+          const { error: roleErr } = await supabaseAdmin.from("user_roles").upsert(
             { user_id: userId!, role },
             { onConflict: "user_id,role" },
           );
+          if (roleErr) throw roleErr;
+          if (!had.has(role)) {
+            const uid = userId!;
+            rollback.push(async () => {
+              await supabaseAdmin.from("user_roles").delete().eq("user_id", uid).eq("role", role);
+            });
+          }
         }
 
         let deptLinked = false;
         let deptName: string | null = null;
         if (person.department_id) {
-          const { data: dept, error: deptErr } = await supabaseAdmin
+          const { data: prevDept } = await supabaseAdmin
+            .from("departments").select("id, name, hod_id").eq("id", person.department_id).maybeSingle();
+          if (!prevDept) throw new Error("Selected department no longer exists");
+
+          const { error: deptErr } = await supabaseAdmin
             .from("departments")
             .update({ hod_id: userId! })
-            .eq("id", person.department_id)
-            .select("name")
-            .maybeSingle();
-          deptLinked = !deptErr;
-          deptName = dept?.name ?? null;
+            .eq("id", person.department_id);
+          if (deptErr) throw deptErr;
+
+          deptLinked = true;
+          deptName = prevDept.name;
+          const previousHod = prevDept.hod_id;
+          const deptId = prevDept.id;
+          rollback.push(async () => {
+            await supabaseAdmin.from("departments").update({ hod_id: previousHod }).eq("id", deptId);
+          });
         }
 
         // Audit trail: who changed roles/department, and when.
-        await supabaseAdmin.from("audit_logs").insert({
+        const { error: auditErr } = await supabaseAdmin.from("audit_logs").insert({
           actor_id: context.userId,
           action: created ? "staff_account_created" : "staff_assignment_updated",
           entity: "profiles",
@@ -602,11 +642,10 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
             at: new Date().toISOString(),
           },
         });
+        if (auditErr) throw auditErr;
 
         // In-app notification confirming the assignment + first-login prompt.
-        const roleText = person.roles.length
-          ? person.roles.map((r) => r.replace("_", " ")).join(" and ")
-          : "staff";
+        const roleText = person.roles.map((r) => r.replace("_", " ")).join(" and ");
         await supabaseAdmin.from("notifications").insert({
           user_id: userId!,
           title: "Your portal access is ready",
@@ -623,12 +662,22 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         });
 
       } catch (e) {
+        let rolledBack = true;
+        for (const undo of rollback.reverse()) {
+          try { await undo(); } catch { rolledBack = false; }
+        }
         results.push({
           email, user_id: null, created: false, roles: [], department_linked: false,
-          error: e instanceof Error ? e.message : "Unknown error",
+          rolled_back: rolledBack,
+          error:
+            (e instanceof Error ? e.message : "Unknown error") +
+            (rolledBack
+              ? " — no changes were saved (all partial changes were reverted)."
+              : " — some partial changes could not be reverted automatically; review this account manually."),
         });
       }
     }
+
 
     return { results };
   });
