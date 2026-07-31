@@ -84,6 +84,20 @@ export const grantRole = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const { error } = await supabase.from("user_roles").insert({ user_id: data.user_id, role: data.role });
     if (error && !`${error.message}`.includes("duplicate")) throw error;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "role_granted",
+      entity: "user_roles",
+      entity_id: data.user_id,
+      metadata: { role: data.role, at: new Date().toISOString() },
+    });
+    await supabaseAdmin.from("notifications").insert({
+      user_id: data.user_id,
+      title: "Portal access updated",
+      body: `You have been granted the ${data.role.replace("_", " ")} role on the AKCOE portal.`,
+      category: "access",
+    });
     return { ok: true };
   });
 
@@ -101,8 +115,23 @@ export const revokeRole = createServerFn({ method: "POST" })
     }
     const { error } = await supabase.from("user_roles").delete().eq("user_id", data.user_id).eq("role", data.role);
     if (error) throw error;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "role_revoked",
+      entity: "user_roles",
+      entity_id: data.user_id,
+      metadata: { role: data.role, at: new Date().toISOString() },
+    });
+    await supabaseAdmin.from("notifications").insert({
+      user_id: data.user_id,
+      title: "Portal access updated",
+      body: `Your ${data.role.replace("_", " ")} role on the AKCOE portal has been removed.`,
+      category: "access",
+    });
     return { ok: true };
   });
+
 
 // ============ ACADEMIC STRUCTURE (reads) ============
 
