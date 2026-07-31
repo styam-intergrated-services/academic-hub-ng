@@ -84,6 +84,20 @@ export const grantRole = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const { error } = await supabase.from("user_roles").insert({ user_id: data.user_id, role: data.role });
     if (error && !`${error.message}`.includes("duplicate")) throw error;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "role_granted",
+      entity: "user_roles",
+      entity_id: data.user_id,
+      metadata: { role: data.role, at: new Date().toISOString() },
+    });
+    await supabaseAdmin.from("notifications").insert({
+      user_id: data.user_id,
+      title: "Portal access updated",
+      body: `You have been granted the ${data.role.replace("_", " ")} role on the AKCOE portal.`,
+      category: "access",
+    });
     return { ok: true };
   });
 
@@ -101,8 +115,23 @@ export const revokeRole = createServerFn({ method: "POST" })
     }
     const { error } = await supabase.from("user_roles").delete().eq("user_id", data.user_id).eq("role", data.role);
     if (error) throw error;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "role_revoked",
+      entity: "user_roles",
+      entity_id: data.user_id,
+      metadata: { role: data.role, at: new Date().toISOString() },
+    });
+    await supabaseAdmin.from("notifications").insert({
+      user_id: data.user_id,
+      title: "Portal access updated",
+      body: `Your ${data.role.replace("_", " ")} role on the AKCOE portal has been removed.`,
+      category: "access",
+    });
     return { ok: true };
   });
+
 
 // ============ ACADEMIC STRUCTURE (reads) ============
 
@@ -425,18 +454,54 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         }
 
         let deptLinked = false;
+        let deptName: string | null = null;
         if (person.department_id) {
-          const { error: deptErr } = await supabaseAdmin
+          const { data: dept, error: deptErr } = await supabaseAdmin
             .from("departments")
             .update({ hod_id: userId! })
-            .eq("id", person.department_id);
+            .eq("id", person.department_id)
+            .select("name")
+            .maybeSingle();
           deptLinked = !deptErr;
+          deptName = dept?.name ?? null;
         }
+
+        // Audit trail: who changed roles/department, and when.
+        await supabaseAdmin.from("audit_logs").insert({
+          actor_id: context.userId,
+          action: created ? "staff_account_created" : "staff_assignment_updated",
+          entity: "profiles",
+          entity_id: userId!,
+          metadata: {
+            email,
+            staff_code: person.staff_code ?? null,
+            roles: person.roles,
+            department_id: person.department_id ?? null,
+            department_name: deptName,
+            hod_linked: deptLinked,
+            at: new Date().toISOString(),
+          },
+        });
+
+        // In-app notification confirming the assignment + first-login prompt.
+        const roleText = person.roles.length
+          ? person.roles.map((r) => r.replace("_", " ")).join(" and ")
+          : "staff";
+        await supabaseAdmin.from("notifications").insert({
+          user_id: userId!,
+          title: "Your portal access is ready",
+          body:
+            `You have been assigned the ${roleText} role${deptName ? ` for the ${deptName} department` : ""}. ` +
+            `Sign in with ${email} using the temporary password issued by the College, then set your own password when prompted.`,
+          link: "/first-login",
+          category: "access",
+        });
 
         results.push({
           email, user_id: userId, created,
           roles: person.roles, department_linked: deptLinked,
         });
+
       } catch (e) {
         results.push({
           email, user_id: null, created: false, roles: [], department_linked: false,
