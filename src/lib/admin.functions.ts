@@ -169,19 +169,31 @@ export const STAFF_AUDIT_ACTIONS = [
   "role_revoked",
 ] as const;
 
+export type AuditMetadata = {
+  role?: string;
+  roles?: string[];
+  email?: string;
+  staff_code?: string | null;
+  department_id?: string | null;
+  department_name?: string | null;
+  hod_linked?: boolean;
+  at?: string;
+};
+
 export type AuditLogRow = {
   id: string;
   created_at: string;
   action: string;
   entity: string;
   entity_id: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: AuditMetadata | null;
   actor_id: string | null;
   actor_name: string | null;
   actor_email: string | null;
   target_name: string | null;
   target_email: string | null;
 };
+
 
 export const listAuditLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
