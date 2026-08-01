@@ -11,6 +11,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { StatCard } from "@/components/portal/StatCard";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
+import { DashboardHero, HeroChip } from "@/components/dashboards/widgets/DashboardHero";
+import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
+
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export function StudentDashboard({ user }: { user: PortalUser }) {
@@ -38,29 +41,23 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl bg-hero-gradient p-6 text-white shadow-elegant md:p-8">
-        <div className="text-[10px] uppercase tracking-widest text-white/70">Student Portal</div>
-        <h1 className="mt-2 font-serif text-2xl font-bold sm:text-3xl md:text-4xl">
-          Welcome, {user.full_name ?? "Student"}
-        </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85">
-          {s ? (
+      <DashboardHero
+        eyebrow="Student Portal"
+        title={`Welcome, ${user.full_name ?? "Student"}`}
+        subtitle={
+          s ? undefined : "Your student record hasn't been activated yet. Contact the Registry."
+        }
+        chips={
+          s ? (
             <>
-              <span className="rounded-full bg-white/10 px-3 py-1">
-                Matric <b className="ml-1 font-mono text-gold">{s.matric_number}</b>
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-1">
-                CGPA <b className="ml-1 text-gold tabular-nums">{Number(s.cgpa).toFixed(2)}</b>
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-1 capitalize">
-                Standing <b className="ml-1 text-gold">{s.standing}</b>
-              </span>
+              <HeroChip label="Matric" value={<span className="font-mono">{s.matric_number}</span>} />
+              <HeroChip label="CGPA" value={<span className="tabular-nums">{Number(s.cgpa).toFixed(2)}</span>} />
+              <HeroChip label="Standing" value={<span className="capitalize">{s.standing}</span>} />
             </>
-          ) : (
-            <span>Your student record hasn't been activated yet. Contact the Registry.</span>
-          )}
-        </div>
-      </section>
+          ) : null
+        }
+      />
+
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} accent />
@@ -87,8 +84,8 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
                   <XAxis dataKey="label" fontSize={11} />
                   <YAxis domain={[0, 5]} fontSize={11} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="gpa" stroke="hsl(var(--primary))" strokeWidth={2} dot />
-                  <Line type="monotone" dataKey="cgpa" stroke="hsl(var(--accent-foreground))" strokeDasharray="4 4" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="gpa" stroke="var(--primary)" strokeWidth={2} dot />
+                  <Line type="monotone" dataKey="cgpa" stroke="var(--gold)" strokeDasharray="4 4" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -255,20 +252,17 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <NotificationsCard />
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Quick actions</CardTitle>
-            <CardDescription>Frequently used tasks</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link to="/registration"><Button className="w-full justify-start" variant="secondary"><ClipboardList className="mr-2 size-4" /> Register courses</Button></Link>
-            <Link to="/results"><Button className="w-full justify-start" variant="secondary"><Award className="mr-2 size-4" /> View results</Button></Link>
-            <Link to="/transcript"><Button className="w-full justify-start" variant="secondary"><FileCheck2 className="mr-2 size-4" /> My transcript</Button></Link>
-            <Link to="/courses"><Button className="w-full justify-start" variant="secondary"><BookOpen className="mr-2 size-4" /> My courses</Button></Link>
-            <Link to="/fees"><Button className="w-full justify-start" variant="secondary"><Wallet className="mr-2 size-4" /> Pay fees</Button></Link>
-            <Link to="/profile"><Button className="w-full justify-start" variant="secondary"><User className="mr-2 size-4" /> Update profile</Button></Link>
-          </CardContent>
-        </Card>
+        <QuickActions
+          actions={[
+            { label: "Register courses", to: "/registration", icon: ClipboardList, hint: "Current semester" },
+            { label: "View results", to: "/results", icon: Award, hint: "Published scores" },
+            { label: "My transcript", to: "/transcript", icon: FileCheck2, hint: "Academic record" },
+            { label: "My courses", to: "/courses", icon: BookOpen, hint: "Catalogue" },
+            { label: "Pay fees", to: "/fees", icon: Wallet, hint: "Bursary" },
+            { label: "Update profile", to: "/profile", icon: User, hint: "Photo & contact" },
+          ]}
+        />
+
       </div>
     </div>
   );

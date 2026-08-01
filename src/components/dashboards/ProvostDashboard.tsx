@@ -5,6 +5,8 @@ import { getProvostOverview } from "@/lib/provost.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardHero } from "@/components/dashboards/widgets/DashboardHero";
+import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,21 +46,25 @@ export function ProvostDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="bg-hero-gradient text-white rounded-xl p-6 md:p-8 shadow-elegant">
-        <div className="text-xs uppercase tracking-widest text-white/70">Office of the Provost</div>
-        <h1 className="mt-2 font-serif text-3xl md:text-4xl font-bold">Welcome, {user.full_name ?? "Provost"}</h1>
-        <p className="mt-2 text-white/80 max-w-2xl text-sm">
-          Executive overview of Aminu Kano College of Education — enrolment, revenue, results, and senate approvals.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {user.roles.map((r) => (
-            <Badge key={r} variant="secondary" className="bg-white/10 text-white border-white/20 capitalize">{r.replace("_"," ")}</Badge>
-          ))}
-          {data?.currentSession && (
-            <Badge variant="secondary" className="bg-white/10 text-white border-white/20">Session: {data.currentSession.name}</Badge>
-          )}
-        </div>
-      </section>
+      <DashboardHero
+        eyebrow="Office of the Provost"
+        title={`Welcome, ${user.full_name ?? "Provost"}`}
+        subtitle="Executive overview of Aminu Kano College of Education — enrolment, revenue, results, and senate approvals."
+        chips={
+          <>
+            {user.roles.map((r) => (
+              <Badge key={r} variant="secondary" className="border-white/20 bg-white/10 capitalize text-white">
+                {r.replace("_", " ")}
+              </Badge>
+            ))}
+            {data?.currentSession ? (
+              <Badge variant="secondary" className="border-white/20 bg-white/10 text-white">
+                Session: {data.currentSession.name}
+              </Badge>
+            ) : null}
+          </>
+        }
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
@@ -115,36 +121,34 @@ export function ProvostDashboard({ user }: { user: PortalUser }) {
 
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-serif text-lg">Executive quick access</CardTitle>
-          <CardDescription>The Provost's view is read-and-approve — operational tasks are handled by Registry, Bursary, ICT, Deans and HODs.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid md:grid-cols-3 gap-3">
-          <Link to="/reports"><Button variant="secondary" className="w-full justify-start"><TrendingUp className="h-4 w-4 mr-2" /> Reports</Button></Link>
-          <Link to="/announcements"><Button variant="secondary" className="w-full justify-start"><Megaphone className="h-4 w-4 mr-2" /> Announcements</Button></Link>
-          <Link to="/approvals"><Button variant="secondary" className="w-full justify-start"><FileCheck2 className="h-4 w-4 mr-2" /> Approvals queue</Button></Link>
-          <Link to="/students"><Button variant="secondary" className="w-full justify-start"><GraduationCap className="h-4 w-4 mr-2" /> Students</Button></Link>
-          <Link to="/applications"><Button variant="secondary" className="w-full justify-start"><UserPlus className="h-4 w-4 mr-2" /> Admissions</Button></Link>
-          <Link to="/departments"><Button variant="secondary" className="w-full justify-start"><Building2 className="h-4 w-4 mr-2" /> Departments</Button></Link>
-        </CardContent>
-      </Card>
+      <QuickActions
+        title="Executive quick access"
+        description="The Provost's view is read-and-approve — operational tasks are handled by Registry, Bursary, ICT, Deans and HODs."
+        actions={[
+          { label: "Reports", to: "/reports", icon: TrendingUp, hint: "Analytics" },
+          { label: "Announcements", to: "/announcements", icon: Megaphone, hint: "Senate queue" },
+          { label: "Approvals queue", to: "/approvals", icon: FileCheck2, hint: "Results workflow" },
+          { label: "Students", to: "/students", icon: GraduationCap, hint: "Directory" },
+          { label: "Admissions", to: "/applications", icon: UserPlus, hint: "Applications" },
+          { label: "Departments", to: "/departments", icon: Building2, hint: "Structure" },
+        ]}
+      />
     </div>
   );
 }
 
 function Kpi({ label, value, icon: Icon, to, loading }: { label: string; value: string | null; icon: any; to?: string; loading: boolean }) {
   const inner = (
-    <Card className={to ? "hover:shadow-md transition-shadow cursor-pointer h-full" : "h-full"}>
+    <Card className={to ? "card-hover h-full rounded-2xl" : "h-full rounded-2xl"}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-            <div className="mt-1 text-xl md:text-2xl font-serif font-bold text-primary truncate">
+            <div className="mt-1 truncate font-serif text-xl font-bold tabular-nums text-primary md:text-2xl">
               {loading || value === null ? <Skeleton className="h-7 w-16" /> : value}
             </div>
           </div>
-          <div className="w-9 h-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0"><Icon className="h-4 w-4" /></div>
+          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="size-4" /></div>
         </div>
       </CardContent>
     </Card>

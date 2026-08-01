@@ -12,6 +12,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { StatCard } from "@/components/portal/StatCard";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
+import { DashboardHero } from "@/components/dashboards/widgets/DashboardHero";
+import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
 
 export function LecturerDashboard({ user }: { user: PortalUser }) {
   const teachingFn = useServerFn(getLecturerTeachingCount);
@@ -35,16 +37,11 @@ export function LecturerDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl bg-hero-gradient p-6 text-white shadow-elegant md:p-8">
-        <div className="text-[10px] uppercase tracking-widest text-white/70">Lecturer Portal</div>
-        <h1 className="mt-2 font-serif text-2xl font-bold sm:text-3xl md:text-4xl">
-          Good day, {user.full_name ?? "Lecturer"}
-        </h1>
-        <p className="mt-2 max-w-xl text-sm text-white/80">
-          {cls?.semesterLabel ? `Current semester: ${cls.semesterLabel}. ` : ""}
-          Upload continuous assessment and exam scores, then submit for approval.
-        </p>
-      </section>
+      <DashboardHero
+        eyebrow="Lecturer Portal"
+        title={`Good day, ${user.full_name ?? "Lecturer"}`}
+        subtitle={`${cls?.semesterLabel ? `Current semester: ${cls.semesterLabel}. ` : ""}Upload continuous assessment and exam scores, then submit for approval.`}
+      />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <StatCard icon={BookOpen} label="Courses teaching" value={isLoading ? "…" : n} accent />
@@ -93,18 +90,16 @@ export function LecturerDashboard({ user }: { user: PortalUser }) {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Result submission</CardTitle>
-            <CardDescription>Draft → Submit → HOD → Dean → Registry → Published</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link to="/upload-results"><Button className="w-full justify-start" variant="secondary"><Upload className="mr-2 size-4" />Upload results</Button></Link>
-            <Link to="/teaching"><Button className="w-full justify-start" variant="secondary"><Users className="mr-2 size-4" />View classes</Button></Link>
-            <Link to="/students"><Button className="w-full justify-start" variant="secondary"><Users className="mr-2 size-4" />Student records</Button></Link>
-            <Link to="/profile"><Button className="w-full justify-start" variant="secondary"><FileCheck2 className="mr-2 size-4" />Update profile</Button></Link>
-          </CardContent>
-        </Card>
+        <QuickActions
+          title="Result submission"
+          description="Draft → Submit → HOD → Dean → Registry → Published"
+          actions={[
+            { label: "Upload results", to: "/upload-results", icon: Upload, hint: "Enter CA & exam scores" },
+            { label: "View classes", to: "/teaching", icon: Users, hint: "Allocated courses" },
+            { label: "Student records", to: "/students", icon: Users, hint: "Directory" },
+            { label: "Update profile", to: "/profile", icon: FileCheck2, hint: "Photo & contact" },
+          ]}
+        />
         <NotificationsCard />
       </div>
 
