@@ -1,0 +1,43 @@
+name: RLS regression (HOD scope)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  rls-hod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Require RLS test credentials
+        env:
+          RLS_TEST_HOD_EMAIL: ${{ secrets.RLS_TEST_HOD_EMAIL }}
+          RLS_TEST_HOD_PASSWORD: ${{ secrets.RLS_TEST_HOD_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          missing=0
+          for v in RLS_TEST_HOD_EMAIL RLS_TEST_HOD_PASSWORD VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::Missing required secret $v"; missing=1; fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "The RLS regression suite skips without credentials, which would hide policy regressions. Add the secrets above."
+            exit 1
+          fi
+
+      - name: Run HOD RLS regression tests
+        env:
+          RLS_TEST_HOD_EMAIL: ${{ secrets.RLS_TEST_HOD_EMAIL }}
+          RLS_TEST_HOD_PASSWORD: ${{ secrets.RLS_TEST_HOD_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: bun run test:rls
