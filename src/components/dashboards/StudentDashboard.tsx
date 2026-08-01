@@ -11,6 +11,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { StatCard } from "@/components/portal/StatCard";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
+import { DashboardHero, HeroChip } from "@/components/dashboards/widgets/DashboardHero";
+import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
+
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export function StudentDashboard({ user }: { user: PortalUser }) {
