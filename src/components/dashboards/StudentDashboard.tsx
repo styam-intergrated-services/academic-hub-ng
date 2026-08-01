@@ -252,20 +252,17 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <NotificationsCard />
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Quick actions</CardTitle>
-            <CardDescription>Frequently used tasks</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link to="/registration"><Button className="w-full justify-start" variant="secondary"><ClipboardList className="mr-2 size-4" /> Register courses</Button></Link>
-            <Link to="/results"><Button className="w-full justify-start" variant="secondary"><Award className="mr-2 size-4" /> View results</Button></Link>
-            <Link to="/transcript"><Button className="w-full justify-start" variant="secondary"><FileCheck2 className="mr-2 size-4" /> My transcript</Button></Link>
-            <Link to="/courses"><Button className="w-full justify-start" variant="secondary"><BookOpen className="mr-2 size-4" /> My courses</Button></Link>
-            <Link to="/fees"><Button className="w-full justify-start" variant="secondary"><Wallet className="mr-2 size-4" /> Pay fees</Button></Link>
-            <Link to="/profile"><Button className="w-full justify-start" variant="secondary"><User className="mr-2 size-4" /> Update profile</Button></Link>
-          </CardContent>
-        </Card>
+        <QuickActions
+          actions={[
+            { label: "Register courses", to: "/registration", icon: ClipboardList, hint: "Current semester" },
+            { label: "View results", to: "/results", icon: Award, hint: "Published scores" },
+            { label: "My transcript", to: "/transcript", icon: FileCheck2, hint: "Academic record" },
+            { label: "My courses", to: "/courses", icon: BookOpen, hint: "Catalogue" },
+            { label: "Pay fees", to: "/fees", icon: Wallet, hint: "Bursary" },
+            { label: "Update profile", to: "/profile", icon: User, hint: "Photo & contact" },
+          ]}
+        />
+
       </div>
     </div>
   );
