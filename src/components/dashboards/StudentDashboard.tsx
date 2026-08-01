@@ -38,29 +38,23 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl bg-hero-gradient p-6 text-white shadow-elegant md:p-8">
-        <div className="text-[10px] uppercase tracking-widest text-white/70">Student Portal</div>
-        <h1 className="mt-2 font-serif text-2xl font-bold sm:text-3xl md:text-4xl">
-          Welcome, {user.full_name ?? "Student"}
-        </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85">
-          {s ? (
+      <DashboardHero
+        eyebrow="Student Portal"
+        title={`Welcome, ${user.full_name ?? "Student"}`}
+        subtitle={
+          s ? undefined : "Your student record hasn't been activated yet. Contact the Registry."
+        }
+        chips={
+          s ? (
             <>
-              <span className="rounded-full bg-white/10 px-3 py-1">
-                Matric <b className="ml-1 font-mono text-gold">{s.matric_number}</b>
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-1">
-                CGPA <b className="ml-1 text-gold tabular-nums">{Number(s.cgpa).toFixed(2)}</b>
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-1 capitalize">
-                Standing <b className="ml-1 text-gold">{s.standing}</b>
-              </span>
+              <HeroChip label="Matric" value={<span className="font-mono">{s.matric_number}</span>} />
+              <HeroChip label="CGPA" value={<span className="tabular-nums">{Number(s.cgpa).toFixed(2)}</span>} />
+              <HeroChip label="Standing" value={<span className="capitalize">{s.standing}</span>} />
             </>
-          ) : (
-            <span>Your student record hasn't been activated yet. Contact the Registry.</span>
-          )}
-        </div>
-      </section>
+          ) : null
+        }
+      />
+
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} accent />
