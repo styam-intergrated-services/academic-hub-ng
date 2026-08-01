@@ -5,6 +5,8 @@ import { getProvostOverview } from "@/lib/provost.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardHero } from "@/components/dashboards/widgets/DashboardHero";
+import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {

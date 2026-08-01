@@ -14,6 +14,7 @@ import { ApprovalsShortcut } from "@/components/dashboards/widgets/ApprovalsShor
 import { SessionBanner } from "@/components/dashboards/widgets/SessionBanner";
 import { GpaTrendsCard } from "@/components/dashboards/widgets/GpaTrendsCard";
 import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
+import { DashboardHero } from "@/components/dashboards/widgets/DashboardHero";
 
 export function AdminDashboard({ user }: { user: PortalUser }) {
   const stats = useServerFn(getManagementStats);
@@ -40,18 +41,16 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
 
   return (
     <div className="space-y-6">
-      <section className="bg-hero-gradient text-white rounded-xl p-6 md:p-8 shadow-elegant">
-        <div className="text-xs uppercase tracking-widest text-white/70">Administration</div>
-        <h1 className="mt-2 font-serif text-3xl md:text-4xl font-bold">Welcome, {user.full_name ?? "Administrator"}</h1>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {user.roles.map((r) => (
-            <Badge key={r} variant="secondary" className="bg-white/10 text-white border-white/20 capitalize">{r.replace("_"," ")}</Badge>
-          ))}
-        </div>
-        {data?.scope === "partial" && (
-          <div className="mt-4 text-xs text-white/80">Showing data scoped to your department / faculty.</div>
-        )}
-      </section>
+      <DashboardHero
+        eyebrow="Administration"
+        title={`Welcome, ${user.full_name ?? "Administrator"}`}
+        subtitle={data?.scope === "partial" ? "Showing data scoped to your department / faculty." : undefined}
+        chips={user.roles.map((r) => (
+          <Badge key={r} variant="secondary" className="border-white/20 bg-white/10 capitalize text-white">
+            {r.replace("_", " ")}
+          </Badge>
+        ))}
+      />
 
       <SessionBanner semester={data?.currentSemester ?? null} canToggle={isRegistry} />
 
@@ -143,16 +142,16 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
 
 function StatCard({ icon: Icon, label, value, to, search }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | null; to?: string; search?: Record<string, string> }) {
   const inner = (
-    <Card className={to ? "hover:shadow-md transition-shadow cursor-pointer" : ""}>
+    <Card className={to ? "card-hover h-full rounded-2xl" : "h-full rounded-2xl"}>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-            <div className="mt-1 text-2xl font-serif font-bold text-primary">
+            <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</div>
+            <div className="mt-1 font-serif text-2xl font-bold tabular-nums text-primary sm:text-3xl">
               {value === null ? <Skeleton className="h-7 w-16" /> : value}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-md bg-primary/10 text-primary grid place-items-center"><Icon className="h-5 w-5" /></div>
+          <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="size-5" /></div>
         </div>
       </CardContent>
     </Card>
@@ -163,10 +162,10 @@ function StatCard({ icon: Icon, label, value, to, search }: { icon: React.Compon
 
 function QuickCard({ title, desc, to, icon: Icon }: { title: string; desc: string; to: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <Card>
+    <Card className="card-hover h-full rounded-2xl">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-primary text-primary-foreground grid place-items-center"><Icon className="h-4 w-4" /></div>
+          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Icon className="size-4" /></div>
           <div>
             <CardTitle className="font-serif text-base">{title}</CardTitle>
             <CardDescription>{desc}</CardDescription>
