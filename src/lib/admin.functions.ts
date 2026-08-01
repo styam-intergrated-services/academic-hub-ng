@@ -195,32 +195,93 @@ export type AuditLogRow = {
 };
 
 
+export type AuditLogPage = {
+  rows: AuditLogRow[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+/** Strip characters that would break PostgREST `or(...)` filter syntax. */
+function safeLike(v: string): string {
+  return v.replace(/[,()%*"']/g, " ").trim();
+}
+
 export const listAuditLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     action: z.string().max(60).optional(),
     staff_only: z.boolean().optional().default(true),
     search: z.string().max(120).optional().default(""),
+    staff_code: z.string().max(40).optional().default(""),
+    department_id: z.string().uuid().optional(),
     from: z.string().max(30).optional(),
     to: z.string().max(30).optional(),
-    limit: z.number().int().min(1).max(500).optional().default(150),
+    page: z.number().int().min(1).max(2000).optional().default(1),
+    page_size: z.number().int().min(1).max(2000).optional().default(25),
   }).parse(d ?? {}))
-  .handler(async ({ data, context }): Promise<AuditLogRow[]> => {
+  .handler(async ({ data, context }): Promise<AuditLogPage> => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
 
     let q = supabase
       .from("audit_logs")
-      .select("id, created_at, action, entity, entity_id, metadata, actor_id")
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .select("id, created_at, action, entity, entity_id, metadata, actor_id", { count: "exact" })
+      .order("created_at", { ascending: false });
 
     if (data.action) q = q.eq("action", data.action);
     else if (data.staff_only) q = q.in("action", STAFF_AUDIT_ACTIONS as unknown as string[]);
     if (data.from) q = q.gte("created_at", new Date(data.from).toISOString());
     if (data.to) q = q.lte("created_at", new Date(`${data.to}T23:59:59`).toISOString());
+    if (data.department_id) q = q.eq("metadata->>department_id", data.department_id);
 
-    const { data: logs, error } = await q;
+    // Staff-code filter: resolve to the staff profiles it matches, then filter on target id.
+    const code = safeLike(data.staff_code);
+    if (code) {
+      const { data: coded } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("staff_code", `%${code}%`)
+        .limit(500);
+      const ids = (coded ?? []).map((p) => p.id);
+      if (ids.length === 0) {
+        return { rows: [], total: 0, page: data.page, page_size: data.page_size };
+      }
+      q = q.in("entity_id", ids);
+    }
+
+    // Full-text-ish search: staff name/email/staff code, action, department name/code.
+    const s = safeLike(data.search);
+    if (s) {
+      const like = `%${s}%`;
+      const [{ data: profs }, { data: depts }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id")
+          .or(`full_name.ilike.${like},email.ilike.${like},staff_code.ilike.${like}`)
+          .limit(500),
+        supabase
+          .from("departments")
+          .select("id")
+          .or(`name.ilike.${like},code.ilike.${like}`)
+          .limit(300),
+      ]);
+      const ors = [
+        `action.ilike.${like}`,
+        `metadata->>email.ilike.${like}`,
+        `metadata->>department_name.ilike.${like}`,
+        `metadata->>staff_code.ilike.${like}`,
+        `metadata->>role.ilike.${like}`,
+      ];
+      const pIds = (profs ?? []).map((p) => p.id);
+      const dIds = (depts ?? []).map((d) => d.id);
+      if (pIds.length) ors.push(`entity_id.in.(${pIds.join(",")})`);
+      if (dIds.length) ors.push(`metadata->>department_id.in.(${dIds.join(",")})`);
+      q = q.or(ors.join(","));
+    }
+
+    const start = (data.page - 1) * data.page_size;
+    const { data: logs, error, count } = await q.range(start, start + data.page_size - 1);
     if (error) throw error;
 
     const ids = new Set<string>();
@@ -228,16 +289,17 @@ export const listAuditLogs = createServerFn({ method: "POST" })
       if (l.actor_id) ids.add(l.actor_id);
       if (l.entity_id) ids.add(l.entity_id);
     }
-    const people = new Map<string, { full_name: string | null; email: string }>();
+    const people = new Map<string, { full_name: string | null; email: string; staff_code: string | null }>();
     if (ids.size) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, staff_code")
         .in("id", [...ids]);
-      for (const p of profiles ?? []) people.set(p.id, { full_name: p.full_name, email: p.email });
+      for (const p of profiles ?? [])
+        people.set(p.id, { full_name: p.full_name, email: p.email, staff_code: p.staff_code });
     }
 
-    let rows: AuditLogRow[] = (logs ?? []).map((l) => {
+    const rows: AuditLogRow[] = (logs ?? []).map((l) => {
       const actor = l.actor_id ? people.get(l.actor_id) : undefined;
       const target = l.entity_id ? people.get(l.entity_id) : undefined;
       const meta = (l.metadata ?? null) as AuditMetadata | null;
@@ -253,18 +315,13 @@ export const listAuditLogs = createServerFn({ method: "POST" })
         actor_email: actor?.email ?? null,
         target_name: target?.full_name ?? null,
         target_email: target?.email ?? (typeof meta?.email === "string" ? (meta.email as string) : null),
+        target_staff_code: target?.staff_code ?? meta?.staff_code ?? null,
       };
     });
 
-    const s = data.search.trim().toLowerCase();
-    if (s) {
-      rows = rows.filter((r) =>
-        [r.actor_name, r.actor_email, r.target_name, r.target_email, r.action, JSON.stringify(r.metadata ?? {})]
-          .some((v) => (v ?? "").toString().toLowerCase().includes(s)),
-      );
-    }
-    return rows;
+    return { rows, total: count ?? rows.length, page: data.page, page_size: data.page_size };
   });
+
 
 
 // ============ FACULTIES ============
