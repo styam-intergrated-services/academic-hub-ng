@@ -87,8 +87,8 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
                   <XAxis dataKey="label" fontSize={11} />
                   <YAxis domain={[0, 5]} fontSize={11} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="gpa" stroke="hsl(var(--primary))" strokeWidth={2} dot />
-                  <Line type="monotone" dataKey="cgpa" stroke="hsl(var(--accent-foreground))" strokeDasharray="4 4" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="gpa" stroke="var(--primary)" strokeWidth={2} dot />
+                  <Line type="monotone" dataKey="cgpa" stroke="var(--gold)" strokeDasharray="4 4" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             )}

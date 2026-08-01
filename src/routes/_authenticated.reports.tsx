@@ -64,7 +64,7 @@ function AcademicTab() {
             <CartesianGrid strokeDasharray="3 3" opacity={0.3}/>
             <XAxis dataKey="name" fontSize={10} interval={0} angle={-30} textAnchor="end" height={80}/>
             <YAxis allowDecimals={false} fontSize={11}/><Tooltip/>
-            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4,4,0,0]}/>
+            <Bar dataKey="count" fill="var(--primary)" radius={[4,4,0,0]}/>
           </BarChart>
         </ChartCard>
         <ChartCard title="GPA distribution" onExport={() => download("gpa_distribution", data.gpaDistribution)}>
@@ -107,7 +107,7 @@ function FinancialTab() {
           <LineChart data={data.trend}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.3}/>
             <XAxis dataKey="month" fontSize={11}/><YAxis fontSize={11}/><Tooltip formatter={(v: any) => NGN(Number(v))}/>
-            <Line type="monotone" dataKey="amount" stroke="hsl(var(--primary))" strokeWidth={2}/>
+            <Line type="monotone" dataKey="amount" stroke="var(--primary)" strokeWidth={2}/>
           </LineChart>
         </ChartCard>
         <TableCard title="Collection by programme" onExport={() => download("collection_by_programme", data.byProgramme)}
@@ -133,7 +133,7 @@ function AdminTab() {
         <ChartCard title="Admission funnel" onExport={() => download("admission_funnel", data.admissionFunnel)}>
           <BarChart data={data.admissionFunnel}>
             <XAxis dataKey="status" fontSize={11}/><YAxis allowDecimals={false} fontSize={11}/><Tooltip/>
-            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4,4,0,0]}/>
+            <Bar dataKey="count" fill="var(--primary)" radius={[4,4,0,0]}/>
           </BarChart>
         </ChartCard>
         <ChartCard title="Population by level" onExport={() => download("population_by_level", data.populationByLevel)}>

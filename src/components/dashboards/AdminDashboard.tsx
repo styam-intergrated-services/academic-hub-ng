@@ -88,7 +88,7 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
                   <XAxis dataKey="level" fontSize={11} />
                   <YAxis allowDecimals={false} fontSize={11} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
+                  <Bar dataKey="count" fill="var(--primary)" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -105,7 +105,7 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
               <ResponsiveContainer>
                 <PieChart>
                   <Pie data={standingData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80}>
-                    {standingData.map((s) => <Cell key={s.name} fill={STANDING_COLORS[s.name] ?? "hsl(var(--muted))"} />)}
+                    {standingData.map((s) => <Cell key={s.name} fill={STANDING_COLORS[s.name] ?? "var(--muted)"} />)}
                   </Pie>
                   <Legend
                     wrapperStyle={{ fontSize: 11, cursor: "pointer" }}
