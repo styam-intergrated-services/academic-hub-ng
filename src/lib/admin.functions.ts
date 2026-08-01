@@ -192,6 +192,8 @@ export type AuditLogRow = {
   actor_email: string | null;
   target_name: string | null;
   target_email: string | null;
+  target_staff_code: string | null;
+
 };
 
 
