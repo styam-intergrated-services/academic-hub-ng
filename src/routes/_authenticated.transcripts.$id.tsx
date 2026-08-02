@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useRef, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { getTranscript, issueOfficialTranscript } from "@/lib/transcripts.functions";
+import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Printer, ShieldAlert, FileSignature } from "lucide-react";
+import { ChevronLeft, Download, Printer, ShieldAlert, FileSignature } from "lucide-react";
 import { TranscriptView } from "@/components/TranscriptView";
 
 const searchSchema = z.object({ official: z.coerce.boolean().optional(), serial: z.string().optional() });
@@ -24,6 +26,8 @@ function StudentTranscriptPage() {
   const qc = useQueryClient();
   const fn = useServerFn(getTranscript);
   const issueFn = useServerFn(issueOfficialTranscript);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["transcript", id],
@@ -39,6 +43,20 @@ function StudentTranscriptPage() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Failed to issue"),
   });
+
+  async function handleDownload() {
+    if (!sheetRef.current) return;
+    setDownloading(true);
+    try {
+      const matric = (data as any)?.student?.matric_number ?? "transcript";
+      const prefix = official ? "Official-Transcript" : "Transcript";
+      await downloadElementAsPdf(sheetRef.current, `${prefix}-${String(matric).replace(/[^\w-]+/g, "_")}.pdf`);
+    } catch {
+      toast.error("Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   if (isLoading) return <Skeleton className="h-96" />;
   if (error) return <Card><CardContent className="pt-6 text-destructive flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> {(error as Error).message}</CardContent></Card>;
@@ -61,14 +79,18 @@ function StudentTranscriptPage() {
               Switch to unofficial view
             </Button>
           )}
+          <Button variant="outline" onClick={handleDownload} disabled={downloading}>
+            <Download className="h-4 w-4 mr-2" /> {downloading ? "Preparing…" : "Download PDF"}
+          </Button>
           <Button onClick={() => window.print()} className="bg-primary text-primary-foreground">
-            <Printer className="h-4 w-4 mr-2" /> Print / Save PDF
+            <Printer className="h-4 w-4 mr-2" /> Print
           </Button>
         </div>
       </div>
-      <Card className="p-6 md:p-10 bg-white text-black">
+      <Card ref={sheetRef} className="p-6 md:p-10 bg-white text-black">
         <TranscriptView data={data} official={!!official} serial={serial} />
       </Card>
     </div>
   );
 }
+
