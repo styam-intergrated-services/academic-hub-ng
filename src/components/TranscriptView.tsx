@@ -90,9 +90,10 @@ export function TranscriptView({ data, official, serial }: { data: any; official
 
         <section className="mt-8 text-xs">
           <div className="text-[10px] mb-4">
-            Grading scale: A (75–100) 5.0 · B (65–74) 4.0 · C (55–64) 3.0 · D (45–54) 2.0 · E (40–44) 1.0 · F (0–39) 0.0.
-            Class of result: Distinction (≥4.50), Credit (≥3.50), Merit (≥2.50), Pass (≥1.00).
+            Grading scale: A (70–100) 5.0 · B (60–69) 4.0 · C (50–59) 3.0 · D (45–49) 2.0 · E (40–44) 1.0 · F (0–39) 0.0.
+            Class of result: Distinction (≥4.50), Upper Credit (≥3.50), Lower Credit (≥2.50), Merit (≥1.50), Pass (≥1.00).
           </div>
+
           {official ? (
             <div className="grid grid-cols-2 gap-8 mt-6">
               <SignatoryBlock label="Registrar" />
