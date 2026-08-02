@@ -1,40 +1,57 @@
-# Email login details to users automatically
+# Email existing login details to each user
 
-Yes, this is possible — with two important caveats.
+Yes — this is possible, and no passwords get changed. The emails simply state the credentials in the format already in use.
 
-## Caveats
+## Credential formats kept exactly as-is
 
-1. **Passwords cannot be looked up.** Stored passwords are hashed and cannot be read back, so an email can never contain an existing password. The flow therefore *issues a fresh temporary password* for the account at the moment of sending, and the email delivers that one. The user is forced to change it at first login (the existing `must_change_password` behaviour).
-2. **Students have no real email address.** Student accounts log in with matric number + entry year and use internal synthetic addresses, so nothing can be delivered to them until a real email is recorded on their record. They are skipped and reported as "no email on file". Staff/admin accounts (real emails) work immediately.
+- **Staff (Provost, Exam Director/Officers, HODs, Lecturers, admins)**
+  - Username: their email address
+  - Password: `Surname@2026`
+  - Still prompted to set a personal password at first sign-in (unchanged).
+- **Students**
+  - Username: their matric number
+  - Password: their year of entry
+  - Nothing about the matric login flow changes.
+
+Because the format is derived (surname / entry year), the email is generated from the record on file — no password reset, no new password, no change to `must_change_password`.
 
 ## Prerequisite: sender domain
 
-Emails must come from a domain you own — `akcoekano.com` is already connected to this project, so a sending subdomain (e.g. `notify.akcoekano.com`) gets set up through the email setup dialog. Sending activates once DNS verifies; nothing else is needed from you afterwards.
+Emails must come from a domain you own. `akcoekano.com` is already connected, so a sending subdomain (e.g. `notify.akcoekano.com`) gets set up through the email setup dialog once, then sending activates after DNS verifies.
+
+## Where the emails go
+
+- Staff: their real email address — ready to send immediately.
+- Students: student records currently hold **no personal email address** (their login identity is a matric number), so there is nowhere to deliver to yet. The build therefore adds:
+  - an optional personal email field on the student record,
+  - a CSV import ("matric number, email") so you can load the addresses you have,
+  - and the send action skips any student with no address, reporting them in a "no email on file" list.
 
 ## What will be built
 
-1. **Branded "Your portal login details" email template**
-   - AKCOE navy/gold styling, recipient name, portal URL, their login username (email), the temporary password, and a "you must change this at first sign-in" note.
+1. **Two branded email templates** (AKCOE navy/gold)
+   - *Staff login details*: name, portal link, username = email, password = `Surname@2026`, note to change it at first sign-in.
+   - *Student login details*: name, portal link, username = matric number, password = entry year, short "how to sign in" steps.
 
-2. **Server-side send action (Registry / ICT admin / Super admin only)**
-   - For one account: reset to a fresh temporary password, mark `must_change_password`, send the email, write an audit log entry.
-   - Reuses the existing admin password-reset path so no new privileged logic is introduced.
+2. **Send actions, admin-only** (Registry / ICT admin / Super admin)
+   - Send to one recipient, or bulk send to a filtered set (all staff, a department, a programme/level cohort).
+   - Read-only with respect to credentials: nothing in the auth system is modified.
 
-3. **UI in `/users`**
-   - A "Send login details" button on each directory row that has a real email address (disabled with a tooltip for synthetic student accounts).
-   - A bulk "Send to selected" action for staff accounts, with a confirmation dialog stating that each recipient's password will be reset.
-   - Toast feedback per send, plus a summary for bulk (sent / skipped-no-email / failed).
+3. **UI**
+   - `/users`: "Email login details" per staff row, plus a bulk "Email all staff" action with a confirmation dialog.
+   - `/students`: same per-student action and a bulk "Email login details" for the current filtered list, with counts of sent / skipped (no email) / failed.
+   - Student email import screen for the CSV of addresses.
 
 4. **Audit trail**
-   - Every send logged in `audit_logs` (who sent, to whom, when), so it appears in `/audit-logs`.
-
-## Students — optional follow-up
-
-If you want students to receive their details by email too, we would add an email field to the student record and an import path for their addresses. That is a separate step; say the word and it goes in the same build.
+   - Every send recorded in `audit_logs` (who sent, to whom, when) and visible in `/audit-logs`.
 
 ## Technical notes
 
-- Lovable-managed email sending: React Email template in `src/lib/email-templates/`, server-only send helper, no queues or email tables.
-- Send happens inside a server function guarded by the existing registry/ICT/super-admin role check, never from the browser.
-- Idempotency key per (account, send event) so retries do not duplicate messages.
-- No changes to grading, results, approvals, student login flow, or any academic data.
+- Lovable-managed sending: React Email templates in `src/lib/email-templates/`, server-only send helper, one recipient per send, idempotency key per (recipient, send batch) so retries never duplicate.
+- Passwords are rendered from the existing derived rules (surname + `@2026`; entry year) inside the server function — never read from or written to auth.
+- Bulk sends are throttled to respect the hourly send allowance; a summary is returned when a batch is rate-limited so it can be resumed.
+- No changes to grading, results, approvals, graduation, or any academic data.
+
+## One thing to confirm
+
+Do you have a list of student email addresses to import, or should student emails be collected in-app later (e.g. asked at first sign-in) and sent then?
