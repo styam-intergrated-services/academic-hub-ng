@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { getBroadsheet } from "@/lib/transcripts.functions";
+import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Printer, ShieldAlert } from "lucide-react";
+import { ChevronLeft, Download, Printer, ShieldAlert } from "lucide-react";
 import { BroadsheetView } from "@/components/BroadsheetView";
 
 export const Route = createFileRoute("/_authenticated/broadsheet/$offeringId")({
@@ -15,10 +18,25 @@ export const Route = createFileRoute("/_authenticated/broadsheet/$offeringId")({
 function BroadsheetPage() {
   const { offeringId } = Route.useParams();
   const fn = useServerFn(getBroadsheet);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["broadsheet", offeringId],
     queryFn: () => fn({ data: { offering_id: offeringId } }),
   });
+
+  async function handleDownload() {
+    if (!sheetRef.current) return;
+    setDownloading(true);
+    try {
+      const code = (data as any)?.offering?.course?.code ?? "broadsheet";
+      await downloadElementAsPdf(sheetRef.current, `Broadsheet-${String(code).replace(/[^\w-]+/g, "_")}.pdf`);
+    } catch {
+      toast.error("Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   if (isLoading) return <Skeleton className="h-96" />;
   if (error) return <Card><CardContent className="pt-6 text-destructive flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> {(error as Error).message}</CardContent></Card>;
@@ -30,13 +48,19 @@ function BroadsheetPage() {
         <Link to="/approvals" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center gap-1">
           <ChevronLeft className="h-4 w-4" /> Back
         </Link>
-        <Button onClick={() => window.print()} className="bg-primary text-primary-foreground">
-          <Printer className="h-4 w-4 mr-2" /> Print / Save PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownload} disabled={downloading}>
+            <Download className="h-4 w-4 mr-2" /> {downloading ? "Preparing…" : "Download PDF"}
+          </Button>
+          <Button onClick={() => window.print()} className="bg-primary text-primary-foreground">
+            <Printer className="h-4 w-4 mr-2" /> Print
+          </Button>
+        </div>
       </div>
-      <Card className="p-6 md:p-10 bg-white text-black">
+      <Card ref={sheetRef} className="p-6 md:p-10 bg-white text-black">
         <BroadsheetView data={data} />
       </Card>
     </div>
   );
 }
+
