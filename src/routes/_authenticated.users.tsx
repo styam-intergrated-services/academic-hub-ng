@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { listUsers, grantRole, revokeRole, type AppRole } from "@/lib/admin.functions";
+import { sendStaffOnboardingEmail } from "@/lib/staff-email.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, UserPlus, X } from "lucide-react";
+import { Search, UserPlus, X, Mail } from "lucide-react";
 import { CreateStaffAccountCard } from "@/components/admin/CreateStaffAccountCard";
 import { PasswordResetRequestsCard } from "@/components/admin/PasswordResetRequestsCard";
 
 
 const ROLES: AppRole[] = ["super_admin","ict_admin","registry","bursary","dean","hod","lecturer","student","applicant"];
+
 
 export const Route = createFileRoute("/_authenticated/users")({
   component: UsersPage,
@@ -46,6 +48,13 @@ function UsersPage() {
     onSuccess: () => { toast.success("Role revoked"); qc.invalidateQueries({ queryKey: ["admin","users"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+  const sendEmail = useServerFn(sendStaffOnboardingEmail);
+  const emailMut = useMutation({
+    mutationFn: (staff_id: string) => sendEmail({ data: { staff_id } }),
+    onSuccess: (r) => { toast.success(`Welcome email sent to ${r.email}`); qc.invalidateQueries({ queryKey: ["admin","audit-logs"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   return (
     <div className="space-y-6">
@@ -105,8 +114,11 @@ function UsersPage() {
                       onGrant={(role) => grantMut.mutate({ user_id: u.id, role })}
                       onRevoke={(role) => revokeMut.mutate({ user_id: u.id, role })}
                       busy={grantMut.isPending || revokeMut.isPending}
+                      onResendEmail={() => emailMut.mutate(u.id)}
+                      sending={emailMut.isPending && emailMut.variables === u.id}
                     />
                   ))
+
                 )}
               </TableBody>
             </Table>
@@ -118,15 +130,18 @@ function UsersPage() {
 }
 
 function UserRow({
-  user, onGrant, onRevoke, busy,
+  user, onGrant, onRevoke, busy, onResendEmail, sending,
 }: {
   user: { id: string; email: string; full_name: string | null; roles: AppRole[] };
   onGrant: (r: AppRole) => void;
   onRevoke: (r: AppRole) => void;
   busy: boolean;
+  onResendEmail: () => void;
+  sending: boolean;
 }) {
   const [pick, setPick] = useState<AppRole | "">("");
   const available = ROLES.filter((r) => !user.roles.includes(r));
+
   return (
     <TableRow>
       <TableCell className="font-medium">{user.full_name ?? <span className="text-muted-foreground">—</span>}</TableCell>
@@ -161,8 +176,12 @@ function UserRow({
           <Button size="sm" disabled={!pick || busy} onClick={() => { if (pick) { onGrant(pick); setPick(""); } }}>
             <UserPlus className="h-4 w-4" />
           </Button>
+          <Button size="sm" variant="outline" disabled={busy || sending} onClick={onResendEmail} title="Resend welcome email">
+            <Mail className="h-4 w-4" />
+          </Button>
         </div>
       </TableCell>
+
     </TableRow>
   );
 }
