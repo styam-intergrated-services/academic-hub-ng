@@ -48,6 +48,13 @@ function UsersPage() {
     onSuccess: () => { toast.success("Role revoked"); qc.invalidateQueries({ queryKey: ["admin","users"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+  const sendEmail = useServerFn(sendStaffOnboardingEmail);
+  const emailMut = useMutation({
+    mutationFn: (staff_id: string) => sendEmail({ data: { staff_id } }),
+    onSuccess: (r) => { toast.success(`Welcome email sent to ${r.email}`); qc.invalidateQueries({ queryKey: ["admin","audit-logs"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   return (
     <div className="space-y-6">
@@ -107,8 +114,11 @@ function UsersPage() {
                       onGrant={(role) => grantMut.mutate({ user_id: u.id, role })}
                       onRevoke={(role) => revokeMut.mutate({ user_id: u.id, role })}
                       busy={grantMut.isPending || revokeMut.isPending}
+                      onResendEmail={() => emailMut.mutate(u.id)}
+                      sending={emailMut.isPending && emailMut.variables === u.id}
                     />
                   ))
+
                 )}
               </TableBody>
             </Table>
@@ -120,15 +130,18 @@ function UsersPage() {
 }
 
 function UserRow({
-  user, onGrant, onRevoke, busy,
+  user, onGrant, onRevoke, busy, onResendEmail, sending,
 }: {
   user: { id: string; email: string; full_name: string | null; roles: AppRole[] };
   onGrant: (r: AppRole) => void;
   onRevoke: (r: AppRole) => void;
   busy: boolean;
+  onResendEmail: () => void;
+  sending: boolean;
 }) {
   const [pick, setPick] = useState<AppRole | "">("");
   const available = ROLES.filter((r) => !user.roles.includes(r));
+
   return (
     <TableRow>
       <TableCell className="font-medium">{user.full_name ?? <span className="text-muted-foreground">—</span>}</TableCell>
@@ -163,8 +176,12 @@ function UserRow({
           <Button size="sm" disabled={!pick || busy} onClick={() => { if (pick) { onGrant(pick); setPick(""); } }}>
             <UserPlus className="h-4 w-4" />
           </Button>
+          <Button size="sm" variant="outline" disabled={busy || sending} onClick={onResendEmail} title="Resend welcome email">
+            <Mail className="h-4 w-4" />
+          </Button>
         </div>
       </TableCell>
+
     </TableRow>
   );
 }
