@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { listUsers, grantRole, revokeRole, type AppRole } from "@/lib/admin.functions";
+import { sendStaffOnboardingEmail } from "@/lib/staff-email.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, UserPlus, X } from "lucide-react";
+import { Search, UserPlus, X, Mail } from "lucide-react";
 import { CreateStaffAccountCard } from "@/components/admin/CreateStaffAccountCard";
 import { PasswordResetRequestsCard } from "@/components/admin/PasswordResetRequestsCard";
 
 
 const ROLES: AppRole[] = ["super_admin","ict_admin","registry","bursary","dean","hod","lecturer","student","applicant"];
+
 
 export const Route = createFileRoute("/_authenticated/users")({
   component: UsersPage,
