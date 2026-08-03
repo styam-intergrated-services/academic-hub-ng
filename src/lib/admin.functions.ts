@@ -582,7 +582,9 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
     const results: Array<{
       email: string; user_id: string | null; created: boolean;
       roles: string[]; department_linked: boolean; error?: string; rolled_back?: boolean;
+      email_sent?: boolean; email_error?: string;
     }> = [];
+
 
     for (const person of data.staff) {
       const email = person.email.trim().toLowerCase();
@@ -715,10 +717,38 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
           category: "access",
         });
 
+        // Onboarding email with the temporary password that was just generated.
+        let emailSent = false;
+        let emailError: string | undefined;
+        try {
+          const { renderStaffOnboardingEmail, sendViaResend } = await import("./staff-email.server");
+          const rendered = renderStaffOnboardingEmail({
+            full_name: person.full_name,
+            email,
+            temp_password: password,
+            roles: person.roles,
+            department_name: deptName,
+          });
+          const sent = await sendViaResend(email, rendered.subject, rendered.html, rendered.text);
+          emailSent = true;
+          await supabaseAdmin.from("audit_logs").insert({
+            actor_id: context.userId,
+            action: "staff_onboarding_email_sent",
+            entity: "profiles",
+            entity_id: userId!,
+            metadata: { email, included_password: true, provider_id: sent.id ?? null, at: new Date().toISOString() },
+          });
+        } catch (mailErr) {
+          // Email failure must not roll back a valid account.
+          emailError = mailErr instanceof Error ? mailErr.message : "Email could not be sent";
+        }
+
         results.push({
           email, user_id: userId, created,
           roles: person.roles, department_linked: deptLinked,
+          email_sent: emailSent, email_error: emailError,
         });
+
 
       } catch (e) {
         let rolledBack = true;
