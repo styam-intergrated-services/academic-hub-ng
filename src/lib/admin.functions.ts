@@ -706,6 +706,18 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         });
         if (auditErr) throw auditErr;
 
+        // Last irreversible step: reset the temporary password on an existing account.
+        // Done only after every rollback-able step succeeded.
+        if (resetExistingPassword) {
+          const { error: pwErr } = await supabaseAdmin.auth.admin.updateUserById(userId!, {
+            password,
+            user_metadata: { full_name: person.full_name, staff_code: person.staff_code ?? null },
+          });
+          if (pwErr) throw pwErr;
+        }
+
+
+
         // In-app notification confirming the assignment + first-login prompt.
         const roleText = person.roles.map((r) => r.replace("_", " ")).join(" and ");
         await supabaseAdmin.from("notifications").insert({
