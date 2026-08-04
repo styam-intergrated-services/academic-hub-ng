@@ -734,23 +734,33 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
         let emailSent = false;
         let emailError: string | undefined;
         try {
-          const { renderStaffOnboardingEmail, sendViaResend } = await import("./staff-email.server");
-          const rendered = renderStaffOnboardingEmail({
-            full_name: person.full_name,
-            email,
-            temp_password: password,
-            roles: person.roles,
-            department_name: deptName,
+          const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+          const result = await sendTemplateEmail("staff-login-details", email, {
+            templateData: {
+              full_name: person.full_name,
+              email,
+              temp_password: password,
+              role_text: person.roles.map((r) => r.replace(/_/g, " ")).join(" and "),
+              department_name: deptName,
+            },
+            idempotencyKey: `staff-login-details-${userId}`,
           });
-          const sent = await sendViaResend(email, rendered.subject, rendered.html, rendered.text);
-          emailSent = true;
+          emailSent = result.sent;
+          if (!result.sent) emailError = result.reason;
           await supabaseAdmin.from("audit_logs").insert({
             actor_id: context.userId,
             action: "staff_onboarding_email_sent",
             entity: "profiles",
             entity_id: userId!,
-            metadata: { email, included_password: true, provider_id: sent.id ?? null, at: new Date().toISOString() },
+            metadata: {
+              email,
+              included_password: true,
+              sent: result.sent,
+              reason: result.sent ? null : result.reason,
+              at: new Date().toISOString(),
+            },
           });
+
         } catch (mailErr) {
           // Email failure must not roll back a valid account.
           emailError = mailErr instanceof Error ? mailErr.message : "Email could not be sent";
