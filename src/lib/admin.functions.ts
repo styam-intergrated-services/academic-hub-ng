@@ -603,22 +603,23 @@ export const createStaffAccounts = createServerFn({ method: "POST" })
           user_metadata: { full_name: person.full_name, staff_code: person.staff_code ?? null },
         });
 
+        let resetExistingPassword = false;
         if (createErr) {
-          // already registered → look the account up and reset the temp password
+          // Already registered → reuse the account. The temporary password reset is
+          // deferred until every other step succeeds, because an auth password change
+          // cannot be rolled back (the previous hash is unreadable).
           const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
           const existing = list?.users?.find((u) => (u.email ?? "").toLowerCase() === email);
           if (!existing) throw createErr;
           userId = existing.id;
-          await supabaseAdmin.auth.admin.updateUserById(userId, {
-            password,
-            user_metadata: { full_name: person.full_name, staff_code: person.staff_code ?? null },
-          });
+          resetExistingPassword = true;
         } else {
           userId = createdUser.user!.id;
           created = true;
           const newUserId = userId;
           rollback.push(async () => { await supabaseAdmin.auth.admin.deleteUser(newUserId); });
         }
+
 
         // Snapshot the profile so an existing staff record can be restored on failure.
         const { data: prevProfile } = await supabaseAdmin
