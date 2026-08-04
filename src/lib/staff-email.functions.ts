@@ -24,7 +24,7 @@ export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { renderStaffOnboardingEmail, sendViaResend } = await import("./staff-email.server");
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
 
     const { data: profile, error } = await supabaseAdmin
       .from("profiles").select("id, email, full_name").eq("id", data.staff_id).maybeSingle();
@@ -36,15 +36,20 @@ export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
     const { data: dept } = await supabaseAdmin
       .from("departments").select("name").eq("hod_id", data.staff_id).maybeSingle();
 
-    const rendered = renderStaffOnboardingEmail({
-      full_name: profile.full_name,
-      email: profile.email,
-      temp_password: data.temp_password ?? null,
-      roles: (staffRoles ?? []).map((r) => r.role as string),
-      department_name: dept?.name ?? null,
-    });
+    const roleText = (staffRoles ?? [])
+      .map((r) => (r.role as string).replace(/_/g, " "))
+      .join(" and ");
 
-    const sent = await sendViaResend(profile.email, rendered.subject, rendered.html, rendered.text);
+    const result = await sendTemplateEmail("staff-login-details", profile.email, {
+      templateData: {
+        full_name: profile.full_name,
+        email: profile.email,
+        temp_password: data.temp_password ?? null,
+        role_text: roleText,
+        department_name: dept?.name ?? null,
+      },
+      idempotencyKey: `staff-login-details-${data.staff_id}-${Date.now()}`,
+    });
 
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,
@@ -54,10 +59,12 @@ export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
       metadata: {
         email: profile.email,
         included_password: Boolean(data.temp_password),
-        provider_id: sent.id ?? null,
+        sent: result.sent,
+        reason: result.sent ? null : result.reason,
         at: new Date().toISOString(),
       },
     });
 
-    return { sent: true, email: profile.email, provider_id: sent.id ?? null };
+    return { sent: result.sent, email: profile.email, reason: result.sent ? null : result.reason };
   });
+

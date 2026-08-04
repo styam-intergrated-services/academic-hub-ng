@@ -60,6 +60,7 @@ import { Route as AuthenticatedBroadsheetOfferingIdRouteImport } from './routes/
 import { Route as AuthenticatedAdminImportIssLvt2022RouteImport } from './routes/_authenticated.admin.import-iss-lvt-2022'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -336,6 +337,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -388,6 +395,7 @@ export interface FileRoutesByFullPath {
   '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
   '/api/public/password-reset-request': typeof ApiPublicPasswordResetRequestRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -439,6 +447,7 @@ export interface FileRoutesByTo {
   '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
   '/api/public/password-reset-request': typeof ApiPublicPasswordResetRequestRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -493,6 +502,7 @@ export interface FileRoutesById {
   '/api/public/matric-login-init': typeof ApiPublicMatricLoginInitRoute
   '/api/public/password-reset-request': typeof ApiPublicPasswordResetRequestRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
     | '/api/public/matric-login-init'
     | '/api/public/password-reset-request'
     | '/students/'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/api/public/matric-login-init'
     | '/api/public/password-reset-request'
     | '/students'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -651,6 +663,7 @@ export interface FileRouteTypes {
     | '/api/public/matric-login-init'
     | '/api/public/password-reset-request'
     | '/_authenticated/students/'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -671,6 +684,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMatricLoginInitRoute: typeof ApiPublicMatricLoginInitRoute
   ApiPublicPasswordResetRequestRoute: typeof ApiPublicPasswordResetRequestRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1032,6 +1046,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1154,6 +1175,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMatricLoginInitRoute: ApiPublicMatricLoginInitRoute,
   ApiPublicPasswordResetRequestRoute: ApiPublicPasswordResetRequestRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
