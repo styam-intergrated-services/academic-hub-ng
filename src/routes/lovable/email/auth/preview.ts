@@ -18,7 +18,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "academic-hub-ng"
+const SITE_NAME = "AKCOE Portal"
 const ROOT_DOMAIN = "akcoekano.com"
 
 // Sample data for preview mode ONLY (not used in actual email sending).
