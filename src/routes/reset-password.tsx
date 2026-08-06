@@ -92,17 +92,24 @@ function ResetPasswordPage() {
     <div className="min-h-screen grid place-items-center bg-background p-6">
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader>
-          <h1 className="font-serif text-2xl font-semibold leading-none tracking-tight">Reset Your Password</h1>
+          <h1 className="font-serif text-2xl font-semibold leading-none tracking-tight">
+            {welcome ? "Welcome to AKCOE Portal — Set Your Password" : "Reset Your Password"}
+          </h1>
 
 
           <CardDescription>
             {linkError
-              ? "This reset link is no longer valid."
+              ? "This link is no longer valid."
               : ready
-                ? "Choose a new password for your AKCOE account."
-                : "Verifying reset link…"}
+                ? welcome
+                  ? "Welcome to the AKCOE Portal. Please set your permanent password below to activate your staff account."
+                  : "Choose a new password for your AKCOE account."
+                : welcome
+                  ? "Verifying your invitation link…"
+                  : "Verifying reset link…"}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           {ready && !linkError ? (
             <form onSubmit={handleSubmit} className="space-y-4">
