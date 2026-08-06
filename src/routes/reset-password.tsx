@@ -28,7 +28,9 @@ function ResetPasswordPage() {
     (async () => {
       const url = new URL(window.location.href);
       const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      if (url.searchParams.get("welcome") === "1") setWelcome(true);
       const errDesc = url.searchParams.get("error_description") ?? hash.get("error_description");
+
       if (errDesc) {
         setLinkError(errDesc);
         return;
