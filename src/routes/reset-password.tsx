@@ -17,6 +17,8 @@ function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [welcome, setWelcome] = useState(false);
+
 
   useEffect(() => {
     const sub = supabase.auth.onAuthStateChange((event) => {
@@ -26,7 +28,9 @@ function ResetPasswordPage() {
     (async () => {
       const url = new URL(window.location.href);
       const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      if (url.searchParams.get("welcome") === "1") setWelcome(true);
       const errDesc = url.searchParams.get("error_description") ?? hash.get("error_description");
+
       if (errDesc) {
         setLinkError(errDesc);
         return;
@@ -88,17 +92,24 @@ function ResetPasswordPage() {
     <div className="min-h-screen grid place-items-center bg-background p-6">
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader>
-          <h1 className="font-serif text-2xl font-semibold leading-none tracking-tight">Reset Your Password</h1>
+          <h1 className="font-serif text-2xl font-semibold leading-none tracking-tight">
+            {welcome ? "Welcome to AKCOE Portal — Set Your Password" : "Reset Your Password"}
+          </h1>
 
 
           <CardDescription>
             {linkError
-              ? "This reset link is no longer valid."
+              ? "This link is no longer valid."
               : ready
-                ? "Choose a new password for your AKCOE account."
-                : "Verifying reset link…"}
+                ? welcome
+                  ? "Welcome to the AKCOE Portal. Please set your permanent password below to activate your staff account."
+                  : "Choose a new password for your AKCOE account."
+                : welcome
+                  ? "Verifying your invitation link…"
+                  : "Verifying reset link…"}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           {ready && !linkError ? (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,8 +122,9 @@ function ResetPasswordPage() {
                 <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
               </div>
               <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : welcome ? "Set my password" : "Update password"}
               </Button>
+
             </form>
           ) : (
             <div className="text-sm text-muted-foreground">

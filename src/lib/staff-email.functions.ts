@@ -2,10 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+/** Where the onboarding link lands. `welcome=1` switches the page copy to onboarding wording. */
+const ONBOARDING_REDIRECT = "https://www.akcoekano.com/reset-password?welcome=1";
+
 /**
- * Sends the staff onboarding / welcome email.
- * The temporary password is a per-call parameter — never hardcoded — so the caller
- * passes whatever the account-creation flow actually generated for that account.
+ * Sends the staff onboarding email through the built-in auth email channel
+ * (the same one that already delivers password-reset emails reliably).
+ * The recipient gets a secure link that lands on the welcome/set-password page.
  */
 export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -24,7 +27,6 @@ export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
 
     const { data: profile, error } = await supabaseAdmin
       .from("profiles").select("id, email, full_name").eq("id", data.staff_id).maybeSingle();
@@ -40,16 +42,11 @@ export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
       .map((r) => (r.role as string).replace(/_/g, " "))
       .join(" and ");
 
-    const result = await sendTemplateEmail("staff-login-details", profile.email, {
-      templateData: {
-        full_name: profile.full_name,
-        email: profile.email,
-        temp_password: data.temp_password ?? null,
-        role_text: roleText,
-        department_name: dept?.name ?? null,
-      },
-      idempotencyKey: `staff-login-details-${data.staff_id}-${Date.now()}`,
+    const { error: sendErr } = await supabaseAdmin.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: ONBOARDING_REDIRECT,
     });
+
+    const sent = !sendErr;
 
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId,
@@ -58,13 +55,14 @@ export const sendStaffOnboardingEmail = createServerFn({ method: "POST" })
       entity_id: data.staff_id,
       metadata: {
         email: profile.email,
-        included_password: Boolean(data.temp_password),
-        sent: result.sent,
-        reason: result.sent ? null : result.reason,
+        channel: "auth_recovery_link",
+        role_text: roleText,
+        department_name: dept?.name ?? null,
+        sent,
+        reason: sendErr?.message ?? null,
         at: new Date().toISOString(),
       },
     });
 
-    return { sent: result.sent, email: profile.email, reason: result.sent ? null : result.reason };
+    return { sent, email: profile.email, reason: sendErr?.message ?? null };
   });
-
