@@ -122,8 +122,9 @@ function ResetPasswordPage() {
                 <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
               </div>
               <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : welcome ? "Set my password" : "Update password"}
               </Button>
+
             </form>
           ) : (
             <div className="text-sm text-muted-foreground">
