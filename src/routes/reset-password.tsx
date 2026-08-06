@@ -17,6 +17,8 @@ function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [welcome, setWelcome] = useState(false);
+
 
   useEffect(() => {
     const sub = supabase.auth.onAuthStateChange((event) => {
