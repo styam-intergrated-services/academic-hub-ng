@@ -224,7 +224,9 @@ export const getManagementStats = createServerFn({ method: "GET" })
     const scope = await departmentScope(supabase, userId, roles);
 
     const base = () => {
-      let q = supabase.from("students").select("id, cgpa, standing, is_active, current_level_id", { count: "exact" });
+      let q = supabase
+        .from("students")
+        .select("id, cgpa, standing, is_active, current_level_id, programme_id, department_id", { count: "exact" });
       if (scope !== null) {
         if (scope.length === 0) return { q, empty: true as const };
         q = q.in("department_id", scope);
@@ -235,7 +237,7 @@ export const getManagementStats = createServerFn({ method: "GET" })
     const b = base();
     const students = b.empty ? { data: [] as any[], count: 0 } : await b.q.limit(10_000);
 
-    const rows = (students.data ?? []) as Array<{ cgpa: number; standing: string; is_active: boolean; current_level_id: string }>;
+    const rows = (students.data ?? []) as Array<{ cgpa: number; standing: string; is_active: boolean; current_level_id: string; programme_id: string; department_id: string }>;
     const total = students.count ?? rows.length;
     const active = rows.filter((r) => r.is_active).length;
     const probation = rows.filter((r) => r.standing === "probation").length;
@@ -250,6 +252,43 @@ export const getManagementStats = createServerFn({ method: "GET" })
     for (const r of rows) levelCounts.set(r.current_level_id, (levelCounts.get(r.current_level_id) ?? 0) + 1);
     const { data: levels } = await supabase.from("levels").select("id, name, order_index").order("order_index");
     const perLevel = (levels ?? []).map((l: any) => ({ level: l.name, count: levelCounts.get(l.id) ?? 0 }));
+
+    // Students per programme (with average CGPA + probation count), plus per department
+    const { data: progRows } = await supabase.from("programmes").select("id, code, name, department_id");
+    const { data: deptRows } = await supabase.from("departments").select("id, name");
+    const deptName = new Map((deptRows ?? []).map((d: any) => [d.id, d.name as string]));
+    const progAgg = new Map<string, { count: number; cgpaSum: number; probation: number }>();
+    for (const r of rows) {
+      const a = progAgg.get(r.programme_id) ?? { count: 0, cgpaSum: 0, probation: 0 };
+      a.count++;
+      a.cgpaSum += Number(r.cgpa || 0);
+      if (r.standing === "probation") a.probation++;
+      progAgg.set(r.programme_id, a);
+    }
+    const perProgramme = (progRows ?? [])
+      .map((p: any) => {
+        const a = progAgg.get(p.id);
+        return {
+          programme_id: p.id as string,
+          code: p.code as string,
+          name: p.name as string,
+          department: deptName.get(p.department_id) ?? "—",
+          count: a?.count ?? 0,
+          avgCgpa: a && a.count ? Number((a.cgpaSum / a.count).toFixed(2)) : 0,
+          probation: a?.probation ?? 0,
+        };
+      })
+      .filter((p) => (scope === null ? true : p.count > 0))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+    const deptAgg = new Map<string, number>();
+    for (const r of rows) deptAgg.set(r.department_id, (deptAgg.get(r.department_id) ?? 0) + 1);
+    const perDepartment = (deptRows ?? [])
+      .map((d: any) => ({ department: d.name as string, count: deptAgg.get(d.id) ?? 0 }))
+      .filter((d) => (scope === null ? true : d.count > 0))
+      .sort((a, b) => b.count - a.count);
+
+
 
     // Results pipeline (current semester if any) — scoped by department when applicable
     const { data: currentSemRow } = await supabase.from("semesters")
