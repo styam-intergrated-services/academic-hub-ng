@@ -122,18 +122,67 @@ export function AdminDashboard({ user }: { user: PortalUser }) {
         </Card>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isRegistry && <>
-          <QuickCard title="Departments" desc="Manage faculties, departments and programmes" to="/departments" icon={Building2} />
-          <QuickCard title="Students" desc="View and manage student records" to="/students" icon={GraduationCap} />
-        </>}
-        <QuickCard title="Result approvals" desc="HOD → Dean → Registry workflow" to="/approvals" icon={FileCheck2} />
-        {user.roles.some((r) => ["super_admin","ict_admin"].includes(r)) && (
-          <QuickCard title="Users & Roles" desc="Assign roles and permissions" to="/users" icon={Users} />
-        )}
-        {isFinancial && <QuickCard title="Fees & Payments" desc="Fee structures and payment verification" to="/fees" icon={Wallet} />}
-        <QuickCard title="Administration" desc="Sessions, semesters and general settings" to="/admin" icon={Settings} />
-      </div>
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="font-serif text-lg">Enrolment by programme</CardTitle>
+          <CardDescription>Live student counts, average CGPA and probation cases per programme.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading || !data ? (
+            <div className="p-4"><Skeleton className="h-40" /></div>
+          ) : (data.perProgramme?.length ?? 0) === 0 ? (
+            <div className="p-6 text-sm text-muted-foreground">No programmes in scope yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-background text-left">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Programme</th>
+                    <th className="px-4 py-2 font-medium">Department</th>
+                    <th className="px-4 py-2 text-right font-medium">Students</th>
+                    <th className="px-4 py-2 text-right font-medium">Avg CGPA</th>
+                    <th className="px-4 py-2 text-right font-medium">On probation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.perProgramme.map((p: any) => (
+                    <tr key={p.programme_id} className="border-b last:border-0 even:bg-muted/30">
+                      <td className="px-4 py-2">
+                        <div className="font-medium">{p.name}</div>
+                        <div className="font-mono text-[11px] text-muted-foreground">{p.code}</div>
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">{p.department}</td>
+                      <td className="px-4 py-2 text-right tabular-nums font-semibold">{p.count.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right tabular-nums">{p.count ? p.avgCgpa.toFixed(2) : "—"}</td>
+                      <td className="px-4 py-2 text-right tabular-nums">{p.probation}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <QuickActions
+        description="Live shortcuts for the tasks you use most"
+        actions={[
+          ...(isRegistry
+            ? [
+                { label: "Departments", to: "/departments", icon: Building2, hint: "Faculties & programmes" },
+                { label: "Students", to: "/students", icon: GraduationCap, hint: `${(t?.students ?? 0).toLocaleString()} on record` },
+              ]
+            : []),
+          { label: "Result approvals", to: "/approvals", icon: FileCheck2, hint: `${(t?.pendingApprovals ?? 0).toLocaleString()} pending` },
+          { label: "Results archive", to: "/results-archive", icon: ClipboardList, hint: "By department & level" },
+          ...(user.roles.some((r) => ["super_admin", "ict_admin"].includes(r))
+            ? [{ label: "Users & roles", to: "/users", icon: Users, hint: "Onboard staff" }]
+            : []),
+          ...(isFinancial ? [{ label: "Fees & payments", to: "/fees", icon: Wallet, hint: "Verify payments" }] : []),
+          { label: "Administration", to: "/admin", icon: Settings, hint: "Sessions & semesters" },
+        ]}
+      />
+
 
       <NotificationsCard />
     </div>
