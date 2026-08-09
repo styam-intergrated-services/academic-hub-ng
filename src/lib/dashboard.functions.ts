@@ -184,7 +184,7 @@ export const getStudentExtras = createServerFn({ method: "GET" })
 
     const { data: gpaRows } = await supabase
       .from("gpa_records")
-      .select("gpa,cgpa,semester_id,computed_at")
+      .select("gpa,cgpa,semester_id,computed_at,credit_units,grade_points,standing")
       .eq("student_id", sid)
       .order("computed_at", { ascending: true })
       .limit(12);
@@ -203,6 +203,9 @@ export const getStudentExtras = createServerFn({ method: "GET" })
       label: semLabel.get(g.semester_id) ?? "Semester",
       gpa: Number(g.gpa),
       cgpa: Number(g.cgpa),
+      credit_units: g.credit_units ?? 0,
+      grade_points: Number(g.grade_points ?? 0),
+      standing: g.standing ?? "good",
     }));
 
     // Upcoming exams for offerings the student is registered in.
