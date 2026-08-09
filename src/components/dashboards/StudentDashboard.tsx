@@ -143,6 +143,51 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
         </Card>
       </div>
 
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="font-serif">Semester-by-semester breakdown</CardTitle>
+          <CardDescription>Credit units, grade points, GPA and running CGPA per semester</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {extrasLoading ? (
+            <div className="p-4"><Skeleton className="h-32" /></div>
+          ) : (extras?.semesterGpa.length ?? 0) === 0 ? (
+            <div className="p-4">
+              <EmptyState title="No GPA records yet" description="Each semester appears here once its results are published." />
+            </div>
+          ) : (
+            <TableScroll>
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead>Semester</TableHead>
+                    <TableHead className="text-right">Units</TableHead>
+                    <TableHead className="text-right">Points</TableHead>
+                    <TableHead className="text-right">GPA</TableHead>
+                    <TableHead className="text-right">CGPA</TableHead>
+                    <TableHead>Standing</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extras!.semesterGpa.map((g, i) => (
+                    <TableRow key={`${g.label}-${i}`} className="even:bg-muted/30">
+                      <TableCell className="font-medium">{g.label}</TableCell>
+                      <TableCell className="text-right tabular-nums">{g.credit_units}</TableCell>
+                      <TableCell className="text-right tabular-nums">{g.grade_points.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">{g.gpa.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-primary">{g.cgpa.toFixed(2)}</TableCell>
+                      <TableCell><Badge variant="secondary" className="capitalize">{g.standing}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableScroll>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
