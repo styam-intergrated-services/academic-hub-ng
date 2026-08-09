@@ -52,7 +52,14 @@ export interface StudentExtras {
     credit_units: number;
     published_at: string | null;
   }[];
-  semesterGpa: { label: string; gpa: number; cgpa: number }[];
+  semesterGpa: {
+    label: string;
+    gpa: number;
+    cgpa: number;
+    credit_units: number;
+    grade_points: number;
+    standing: string;
+  }[];
   upcomingExams: {
     id: string;
     code: string;
@@ -141,7 +148,7 @@ export const getStudentExtras = createServerFn({ method: "GET" })
       .eq("student_id", sid)
       .eq("status", "published")
       .order("published_at", { ascending: false })
-      .limit(6);
+      .limit(10);
 
     const offeringIds = Array.from(new Set((results ?? []).map((r) => r.offering_id)));
     const courseByOffering = new Map<string, { code: string; title: string; credit_units: number }>();
@@ -177,7 +184,7 @@ export const getStudentExtras = createServerFn({ method: "GET" })
 
     const { data: gpaRows } = await supabase
       .from("gpa_records")
-      .select("gpa,cgpa,semester_id,computed_at")
+      .select("gpa,cgpa,semester_id,computed_at,credit_units,grade_points,standing")
       .eq("student_id", sid)
       .order("computed_at", { ascending: true })
       .limit(12);
@@ -196,6 +203,9 @@ export const getStudentExtras = createServerFn({ method: "GET" })
       label: semLabel.get(g.semester_id) ?? "Semester",
       gpa: Number(g.gpa),
       cgpa: Number(g.cgpa),
+      credit_units: g.credit_units ?? 0,
+      grade_points: Number(g.grade_points ?? 0),
+      standing: g.standing ?? "good",
     }));
 
     // Upcoming exams for offerings the student is registered in.

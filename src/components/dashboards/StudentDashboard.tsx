@@ -1,7 +1,7 @@
 import { getStudentDashboardStats, type PortalUser } from "@/lib/portal.functions";
 import { getStudentExtras } from "@/lib/dashboard.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Award, BookOpen, ClipboardList, Wallet, TrendingUp, CalendarDays, FileCheck2, User } from "lucide-react";
+import { Award, BookOpen, ClipboardList, Wallet, TrendingUp, CalendarDays, FileCheck2, User, Download } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { StatCard } from "@/components/portal/StatCard";
 import { EmptyState } from "@/components/portal/EmptyState";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableScroll } from "@/components/portal/TableSkeleton";
+import { GradeBadge } from "@/components/portal/StatusBadges";
 import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
 import { DashboardHero, HeroChip } from "@/components/dashboards/widgets/DashboardHero";
 import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
@@ -51,6 +54,10 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
           s ? (
             <>
               <HeroChip label="Matric" value={<span className="font-mono">{s.matric_number}</span>} />
+              {extras?.academic?.programme ? (
+                <HeroChip label="Programme" value={<span className="truncate">{extras.academic.programme}</span>} />
+              ) : null}
+              {extras?.academic?.level ? <HeroChip label="Level" value={extras.academic.level} /> : null}
               <HeroChip label="CGPA" value={<span className="tabular-nums">{Number(s.cgpa).toFixed(2)}</span>} />
               <HeroChip label="Standing" value={<span className="capitalize">{s.standing}</span>} />
             </>
@@ -58,6 +65,21 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
         }
       />
 
+      {s ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to="/transcript" search={{ download: true }}>
+            <Button size="sm" className="bg-primary text-primary-foreground">
+              <Download className="mr-2 size-4" /> Download transcript (PDF)
+            </Button>
+          </Link>
+          <Link to="/transcript" search={{ download: undefined }}>
+            <Button size="sm" variant="outline"><FileCheck2 className="mr-2 size-4" /> View transcript</Button>
+          </Link>
+          <Link to="/results">
+            <Button size="sm" variant="outline"><Award className="mr-2 size-4" /> All results</Button>
+          </Link>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} accent />
@@ -65,6 +87,7 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
         <StatCard icon={BookOpen} label="Registered courses" value={String(registered)} />
         <StatCard icon={ClipboardList} label="Published results" value={String(published)} />
       </div>
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -122,6 +145,51 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="font-serif">Semester-by-semester breakdown</CardTitle>
+          <CardDescription>Credit units, grade points, GPA and running CGPA per semester</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {extrasLoading ? (
+            <div className="p-4"><Skeleton className="h-32" /></div>
+          ) : (extras?.semesterGpa.length ?? 0) === 0 ? (
+            <div className="p-4">
+              <EmptyState title="No GPA records yet" description="Each semester appears here once its results are published." />
+            </div>
+          ) : (
+            <TableScroll>
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead>Semester</TableHead>
+                    <TableHead className="text-right">Units</TableHead>
+                    <TableHead className="text-right">Points</TableHead>
+                    <TableHead className="text-right">GPA</TableHead>
+                    <TableHead className="text-right">CGPA</TableHead>
+                    <TableHead>Standing</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extras!.semesterGpa.map((g, i) => (
+                    <TableRow key={`${g.label}-${i}`} className="even:bg-muted/30">
+                      <TableCell className="font-medium">{g.label}</TableCell>
+                      <TableCell className="text-right tabular-nums">{g.credit_units}</TableCell>
+                      <TableCell className="text-right tabular-nums">{g.grade_points.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">{g.gpa.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-primary">{g.cgpa.toFixed(2)}</TableCell>
+                      <TableCell><Badge variant="secondary" className="capitalize">{g.standing}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableScroll>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -195,34 +263,55 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
       </div>
 
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Recent results</CardTitle>
-            <CardDescription>Latest published course scores</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {extrasLoading ? (
-              <Skeleton className="h-32" />
-            ) : (extras?.recentResults.length ?? 0) === 0 ? (
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="font-serif">Recent published results</CardTitle>
+          <CardDescription>Latest course-by-course scores released by Registry</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {extrasLoading ? (
+            <div className="p-4"><Skeleton className="h-32" /></div>
+          ) : (extras?.recentResults.length ?? 0) === 0 ? (
+            <div className="p-4">
               <EmptyState title="No published results" description="Published results will show here." />
-            ) : (
-              extras!.recentResults.map((r) => (
-                <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
-                  <div className="min-w-0">
-                    <div className="font-mono text-xs text-muted-foreground">{r.code}</div>
-                    <div className="truncate font-medium">{r.title}</div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="tabular-nums text-muted-foreground">{r.total_score ?? "—"}</span>
-                    <Badge variant={r.grade === "F" ? "destructive" : "secondary"}>{r.grade ?? "—"}</Badge>
-                  </div>
-                </div>
-              ))
-            )}
-            <Link to="/results"><Button size="sm" variant="secondary" className="mt-2"><Award className="mr-2 size-4" />All results</Button></Link>
-          </CardContent>
-        </Card>
+            </div>
+          ) : (
+            <TableScroll>
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Course title</TableHead>
+                    <TableHead className="text-right">Units</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Grade</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extras!.recentResults.map((r) => (
+                    <TableRow key={r.id} className="even:bg-muted/30">
+                      <TableCell className="font-mono text-xs">{r.code}</TableCell>
+                      <TableCell className="min-w-0">{r.title}</TableCell>
+                      <TableCell className="text-right tabular-nums">{r.credit_units}</TableCell>
+                      <TableCell className="text-right font-medium tabular-nums">{r.total_score ?? "—"}</TableCell>
+                      <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableScroll>
+          )}
+          <div className="flex flex-wrap gap-2 border-t p-4">
+            <Link to="/results"><Button size="sm" variant="secondary"><Award className="mr-2 size-4" />All results</Button></Link>
+            <Link to="/transcript" search={{ download: true }}>
+              <Button size="sm" variant="outline"><Download className="mr-2 size-4" />Download transcript</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+
 
         <Card>
           <CardHeader>

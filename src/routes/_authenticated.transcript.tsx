@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getTranscript } from "@/lib/transcripts.functions";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
@@ -12,13 +12,18 @@ import { Download, Printer, ShieldAlert } from "lucide-react";
 import { TranscriptView } from "@/components/TranscriptView";
 
 export const Route = createFileRoute("/_authenticated/transcript")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    download: search.download === "1" || search.download === true ? true : undefined,
+  }),
   component: TranscriptPage,
 });
 
 function TranscriptPage() {
+  const { download } = Route.useSearch();
   const fn = useServerFn(getTranscript);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const autoRan = useRef(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["transcript", "me"],
     queryFn: () => fn({ data: {} }),
@@ -36,6 +41,16 @@ function TranscriptPage() {
       setDownloading(false);
     }
   }
+
+  // One-click download: /transcript?download=1 renders the sheet then exports it.
+  useEffect(() => {
+    if (!download || autoRan.current || !data || !sheetRef.current) return;
+    autoRan.current = true;
+    const t = setTimeout(() => { void handleDownload(); }, 400);
+    return () => clearTimeout(t);
+  }, [download, data]);
+
+
 
   if (isLoading) return <Skeleton className="h-96" />;
   if (error) return <Card><CardContent className="pt-6 text-destructive flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> {(error as Error).message}</CardContent></Card>;
