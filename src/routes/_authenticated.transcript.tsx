@@ -12,13 +12,18 @@ import { Download, Printer, ShieldAlert } from "lucide-react";
 import { TranscriptView } from "@/components/TranscriptView";
 
 export const Route = createFileRoute("/_authenticated/transcript")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    download: search.download === "1" || search.download === true ? true : undefined,
+  }),
   component: TranscriptPage,
 });
 
 function TranscriptPage() {
+  const { download } = Route.useSearch();
   const fn = useServerFn(getTranscript);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const autoRan = useRef(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["transcript", "me"],
     queryFn: () => fn({ data: {} }),
