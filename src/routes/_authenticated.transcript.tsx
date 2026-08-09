@@ -42,6 +42,16 @@ function TranscriptPage() {
     }
   }
 
+  // One-click download: /transcript?download=1 renders the sheet then exports it.
+  useEffect(() => {
+    if (!download || autoRan.current || !data || !sheetRef.current) return;
+    autoRan.current = true;
+    const t = setTimeout(() => { void handleDownload(); }, 400);
+    return () => clearTimeout(t);
+  }, [download, data]);
+
+
+
   if (isLoading) return <Skeleton className="h-96" />;
   if (error) return <Card><CardContent className="pt-6 text-destructive flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> {(error as Error).message}</CardContent></Card>;
   if (!data) return null;
