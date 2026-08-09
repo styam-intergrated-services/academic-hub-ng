@@ -356,6 +356,8 @@ export const getManagementStats = createServerFn({ method: "GET" })
       totals: { students: total, active, probation, withdrawn, avgCgpa, lecturers: lecturerCount ?? 0, departments: departmentCount ?? 0, pendingApprovals },
       standingCounts,
       perLevel,
+      perProgramme,
+      perDepartment,
       pipeline,
       pendingForMe,
       currentSemester: currentSemRow ? {
