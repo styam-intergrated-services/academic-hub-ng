@@ -263,34 +263,55 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
       </div>
 
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Recent results</CardTitle>
-            <CardDescription>Latest published course scores</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {extrasLoading ? (
-              <Skeleton className="h-32" />
-            ) : (extras?.recentResults.length ?? 0) === 0 ? (
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="font-serif">Recent published results</CardTitle>
+          <CardDescription>Latest course-by-course scores released by Registry</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {extrasLoading ? (
+            <div className="p-4"><Skeleton className="h-32" /></div>
+          ) : (extras?.recentResults.length ?? 0) === 0 ? (
+            <div className="p-4">
               <EmptyState title="No published results" description="Published results will show here." />
-            ) : (
-              extras!.recentResults.map((r) => (
-                <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
-                  <div className="min-w-0">
-                    <div className="font-mono text-xs text-muted-foreground">{r.code}</div>
-                    <div className="truncate font-medium">{r.title}</div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="tabular-nums text-muted-foreground">{r.total_score ?? "—"}</span>
-                    <Badge variant={r.grade === "F" ? "destructive" : "secondary"}>{r.grade ?? "—"}</Badge>
-                  </div>
-                </div>
-              ))
-            )}
-            <Link to="/results"><Button size="sm" variant="secondary" className="mt-2"><Award className="mr-2 size-4" />All results</Button></Link>
-          </CardContent>
-        </Card>
+            </div>
+          ) : (
+            <TableScroll>
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Course title</TableHead>
+                    <TableHead className="text-right">Units</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Grade</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extras!.recentResults.map((r) => (
+                    <TableRow key={r.id} className="even:bg-muted/30">
+                      <TableCell className="font-mono text-xs">{r.code}</TableCell>
+                      <TableCell className="min-w-0">{r.title}</TableCell>
+                      <TableCell className="text-right tabular-nums">{r.credit_units}</TableCell>
+                      <TableCell className="text-right font-medium tabular-nums">{r.total_score ?? "—"}</TableCell>
+                      <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableScroll>
+          )}
+          <div className="flex flex-wrap gap-2 border-t p-4">
+            <Link to="/results"><Button size="sm" variant="secondary"><Award className="mr-2 size-4" />All results</Button></Link>
+            <Link to="/transcript" search={{ download: true }}>
+              <Button size="sm" variant="outline"><Download className="mr-2 size-4" />Download transcript</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+
 
         <Card>
           <CardHeader>
