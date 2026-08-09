@@ -1,7 +1,7 @@
 import { getStudentDashboardStats, type PortalUser } from "@/lib/portal.functions";
 import { getStudentExtras } from "@/lib/dashboard.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Award, BookOpen, ClipboardList, Wallet, TrendingUp, CalendarDays, FileCheck2, User } from "lucide-react";
+import { Award, BookOpen, ClipboardList, Wallet, TrendingUp, CalendarDays, FileCheck2, User, Download } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +69,7 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
               <Download className="mr-2 size-4" /> Download transcript (PDF)
             </Button>
           </Link>
-          <Link to="/transcript">
+          <Link to="/transcript" search={{ download: undefined }}>
             <Button size="sm" variant="outline"><FileCheck2 className="mr-2 size-4" /> View transcript</Button>
           </Link>
           <Link to="/results">
