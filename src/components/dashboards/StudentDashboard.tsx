@@ -51,6 +51,10 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
           s ? (
             <>
               <HeroChip label="Matric" value={<span className="font-mono">{s.matric_number}</span>} />
+              {extras?.academic?.programme ? (
+                <HeroChip label="Programme" value={<span className="truncate">{extras.academic.programme}</span>} />
+              ) : null}
+              {extras?.academic?.level ? <HeroChip label="Level" value={extras.academic.level} /> : null}
               <HeroChip label="CGPA" value={<span className="tabular-nums">{Number(s.cgpa).toFixed(2)}</span>} />
               <HeroChip label="Standing" value={<span className="capitalize">{s.standing}</span>} />
             </>
@@ -58,6 +62,21 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
         }
       />
 
+      {s ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to="/transcript" search={{ download: true }}>
+            <Button size="sm" className="bg-primary text-primary-foreground">
+              <Download className="mr-2 size-4" /> Download transcript (PDF)
+            </Button>
+          </Link>
+          <Link to="/transcript">
+            <Button size="sm" variant="outline"><FileCheck2 className="mr-2 size-4" /> View transcript</Button>
+          </Link>
+          <Link to="/results">
+            <Button size="sm" variant="outline"><Award className="mr-2 size-4" /> All results</Button>
+          </Link>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <StatCard icon={Award} label="CGPA" value={s ? Number(s.cgpa).toFixed(2) : "—"} accent />
@@ -65,6 +84,7 @@ export function StudentDashboard({ user }: { user: PortalUser }) {
         <StatCard icon={BookOpen} label="Registered courses" value={String(registered)} />
         <StatCard icon={ClipboardList} label="Published results" value={String(published)} />
       </div>
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
