@@ -52,7 +52,14 @@ export interface StudentExtras {
     credit_units: number;
     published_at: string | null;
   }[];
-  semesterGpa: { label: string; gpa: number; cgpa: number }[];
+  semesterGpa: {
+    label: string;
+    gpa: number;
+    cgpa: number;
+    credit_units: number;
+    grade_points: number;
+    standing: string;
+  }[];
   upcomingExams: {
     id: string;
     code: string;
