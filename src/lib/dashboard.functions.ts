@@ -148,7 +148,7 @@ export const getStudentExtras = createServerFn({ method: "GET" })
       .eq("student_id", sid)
       .eq("status", "published")
       .order("published_at", { ascending: false })
-      .limit(6);
+      .limit(10);
 
     const offeringIds = Array.from(new Set((results ?? []).map((r) => r.offering_id)));
     const courseByOffering = new Map<string, { code: string; title: string; credit_units: number }>();
