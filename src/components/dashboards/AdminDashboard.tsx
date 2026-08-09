@@ -15,6 +15,7 @@ import { SessionBanner } from "@/components/dashboards/widgets/SessionBanner";
 import { GpaTrendsCard } from "@/components/dashboards/widgets/GpaTrendsCard";
 import { NotificationsCard } from "@/components/dashboards/widgets/NotificationsCard";
 import { DashboardHero } from "@/components/dashboards/widgets/DashboardHero";
+import { QuickActions } from "@/components/dashboards/widgets/QuickActions";
 
 export function AdminDashboard({ user }: { user: PortalUser }) {
   const stats = useServerFn(getManagementStats);
