@@ -209,22 +209,3 @@ function StatCard({ icon: Icon, label, value, to, search }: { icon: React.Compon
   if (!to) return inner;
   return <Link to={to as any} search={search as any}>{inner}</Link>;
 }
-
-function QuickCard({ title, desc, to, icon: Icon }: { title: string; desc: string; to: string; icon: React.ComponentType<{ className?: string }> }) {
-  return (
-    <Card className="card-hover h-full rounded-2xl">
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Icon className="size-4" /></div>
-          <div>
-            <CardTitle className="font-serif text-base">{title}</CardTitle>
-            <CardDescription>{desc}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Link to={to as any}><Button variant="secondary" size="sm">Open</Button></Link>
-      </CardContent>
-    </Card>
-  );
-}
