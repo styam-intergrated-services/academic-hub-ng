@@ -70,53 +70,87 @@ function MyResults() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
-        <CardHeader className="border-b bg-muted/30">
-          <CardTitle className="font-serif">Course results</CardTitle>
-          <CardDescription>Published course-by-course scores</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-4"><TableSkeleton rows={6} cols={9} /></div>
-          ) : (data?.results?.length ?? 0) === 0 ? (
-            <div className="p-4">
-              <EmptyState icon={Award} title="No published results yet" description="Results appear here once Registry publishes them." />
-            </div>
-          ) : (
-            <TableScroll>
-              <Table>
-                <TableHeader className="sticky top-0 bg-background">
-                  <TableRow>
-                    <TableHead>Session</TableHead><TableHead>Semester</TableHead>
-                    <TableHead>Code</TableHead><TableHead>Title</TableHead>
-                    <TableHead className="text-right">Units</TableHead>
-                    <TableHead className="text-right">CA</TableHead>
-                    <TableHead className="text-right">Exam</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead>Grade</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data?.results?.map((r: any) => (
-                    <TableRow key={r.id} className="even:bg-muted/30">
-                      <TableCell>{r.offering?.semester?.session?.name}</TableCell>
-                      <TableCell className="capitalize">{r.offering?.semester?.type}</TableCell>
-                      <TableCell className="font-mono text-xs">{r.offering?.course?.code}</TableCell>
-                      <TableCell className="min-w-0">{r.offering?.course?.title}</TableCell>
-                      <TableCell className="text-right tabular-nums">{r.offering?.course?.credit_units}</TableCell>
-                      <TableCell className="text-right tabular-nums">{r.ca_score ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{r.exam_score ?? "—"}</TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">{r.total_score ?? "—"}</TableCell>
-                      <TableCell><GradeBadge grade={r.grade} /></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableScroll>
-          )}
-        </CardContent>
-      </Card>
+      <SemesterSection
+        title="First Semester"
+        type="first"
+        blocks={data?.semesters ?? []}
+        isLoading={isLoading}
+      />
+      <SemesterSection
+        title="Second Semester"
+        type="second"
+        blocks={data?.semesters ?? []}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
+
+function SemesterSection({
+  title, type, blocks, isLoading,
+}: { title: string; type: "first" | "second"; blocks: any[]; isLoading: boolean }) {
+  const mine = (blocks ?? []).filter((b: any) => b.semester_type === type);
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b bg-muted/30">
+        <CardTitle className="font-serif">{title}</CardTitle>
+        <CardDescription>Published course-by-course scores, grouped by academic session</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? (
+          <div className="p-4"><TableSkeleton rows={5} cols={7} /></div>
+        ) : mine.length === 0 ? (
+          <div className="p-4">
+            <EmptyState icon={Award} title={`No published ${type} semester results`} description="Results appear here once Registry publishes them." />
+          </div>
+        ) : (
+          <div className="divide-y">
+            {mine.map((b: any) => (
+              <div key={b.semester_id}>
+                <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-muted/20">
+                  <h3 className="font-serif text-sm font-semibold text-primary">
+                    {b.session_name} Academic Session
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="tabular-nums">Units {b.tcu}</Badge>
+                    <Badge variant="secondary" className="tabular-nums">GPA {Number(b.gpa).toFixed(2)}</Badge>
+                  </div>
+                </div>
+                <TableScroll>
+                  <Table>
+                    <TableHeader className="bg-background">
+                      <TableRow>
+                        <TableHead>Code</TableHead><TableHead>Title</TableHead>
+                        <TableHead className="text-right">Units</TableHead>
+                        <TableHead className="text-right">CA</TableHead>
+                        <TableHead className="text-right">Exam</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead>Grade</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {b.rows?.map((r: any, i: number) => (
+                        <TableRow key={`${b.semester_id}-${i}`} className="even:bg-muted/30">
+                          <TableCell className="font-mono text-xs">{r.code}</TableCell>
+                          <TableCell className="min-w-0">{r.title}</TableCell>
+                          <TableCell className="text-right tabular-nums">{r.units}</TableCell>
+                          <TableCell className="text-right tabular-nums">{r.ca ?? "—"}</TableCell>
+                          <TableCell className="text-right tabular-nums">{r.exam ?? "—"}</TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">{r.total ?? "—"}</TableCell>
+                          <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableScroll>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
