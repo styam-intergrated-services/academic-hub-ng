@@ -123,73 +123,14 @@ export const getTranscript = createServerFn({ method: "POST" })
       .eq("status", "published");
     if (eRes) throw eRes;
 
-    // Group by semester
-    type SemBlock = {
-      semester_id: string;
-      session_name: string;
-      semester_type: string;
-      order_key: string;
-      rows: any[];
-      tcu: number;
-      tgp: number;
-      gpa: number;
-    };
-    const byId = new Map<string, SemBlock>();
-    for (const r of (publishedResults ?? []) as any[]) {
-      const sem = r.offering.semester;
-      const key = sem.id;
-      if (!byId.has(key)) {
-        byId.set(key, {
-          semester_id: key,
-          session_name: sem.session?.name ?? "",
-          semester_type: sem.type,
-          order_key: `${sem.session?.start_date ?? sem.session?.name ?? ""}-${sem.type}`,
-          rows: [],
-          tcu: 0,
-          tgp: 0,
-          gpa: 0,
-        });
-      }
-      const block = byId.get(key)!;
-      const units = Number(r.offering.course.credit_units) || 0;
-      const gp = Number(r.grade_point) || 0;
-      const statusCode = r.status_code ?? "OK";
-      block.rows.push({
-        code: r.offering.course.code,
-        title: r.offering.course.title,
-        units,
-        ca: r.ca_score,
-        exam: r.exam_score,
-        total: r.total_score,
-        grade: r.grade,
-        grade_point: gp,
-        status_code: statusCode,
-      });
-      if (statusCode === "OK") {
-        block.tcu += units;
-        block.tgp += units * gp;
-      }
-    }
-    const semesters = Array.from(byId.values())
-      .map((b) => ({ ...b, gpa: b.tcu > 0 ? Math.round((b.tgp / b.tcu) * 100) / 100 : 0 }))
-      .sort((a, b) => (a.order_key < b.order_key ? -1 : 1));
-
-    // Running CGPA per semester
-    let cumUnits = 0;
-    let cumPoints = 0;
-    const semestersWithCgpa = semesters.map((s) => {
-      cumUnits += s.tcu;
-      cumPoints += s.tgp;
-      return { ...s, running_cgpa: cumUnits > 0 ? Math.round((cumPoints / cumUnits) * 100) / 100 : 0 };
-    });
+    // Group by semester + compute GPA / running CGPA (shared logic)
+    const { semesters: semestersWithCgpa, cumUnits, cumPoints } = buildSemesterBlocks(
+      (publishedResults ?? []) as any,
+    );
 
     const overallCgpa = cumUnits > 0 ? Math.round((cumPoints / cumUnits) * 100) / 100 : Number(student.cgpa ?? 0);
-    const classOfResult =
-      overallCgpa >= 4.5 ? "Distinction" :
-      overallCgpa >= 3.5 ? "Upper Credit" :
-      overallCgpa >= 2.5 ? "Lower Credit" :
-      overallCgpa >= 1.5 ? "Merit" :
-      overallCgpa >= 1.0 ? "Pass" : "Fail";
+    const classOfResult = classifyCgpa(overallCgpa);
+
 
     return {
       student,
