@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { buildSemesterBlocks } from "@/lib/gpa-calc";
+
 
 // -------- Lecturer teaching --------
 export const getMyTeaching = createServerFn({ method: "GET" })
