@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, User, BookOpen, ClipboardList, Users, Building2, FileCheck2,
   Wallet, GraduationCap, LogOut, Menu, X, Bell, Award, Settings, TrendingUp, Megaphone, AlertTriangle, Archive, CalendarRange, Upload,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -73,10 +74,23 @@ const NAV: NavItem[] = [
 
 export function PortalShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
   const getUser = useServerFn(getPortalUser);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("akcoe:sidebar-collapsed") === "1");
+  }, []);
+
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("akcoe:sidebar-collapsed", next ? "1" : "0");
+      return next;
+    });
+  }
 
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   useEffect(() => {
