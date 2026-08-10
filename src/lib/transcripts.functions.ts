@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { buildSemesterBlocks, classifyCgpa } from "@/lib/gpa-calc";
+
 
 // ---------- Broadsheet (per offering) ----------
 export const getBroadsheet = createServerFn({ method: "POST" })
