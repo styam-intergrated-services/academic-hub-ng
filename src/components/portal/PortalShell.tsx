@@ -163,8 +163,9 @@ export function PortalShell({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] flex-col bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-200 md:w-64 md:translate-x-0 md:shadow-none",
+          "fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] flex-col bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-300 ease-in-out md:w-64 md:shadow-none",
           open ? "translate-x-0" : "-translate-x-full",
+          collapsed ? "md:-translate-x-full" : "md:translate-x-0",
         )}
       >
         <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4">
@@ -229,7 +230,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main */}
-      <div className="md:pl-64">
+      <div className={cn("transition-[padding] duration-300 ease-in-out", collapsed ? "md:pl-0" : "md:pl-64")}>
         <header className="sticky top-0 z-20 grid h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b bg-background/95 px-3 backdrop-blur md:px-6">
           <div className="flex min-w-0 items-center gap-1">
             <Button
@@ -240,6 +241,16 @@ export function PortalShell({ children }: { children: ReactNode }) {
               className="size-11 shrink-0 md:hidden"
             >
               <Menu className="size-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-pressed={collapsed}
+              onClick={toggleCollapsed}
+              className="hidden size-11 shrink-0 md:inline-flex"
+            >
+              {collapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
             </Button>
             <div className="min-w-0 leading-tight">
               <h1 className="truncate font-serif text-base text-primary sm:text-lg">
