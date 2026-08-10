@@ -82,14 +82,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "AKCOE" },
-      { title: "AKCOE" },
-      { property: "og:title", content: "AKCOE" },
-      { name: "twitter:title", content: "AKCOE" },
-      { name: "description", content: "- EduFlow Suite is a College Management Portal for educational institutions." },
-      { property: "og:description", content: "- EduFlow Suite is a College Management Portal for educational institutions." },
-      { name: "twitter:description", content: "- EduFlow Suite is a College Management Portal for educational institutions." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/69e03148-b1f2-47f5-9883-cea9e2944021/id-preview-a716faa4--efbe6ea3-5e1e-4384-8509-49ee803fd3bf.lovable.app-1785852343977.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/69e03148-b1f2-47f5-9883-cea9e2944021/id-preview-a716faa4--efbe6ea3-5e1e-4384-8509-49ee803fd3bf.lovable.app-1785852343977.png" },
     ],
 
     links: [
