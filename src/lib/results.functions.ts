@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { buildSemesterBlocks } from "@/lib/gpa-calc";
+
 
 // -------- Lecturer teaching --------
 export const getMyTeaching = createServerFn({ method: "GET" })
@@ -254,29 +256,43 @@ export const decideApproval = createServerFn({ method: "POST" })
     return { ok: true, target };
   });
 
-// -------- Student published results + GPA --------
+// -------- Student published results + live-computed GPA/CGPA --------
 export const getMyResults = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data: student } = await supabase.from("students").select("id").eq("auth_user_id", userId).maybeSingle();
+    const { data: student } = await supabase.from("students").select("id, standing").eq("auth_user_id", userId).maybeSingle();
     const studentId = student?.id;
-    if (!studentId) return { results: [], gpa: [] };
-    const [{ data: results, error }, { data: gpa }] = await Promise.all([
-      supabase.from("results")
-        .select(`
-          id, ca_score, exam_score, total_score, grade, grade_point, status, published_at,
-          offering:course_offerings!inner(
-            course:courses!inner(code, title, credit_units),
-            semester:semesters!inner(type, session:academic_sessions(name))
-          )
-        `)
-        .eq("student_id", studentId).eq("status", "published"),
-      supabase.from("gpa_records")
-        .select(`gpa, cgpa, credit_units, grade_points, standing, semester:semesters(type, session:academic_sessions(name))`)
-        .eq("student_id", studentId)
-        .order("computed_at", { ascending: false }),
-    ]);
+    if (!studentId) return { results: [], gpa: [], semesters: [], totals: { cgpa: 0, credit_units: 0, grade_points: 0 } };
+
+    const { data: results, error } = await supabase.from("results")
+      .select(`
+        id, ca_score, exam_score, total_score, grade, grade_point, status, status_code, published_at,
+        offering:course_offerings!inner(
+          course:courses!inner(code, title, credit_units),
+          semester:semesters!inner(id, type, session:academic_sessions(name, start_date))
+        )
+      `)
+      .eq("student_id", studentId).eq("status", "published");
     if (error) throw error;
-    return { results: results ?? [], gpa: gpa ?? [] };
+
+    const { semesters, cumUnits, cumPoints, cgpa } = buildSemesterBlocks((results ?? []) as any);
+
+    // Shape kept compatible with the existing GPA summary table
+    const gpa = semesters.map((s) => ({
+      gpa: s.gpa,
+      cgpa: s.running_cgpa,
+      credit_units: s.tcu,
+      grade_points: s.tgp,
+      standing: (student as any)?.standing ?? null,
+      semester: { type: s.semester_type, session: { name: s.session_name } },
+    }));
+
+    return {
+      results: results ?? [],
+      gpa,
+      semesters,
+      totals: { cgpa, credit_units: cumUnits, grade_points: cumPoints },
+    };
   });
+
