@@ -68,7 +68,7 @@ function MyResults() {
                       <TableCell className="text-right tabular-nums">{Number(g.grade_points).toFixed(2)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums">{Number(g.gpa).toFixed(2)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums text-primary">{Number(g.cgpa).toFixed(2)}</TableCell>
-                      <TableCell><Badge variant="secondary" className="capitalize">{g.standing}</Badge></TableCell>
+                      <TableCell><Badge variant="secondary" className="capitalize">{g.standing ?? "—"}</Badge></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
