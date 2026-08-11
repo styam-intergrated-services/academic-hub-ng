@@ -33,14 +33,52 @@ export type SemesterBlock = {
     grade: string | null;
     grade_point: number;
     status_code: string;
+    /** true when units or grade point could not be determined — row is shown but excluded from GPA */
+    excluded: boolean;
   }>;
   tcu: number;
   tgp: number;
   gpa: number;
   running_cgpa: number;
+  /** count of rows excluded from GPA because of missing data */
+  excluded_count: number;
 };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** 5-point NCE scale used college-wide: A 70-100=5, B 60-69=4, C 50-59=3, D 45-49=2, E 40-44=1, F<40=0 */
+export function gradePointFromTotal(total: number | null | undefined): number | null {
+  if (total === null || total === undefined || !Number.isFinite(Number(total))) return null;
+  const t = Number(total);
+  if (t >= 70) return 5;
+  if (t >= 60) return 4;
+  if (t >= 50) return 3;
+  if (t >= 45) return 2;
+  if (t >= 40) return 1;
+  return 0;
+}
+
+const GRADE_LETTER_POINTS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
+
+/** Best-effort grade point: stored value -> letter grade -> total score. Null when undeterminable. */
+export function resolveGradePoint(
+  gradePoint: number | null | undefined,
+  grade: string | null | undefined,
+  total: number | null | undefined,
+): number | null {
+  const gp = Number(gradePoint);
+  if (gradePoint !== null && gradePoint !== undefined && Number.isFinite(gp)) return gp;
+  const letter = (grade ?? "").trim().toUpperCase().charAt(0);
+  if (letter in GRADE_LETTER_POINTS) return GRADE_LETTER_POINTS[letter];
+  return gradePointFromTotal(total);
+}
+
+/** Credit units fallback: invalid/missing/negative units are treated as unknown (null). */
+export function resolveUnits(units: number | string | null | undefined): number | null {
+  const n = Number(units);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
 
 /**
  * Groups published results by semester, computes each semester's GPA
@@ -68,26 +106,31 @@ export function buildSemesterBlocks(results: PublishedResultRow[]): {
         tgp: 0,
         gpa: 0,
         running_cgpa: 0,
+        excluded_count: 0,
       });
     }
     const block = byId.get(key)!;
-    const units = Number(r.offering.course.credit_units) || 0;
-    const gp = Number(r.grade_point) || 0;
+    const resolvedUnits = resolveUnits(r.offering.course.credit_units);
+    const resolvedGp = resolveGradePoint(r.grade_point, r.grade, r.total_score);
     const statusCode = r.status_code ?? "OK";
+    const excluded = statusCode !== "OK" || resolvedUnits === null || resolvedGp === null;
     block.rows.push({
       code: r.offering.course.code,
       title: r.offering.course.title,
-      units,
+      units: resolvedUnits ?? 0,
       ca: r.ca_score ?? null,
       exam: r.exam_score ?? null,
       total: r.total_score ?? null,
       grade: r.grade ?? null,
-      grade_point: gp,
+      grade_point: resolvedGp ?? 0,
       status_code: statusCode,
+      excluded,
     });
-    if (statusCode === "OK") {
-      block.tcu += units;
-      block.tgp += units * gp;
+    if (!excluded) {
+      block.tcu += resolvedUnits!;
+      block.tgp += resolvedUnits! * resolvedGp!;
+    } else if (statusCode === "OK") {
+      block.excluded_count += 1;
     }
   }
 

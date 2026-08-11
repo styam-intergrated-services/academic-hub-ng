@@ -19,6 +19,8 @@ function MyResults() {
   const fn = useServerFn(getMyResults);
   const { data, isLoading } = useQuery({ queryKey: ["my","results"], queryFn: () => fn() });
 
+  const totals = data?.totals;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -26,10 +28,16 @@ function MyResults() {
         description="Only fully-approved, published results are shown here."
       />
 
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatTile label="Cumulative GPA" value={Number(totals?.cgpa ?? 0).toFixed(2)} isLoading={isLoading} highlight />
+        <StatTile label="Total credit units" value={String(totals?.credit_units ?? 0)} isLoading={isLoading} />
+        <StatTile label="Total grade points" value={Number(totals?.grade_points ?? 0).toFixed(2)} isLoading={isLoading} />
+      </div>
+
       <Card className="overflow-hidden">
         <CardHeader className="border-b bg-muted/30">
           <CardTitle className="font-serif">Semester GPA history</CardTitle>
-          <CardDescription>Persisted per semester</CardDescription>
+          <CardDescription>Computed live from your published results</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -60,7 +68,7 @@ function MyResults() {
                       <TableCell className="text-right tabular-nums">{Number(g.grade_points).toFixed(2)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums">{Number(g.gpa).toFixed(2)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums text-primary">{Number(g.cgpa).toFixed(2)}</TableCell>
-                      <TableCell><Badge variant="secondary" className="capitalize">{g.standing}</Badge></TableCell>
+                      <TableCell><Badge variant="secondary" className="capitalize">{g.standing ?? "—"}</Badge></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -82,6 +90,21 @@ function MyResults() {
         blocks={data?.semesters ?? []}
         isLoading={isLoading}
       />
+    </div>
+  );
+}
+
+function StatTile({
+  label, value, isLoading, highlight,
+}: { label: string; value: string; isLoading: boolean; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl border bg-card p-4 shadow-sm ${highlight ? "border-primary/40 bg-primary/5" : ""}`}>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      {isLoading ? (
+        <div className="mt-2 h-7 w-20 animate-pulse rounded bg-muted" />
+      ) : (
+        <p className={`mt-1 font-serif text-2xl font-semibold tabular-nums ${highlight ? "text-primary" : ""}`}>{value}</p>
+      )}
     </div>
   );
 }
@@ -112,9 +135,11 @@ function SemesterSection({
                   <h3 className="font-serif text-sm font-semibold text-primary">
                     {b.session_name} Academic Session
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="tabular-nums">Units {b.tcu}</Badge>
+                    <Badge variant="outline" className="tabular-nums">Points {Number(b.tgp).toFixed(2)}</Badge>
                     <Badge variant="secondary" className="tabular-nums">GPA {Number(b.gpa).toFixed(2)}</Badge>
+                    <Badge variant="secondary" className="tabular-nums">CGPA {Number(b.running_cgpa).toFixed(2)}</Badge>
                   </div>
                 </div>
                 <TableScroll>
@@ -131,19 +156,35 @@ function SemesterSection({
                     </TableHeader>
                     <TableBody>
                       {b.rows?.map((r: any, i: number) => (
-                        <TableRow key={`${b.semester_id}-${i}`} className="even:bg-muted/30">
+                        <TableRow
+                          key={`${b.semester_id}-${i}`}
+                          className={r.excluded ? "bg-muted/50 text-muted-foreground" : "even:bg-muted/30"}
+                        >
                           <TableCell className="font-mono text-xs">{r.code}</TableCell>
-                          <TableCell className="min-w-0">{r.title}</TableCell>
-                          <TableCell className="text-right tabular-nums">{r.units}</TableCell>
+                          <TableCell className="min-w-0">
+                            {r.title}
+                            {r.excluded && (
+                              <span className="ml-2 align-middle text-[10px] uppercase tracking-wide text-muted-foreground">
+                                not counted
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">{r.units > 0 ? r.units : "—"}</TableCell>
                           <TableCell className="text-right tabular-nums">{r.ca ?? "—"}</TableCell>
                           <TableCell className="text-right tabular-nums">{r.exam ?? "—"}</TableCell>
                           <TableCell className="text-right font-medium tabular-nums">{r.total ?? "—"}</TableCell>
-                          <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                          <TableCell>{r.grade ? <GradeBadge grade={r.grade} /> : "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </TableScroll>
+                {(b.excluded_count ?? 0) > 0 && (
+                  <p className="px-4 py-2 text-xs text-muted-foreground">
+                    {b.excluded_count} course{b.excluded_count > 1 ? "s" : ""} could not be scored (missing credit units or grade) and
+                    {" "}{b.excluded_count > 1 ? "are" : "is"} excluded from this semester's GPA. Contact Registry to have it corrected.
+                  </p>
+                )}
               </div>
             ))}
           </div>
