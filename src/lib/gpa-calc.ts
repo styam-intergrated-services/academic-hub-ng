@@ -33,11 +33,15 @@ export type SemesterBlock = {
     grade: string | null;
     grade_point: number;
     status_code: string;
+    /** true when units or grade point could not be determined — row is shown but excluded from GPA */
+    excluded: boolean;
   }>;
   tcu: number;
   tgp: number;
   gpa: number;
   running_cgpa: number;
+  /** count of rows excluded from GPA because of missing data */
+  excluded_count: number;
 };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
