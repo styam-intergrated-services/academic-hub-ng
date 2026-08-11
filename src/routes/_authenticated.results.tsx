@@ -19,6 +19,8 @@ function MyResults() {
   const fn = useServerFn(getMyResults);
   const { data, isLoading } = useQuery({ queryKey: ["my","results"], queryFn: () => fn() });
 
+  const totals = data?.totals;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -26,10 +28,16 @@ function MyResults() {
         description="Only fully-approved, published results are shown here."
       />
 
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatTile label="Cumulative GPA" value={Number(totals?.cgpa ?? 0).toFixed(2)} isLoading={isLoading} highlight />
+        <StatTile label="Total credit units" value={String(totals?.credit_units ?? 0)} isLoading={isLoading} />
+        <StatTile label="Total grade points" value={Number(totals?.grade_points ?? 0).toFixed(2)} isLoading={isLoading} />
+      </div>
+
       <Card className="overflow-hidden">
         <CardHeader className="border-b bg-muted/30">
           <CardTitle className="font-serif">Semester GPA history</CardTitle>
-          <CardDescription>Persisted per semester</CardDescription>
+          <CardDescription>Computed live from your published results</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
