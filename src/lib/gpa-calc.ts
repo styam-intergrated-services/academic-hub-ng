@@ -106,26 +106,31 @@ export function buildSemesterBlocks(results: PublishedResultRow[]): {
         tgp: 0,
         gpa: 0,
         running_cgpa: 0,
+        excluded_count: 0,
       });
     }
     const block = byId.get(key)!;
-    const units = Number(r.offering.course.credit_units) || 0;
-    const gp = Number(r.grade_point) || 0;
+    const resolvedUnits = resolveUnits(r.offering.course.credit_units);
+    const resolvedGp = resolveGradePoint(r.grade_point, r.grade, r.total_score);
     const statusCode = r.status_code ?? "OK";
+    const excluded = statusCode !== "OK" || resolvedUnits === null || resolvedGp === null;
     block.rows.push({
       code: r.offering.course.code,
       title: r.offering.course.title,
-      units,
+      units: resolvedUnits ?? 0,
       ca: r.ca_score ?? null,
       exam: r.exam_score ?? null,
       total: r.total_score ?? null,
       grade: r.grade ?? null,
-      grade_point: gp,
+      grade_point: resolvedGp ?? 0,
       status_code: statusCode,
+      excluded,
     });
-    if (statusCode === "OK") {
-      block.tcu += units;
-      block.tgp += units * gp;
+    if (!excluded) {
+      block.tcu += resolvedUnits!;
+      block.tgp += resolvedUnits! * resolvedGp!;
+    } else if (statusCode === "OK") {
+      block.excluded_count += 1;
     }
   }
 
