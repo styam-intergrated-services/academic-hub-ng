@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      _import_staging: {
+        Row: {
+          ca: number | null
+          contact_number: number | null
+          course_code: string | null
+          credit_unit: number | null
+          dept: string | null
+          exam: number | null
+          level: number | null
+          matric: string | null
+          semester_type: string | null
+          session: string | null
+          student_name: string | null
+          total: number | null
+        }
+        Insert: {
+          ca?: number | null
+          contact_number?: number | null
+          course_code?: string | null
+          credit_unit?: number | null
+          dept?: string | null
+          exam?: number | null
+          level?: number | null
+          matric?: string | null
+          semester_type?: string | null
+          session?: string | null
+          student_name?: string | null
+          total?: number | null
+        }
+        Update: {
+          ca?: number | null
+          contact_number?: number | null
+          course_code?: string | null
+          credit_unit?: number | null
+          dept?: string | null
+          exam?: number | null
+          level?: number | null
+          matric?: string | null
+          semester_type?: string | null
+          session?: string | null
+          student_name?: string | null
+          total?: number | null
+        }
+        Relationships: []
+      }
       academic_calendar_events: {
         Row: {
           category: string
