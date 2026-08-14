@@ -113,12 +113,46 @@ function ResultsArchivePage() {
             <Button variant="outline" size="sm" onClick={handleCsv} disabled={!filtered.length}>
               <Download className="mr-2 size-4" /> CSV
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={!filtered.length || exporting !== null}>
+                  {exporting ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <FileDown className="mr-2 size-4" />
+                  )}
+                  {exporting ?? "Bulk export"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel>Combined broadsheet</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => runExport("broadsheet", "pdf")}>
+                  Broadsheet — PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runExport("broadsheet", "docx")}>
+                  Broadsheet — Word (.docx)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>
+                  Per-student slips ({studentCount.toLocaleString()} student
+                  {studentCount === 1 ? "" : "s"}
+                  {studentCount > 1 ? ", zipped" : ""})
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => runExport("slips", "pdf")}>
+                  Student slips — PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runExport("slips", "docx")}>
+                  Student slips — Word (.docx)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button size="sm" onClick={handlePrint} disabled={!filtered.length}>
               <Printer className="mr-2 size-4" /> Print
             </Button>
           </>
         }
       />
+
 
       {error ? (
         <Card><CardContent className="p-6 text-sm text-destructive">
