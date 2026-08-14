@@ -14,7 +14,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toCsv, downloadCsv } from "@/lib/csv";
-import { Search, Download, Printer, Layers, Building2, GraduationCap } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  buildBroadsheetDoc,
+  downloadBlob,
+  exportPerStudent,
+  renderDoc,
+  type ResultExportRow,
+} from "@/lib/bulk-export";
+import { toast } from "sonner";
+import { Search, Download, Printer, Layers, Building2, GraduationCap, FileDown, Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/results-archive")({
   head: () => ({
@@ -99,6 +116,45 @@ function ResultsArchivePage() {
     printArchive(grouped, summary.total);
   }
 
+  const [exporting, setExporting] = useState<string | null>(null);
+  const studentCount = useMemo(
+    () => new Set(filtered.map((r) => r.matric_number)).size,
+    [filtered],
+  );
+
+  const scopeLabel = useMemo(() => {
+    const parts = [
+      options.departments.find((d) => d.id === dept)?.label,
+      options.levels.find((l) => l.id === level)?.label,
+      options.sessions.find((s) => s.id === session)?.label,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "All departments, levels and sessions";
+  }, [options, dept, level, session]);
+
+  async function runExport(kind: "broadsheet" | "slips", format: "pdf" | "docx") {
+    if (!filtered.length) return;
+    setExporting(kind === "broadsheet" ? "Building broadsheet…" : "Building slips…");
+    try {
+      const exportRows = filtered as unknown as ResultExportRow[];
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (kind === "broadsheet") {
+        const blob = await renderDoc(buildBroadsheetDoc(exportRows, scopeLabel), format);
+        downloadBlob(blob, `akcoe-broadsheet-${stamp}.${format}`);
+        toast.success(`Broadsheet exported (${filtered.length.toLocaleString()} records)`);
+      } else {
+        const count = await exportPerStudent(exportRows, format, `akcoe-student-results-${format}-${stamp}.zip`);
+        toast.success(
+          count > 1 ? `${count} student slips exported in a zip` : "Student slip exported",
+        );
+      }
+    } catch (e) {
+      toast.error(`Export failed: ${(e as Error).message}`);
+    } finally {
+      setExporting(null);
+    }
+  }
+
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -113,12 +169,46 @@ function ResultsArchivePage() {
             <Button variant="outline" size="sm" onClick={handleCsv} disabled={!filtered.length}>
               <Download className="mr-2 size-4" /> CSV
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={!filtered.length || exporting !== null}>
+                  {exporting ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <FileDown className="mr-2 size-4" />
+                  )}
+                  {exporting ?? "Bulk export"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel>Combined broadsheet</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => runExport("broadsheet", "pdf")}>
+                  Broadsheet — PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runExport("broadsheet", "docx")}>
+                  Broadsheet — Word (.docx)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>
+                  Per-student slips ({studentCount.toLocaleString()} student
+                  {studentCount === 1 ? "" : "s"}
+                  {studentCount > 1 ? ", zipped" : ""})
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => runExport("slips", "pdf")}>
+                  Student slips — PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runExport("slips", "docx")}>
+                  Student slips — Word (.docx)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button size="sm" onClick={handlePrint} disabled={!filtered.length}>
               <Printer className="mr-2 size-4" /> Print
             </Button>
           </>
         }
       />
+
 
       {error ? (
         <Card><CardContent className="p-6 text-sm text-destructive">
