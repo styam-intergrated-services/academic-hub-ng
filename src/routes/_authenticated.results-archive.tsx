@@ -116,6 +116,45 @@ function ResultsArchivePage() {
     printArchive(grouped, summary.total);
   }
 
+  const [exporting, setExporting] = useState<string | null>(null);
+  const studentCount = useMemo(
+    () => new Set(filtered.map((r) => r.matric_number)).size,
+    [filtered],
+  );
+
+  const scopeLabel = useMemo(() => {
+    const parts = [
+      options.departments.find((d) => d.id === dept)?.label,
+      options.levels.find((l) => l.id === level)?.label,
+      options.sessions.find((s) => s.id === session)?.label,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "All departments, levels and sessions";
+  }, [options, dept, level, session]);
+
+  async function runExport(kind: "broadsheet" | "slips", format: "pdf" | "docx") {
+    if (!filtered.length) return;
+    setExporting(kind === "broadsheet" ? "Building broadsheet…" : "Building slips…");
+    try {
+      const exportRows = filtered as unknown as ResultExportRow[];
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (kind === "broadsheet") {
+        const blob = await renderDoc(buildBroadsheetDoc(exportRows, scopeLabel), format);
+        downloadBlob(blob, `akcoe-broadsheet-${stamp}.${format}`);
+        toast.success(`Broadsheet exported (${filtered.length.toLocaleString()} records)`);
+      } else {
+        const count = await exportPerStudent(exportRows, format, `akcoe-student-results-${format}-${stamp}.zip`);
+        toast.success(
+          count > 1 ? `${count} student slips exported in a zip` : "Student slip exported",
+        );
+      }
+    } catch (e) {
+      toast.error(`Export failed: ${(e as Error).message}`);
+    } finally {
+      setExporting(null);
+    }
+  }
+
+
   return (
     <div className="space-y-6">
       <PageHeader
