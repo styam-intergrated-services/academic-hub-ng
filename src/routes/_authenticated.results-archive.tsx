@@ -14,7 +14,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toCsv, downloadCsv } from "@/lib/csv";
-import { Search, Download, Printer, Layers, Building2, GraduationCap } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  buildBroadsheetDoc,
+  downloadBlob,
+  exportPerStudent,
+  renderDoc,
+  type ResultExportRow,
+} from "@/lib/bulk-export";
+import { toast } from "sonner";
+import { Search, Download, Printer, Layers, Building2, GraduationCap, FileDown, Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/results-archive")({
   head: () => ({
