@@ -5,11 +5,28 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { getBroadsheet } from "@/lib/transcripts.functions";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
+import {
+  buildBroadsheetDoc,
+  downloadBlob,
+  exportPerStudent,
+  renderDoc,
+  safeName,
+  type ResultExportRow,
+} from "@/lib/bulk-export";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Download, Printer, ShieldAlert } from "lucide-react";
+import { ChevronLeft, Download, FileDown, Loader2, Printer, ShieldAlert } from "lucide-react";
 import { BroadsheetView } from "@/components/BroadsheetView";
+
 
 export const Route = createFileRoute("/_authenticated/broadsheet/$offeringId")({
   component: BroadsheetPage,
