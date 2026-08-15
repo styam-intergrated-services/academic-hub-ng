@@ -1580,6 +1580,30 @@ export type Database = {
           },
         ]
       }
+      uploaded_csv_files: {
+        Row: {
+          created_at: string
+          csv_content: string
+          file_name: string
+          id: string
+          sheet_name: string
+        }
+        Insert: {
+          created_at?: string
+          csv_content: string
+          file_name: string
+          id?: string
+          sheet_name: string
+        }
+        Update: {
+          created_at?: string
+          csv_content?: string
+          file_name?: string
+          id?: string
+          sheet_name?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
