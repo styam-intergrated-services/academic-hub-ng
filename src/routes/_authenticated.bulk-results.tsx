@@ -17,7 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { parseCsv, toCsv, downloadCsv } from "@/lib/csv";
+import { toCsv, downloadCsv } from "@/lib/csv";
+import { readTabularFile } from "@/lib/sheet-import";
+
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2, Play, Upload } from "lucide-react";
 
