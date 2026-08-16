@@ -48,13 +48,15 @@ const ALL = "all";
 
 function ResultsArchivePage() {
   const fetchArchive = useServerFn(getResultsArchive);
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["results", "archive"],
     queryFn: () => fetchArchive(),
     staleTime: 120_000,
   });
 
+  const canEdit = data?.scope === "college";
   const rows = data?.rows ?? [];
+
 
   const [session, setSession] = useState(ALL);
   const [dept, setDept] = useState(ALL);
