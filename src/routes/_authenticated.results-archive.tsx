@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { EditResultDialog } from "@/components/portal/EditResultDialog";
+
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getResultsArchive, getSummaryRecords, type ArchiveRow, type SummaryRow } from "@/lib/results-archive.functions";
