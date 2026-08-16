@@ -66,20 +66,33 @@ function BulkResultsPage() {
 
   const ready = sessionName.trim().length > 0 && rows.length > 0;
 
-  function handleFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { rows: parsed, errors } = parseSheet(String(reader.result ?? ""));
-      setRows(parsed);
-      setParseErrors(errors);
+  async function handleFile(file: File) {
+    try {
+      const tables = await readTabularFile(file);
+      if (tables.length === 0) {
+        toast.error("No table found in that file");
+        return;
+      }
+      const all: ImportRow[] = [];
+      const errs: string[] = [];
+      for (const t of tables) {
+        const { rows: parsed, errors } = parseSheet(t.table);
+        if (parsed.length === 0 && tables.length > 1) continue; // skip non-score sheets
+        all.push(...parsed);
+        errs.push(...errors.map((e) => (tables.length > 1 ? `${t.name}: ${e}` : e)));
+      }
+      setRows(all);
+      setParseErrors(errs);
       setFileName(file.name);
       setPreview(null);
       setCommitted(null);
-      if (parsed.length) toast.success(`${parsed.length} rows read from ${file.name}`);
+      if (all.length) toast.success(`${all.length} rows read from ${file.name}`);
       else toast.error("No usable rows found in that file");
-    };
-    reader.readAsText(file);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   }
+
 
   function downloadTemplate() {
     downloadCsv(
