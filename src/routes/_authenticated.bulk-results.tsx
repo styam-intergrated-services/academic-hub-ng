@@ -113,7 +113,7 @@ function BulkResultsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Bulk Result Upload"
-        description="Import a department score sheet (CSV) for any programme. Always preview first — nothing is written until you commit."
+        description="Import a department score sheet (CSV, Excel .xlsx or Word .docx) for any programme. Always preview first — nothing is written until you commit."
         actions={
           <Button variant="outline" onClick={downloadTemplate}>
             <Download className="mr-2 size-4" /> CSV template
