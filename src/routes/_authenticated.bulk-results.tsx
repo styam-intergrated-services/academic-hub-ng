@@ -316,13 +316,14 @@ function Report({ title, report, done }: { title: string; report: ImportReport; 
   );
 }
 
-/* ---------- CSV parsing ---------- */
+/* ---------- sheet parsing (CSV / Excel / Word tables) ---------- */
 
-function parseSheet(text: string): { rows: ImportRow[]; errors: string[] } {
-  const table = parseCsv(text).filter((r) => r.some((c) => c.trim() !== ""));
+function parseSheet(input: string[][]): { rows: ImportRow[]; errors: string[] } {
+  const table = input.filter((r) => r.some((c) => (c ?? "").trim() !== ""));
   if (table.length < 2) return { rows: [], errors: ["File has no data rows"] };
 
-  const header = table[0].map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
+  const header = table[0].map((h) => (h ?? "").trim().toLowerCase().replace(/\s+/g, "_"));
+
   const idx = (...names: string[]) => {
     for (const n of names) { const i = header.indexOf(n); if (i >= 0) return i; }
     return -1;
