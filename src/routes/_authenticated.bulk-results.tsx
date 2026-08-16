@@ -17,7 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { parseCsv, toCsv, downloadCsv } from "@/lib/csv";
+import { toCsv, downloadCsv } from "@/lib/csv";
+import { readTabularFile } from "@/lib/sheet-import";
+
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2, Play, Upload } from "lucide-react";
 
@@ -66,20 +68,33 @@ function BulkResultsPage() {
 
   const ready = sessionName.trim().length > 0 && rows.length > 0;
 
-  function handleFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { rows: parsed, errors } = parseSheet(String(reader.result ?? ""));
-      setRows(parsed);
-      setParseErrors(errors);
+  async function handleFile(file: File) {
+    try {
+      const tables = await readTabularFile(file);
+      if (tables.length === 0) {
+        toast.error("No table found in that file");
+        return;
+      }
+      const all: ImportRow[] = [];
+      const errs: string[] = [];
+      for (const t of tables) {
+        const { rows: parsed, errors } = parseSheet(t.table);
+        if (parsed.length === 0 && tables.length > 1) continue; // skip non-score sheets
+        all.push(...parsed);
+        errs.push(...errors.map((e) => (tables.length > 1 ? `${t.name}: ${e}` : e)));
+      }
+      setRows(all);
+      setParseErrors(errs);
       setFileName(file.name);
       setPreview(null);
       setCommitted(null);
-      if (parsed.length) toast.success(`${parsed.length} rows read from ${file.name}`);
+      if (all.length) toast.success(`${all.length} rows read from ${file.name}`);
       else toast.error("No usable rows found in that file");
-    };
-    reader.readAsText(file);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   }
+
 
   function downloadTemplate() {
     downloadCsv(
@@ -98,7 +113,7 @@ function BulkResultsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Bulk Result Upload"
-        description="Import a department score sheet (CSV) for any programme. Always preview first — nothing is written until you commit."
+        description="Import a department score sheet (CSV, Excel .xlsx or Word .docx) for any programme. Always preview first — nothing is written until you commit."
         actions={
           <Button variant="outline" onClick={downloadTemplate}>
             <Download className="mr-2 size-4" /> CSV template
@@ -145,18 +160,23 @@ function BulkResultsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label>Score sheet (CSV)</Label>
+            <Label>Score sheet (CSV, Excel or Word)</Label>
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.xlsx,.xls,.xlsm,.docx,text/csv"
               className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.target.value = ""; }}
             />
             <Button variant="outline" className="w-full" onClick={() => fileRef.current?.click()}>
               <Upload className="mr-2 size-4" />
-              {fileName ?? "Choose CSV file"}
+              {fileName ?? "Choose .csv, .xlsx or .docx file"}
             </Button>
+            <p className="text-xs text-muted-foreground">
+              Excel workbooks: every sheet that looks like a score sheet is read. Word files: data is read
+              from the document's tables.
+            </p>
+
             {rows.length > 0 ? (
               <p className="text-xs text-muted-foreground">{rows.length.toLocaleString()} rows ready</p>
             ) : null}
@@ -301,13 +321,14 @@ function Report({ title, report, done }: { title: string; report: ImportReport; 
   );
 }
 
-/* ---------- CSV parsing ---------- */
+/* ---------- sheet parsing (CSV / Excel / Word tables) ---------- */
 
-function parseSheet(text: string): { rows: ImportRow[]; errors: string[] } {
-  const table = parseCsv(text).filter((r) => r.some((c) => c.trim() !== ""));
+function parseSheet(input: string[][]): { rows: ImportRow[]; errors: string[] } {
+  const table = input.filter((r) => r.some((c) => (c ?? "").trim() !== ""));
   if (table.length < 2) return { rows: [], errors: ["File has no data rows"] };
 
-  const header = table[0].map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
+  const header = table[0].map((h) => (h ?? "").trim().toLowerCase().replace(/\s+/g, "_"));
+
   const idx = (...names: string[]) => {
     for (const n of names) { const i = header.indexOf(n); if (i >= 0) return i; }
     return -1;
