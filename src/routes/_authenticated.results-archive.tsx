@@ -313,6 +313,7 @@ function ResultsArchivePage() {
                                     <TableHead className="text-right">Total</TableHead>
                                     <TableHead>Grade</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead className="w-10" />
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -325,8 +326,12 @@ function ResultsArchivePage() {
                                       <TableCell className="text-right font-medium">{r.total_score ?? "—"}</TableCell>
                                       <TableCell><GradeBadge grade={r.grade} /></TableCell>
                                       <TableCell><StatusBadge status={r.status_code === "OK" ? r.status : r.status_code} /></TableCell>
+                                      <TableCell className="text-right">
+                                        {canEdit ? <EditResultDialog row={r} onSaved={refetch} /> : null}
+                                      </TableCell>
                                     </TableRow>
                                   ))}
+
                                 </TableBody>
                               </Table>
                             </div>
