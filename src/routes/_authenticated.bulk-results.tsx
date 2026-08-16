@@ -160,18 +160,23 @@ function BulkResultsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label>Score sheet (CSV)</Label>
+            <Label>Score sheet (CSV, Excel or Word)</Label>
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.xlsx,.xls,.xlsm,.docx,text/csv"
               className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.target.value = ""; }}
             />
             <Button variant="outline" className="w-full" onClick={() => fileRef.current?.click()}>
               <Upload className="mr-2 size-4" />
-              {fileName ?? "Choose CSV file"}
+              {fileName ?? "Choose .csv, .xlsx or .docx file"}
             </Button>
+            <p className="text-xs text-muted-foreground">
+              Excel workbooks: every sheet that looks like a score sheet is read. Word files: data is read
+              from the document's tables.
+            </p>
+
             {rows.length > 0 ? (
               <p className="text-xs text-muted-foreground">{rows.length.toLocaleString()} rows ready</p>
             ) : null}
