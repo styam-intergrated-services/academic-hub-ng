@@ -260,6 +260,33 @@ function ResultsArchivePage() {
         </CardContent>
       </Card>
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Grouped by department and level —{" "}
+          {view === "student"
+            ? "each student's complete result set is shown together before the next student."
+            : "each course sheet lists every registered student."}
+        </p>
+        <div className="inline-flex rounded-md border bg-card p-0.5">
+          <Button
+            size="sm"
+            variant={view === "student" ? "default" : "ghost"}
+            className="h-8"
+            onClick={() => setView("student")}
+          >
+            <GraduationCap className="mr-2 size-4" /> By student
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "course" ? "default" : "ghost"}
+            className="h-8"
+            onClick={() => setView("course")}
+          >
+            <Layers className="mr-2 size-4" /> By course
+          </Button>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -268,6 +295,98 @@ function ResultsArchivePage() {
         <Card><CardContent className="p-10 text-center text-sm text-muted-foreground">
           No result records match these filters.
         </CardContent></Card>
+      ) : view === "student" ? (
+        <Accordion type="multiple" className="space-y-3">
+          {byStudent.map((d) => (
+            <AccordionItem key={d.id} value={d.id} className="rounded-lg border bg-card px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                  <span className="truncate font-serif text-base font-semibold text-primary">{d.name}</span>
+                  <Badge variant="secondary" className="shrink-0">{d.count.toLocaleString()} results</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <Accordion type="multiple" className="space-y-2">
+                  {d.levels.map((l) => (
+                    <AccordionItem key={l.id} value={`${d.id}:${l.id}`} className="rounded-md border bg-muted/30 px-3">
+                      <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                          <span className="truncate font-medium">{l.name}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {l.students.length} students · {l.count.toLocaleString()} results
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-3">
+                        {l.students.map((s) => (
+                          <div key={s.key} className="rounded-md border bg-background">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold">{s.student_name}</div>
+                                <div className="font-mono text-xs text-muted-foreground">
+                                  {s.matric_number}
+                                  {s.programme_name ? ` · ${s.programme_name}` : ""}
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                <Badge variant="outline">{s.rows.length} courses</Badge>
+                                <Badge variant="outline">{s.units} CU</Badge>
+                                <Badge variant="secondary">
+                                  GPA {s.gpa === null ? "—" : s.gpa.toFixed(2)}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Session</TableHead>
+                                    <TableHead>Semester</TableHead>
+                                    <TableHead>Course</TableHead>
+                                    <TableHead className="text-right">CU</TableHead>
+                                    <TableHead className="text-right">CA</TableHead>
+                                    <TableHead className="text-right">Exam</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
+                                    <TableHead>Grade</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="w-10" />
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {s.rows.map((r) => (
+                                    <TableRow key={r.id}>
+                                      <TableCell className="whitespace-nowrap text-xs">{r.session_name}</TableCell>
+                                      <TableCell className="whitespace-nowrap text-xs">{r.semester_label}</TableCell>
+                                      <TableCell className="max-w-[260px]">
+                                        <div className="truncate text-sm font-medium">{r.course_code}</div>
+                                        <div className="truncate text-xs text-muted-foreground">{r.course_title}</div>
+                                      </TableCell>
+                                      <TableCell className="text-right">{r.credit_units || "—"}</TableCell>
+                                      <TableCell className="text-right">{r.ca_score ?? "—"}</TableCell>
+                                      <TableCell className="text-right">{r.exam_score ?? "—"}</TableCell>
+                                      <TableCell className="text-right font-medium">{r.total_score ?? "—"}</TableCell>
+                                      <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                                      <TableCell>
+                                        <StatusBadge status={r.status_code === "OK" ? r.status : r.status_code} />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {canEdit ? <EditResultDialog row={r} onSaved={refetch} /> : null}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       ) : (
         <Accordion type="multiple" className="space-y-3">
           {grouped.map((d) => (
