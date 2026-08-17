@@ -698,6 +698,58 @@ function printArchive(groups: DeptGroup[], total: number) {
   setTimeout(() => win.print(), 400);
 }
 
+/** Same sheet, but one block per student (all of that student's courses together). */
+function printStudents(groups: StudentDeptGroup[], total: number) {
+  const win = window.open("", "_blank", "width=1024,height=768");
+  if (!win) return;
+  const body = groups.map((d) => `
+    <h2>${esc(d.name)} <small>(${d.count} results)</small></h2>
+    ${d.levels.map((l) => `
+      <h3>${esc(l.name)} — ${l.students.length} students</h3>
+      ${l.students.map((s) => `
+        <div class="course">
+          <div class="chead"><strong>${esc(s.student_name)}</strong> — ${esc(s.matric_number)}
+            <span>${esc(s.programme_name ?? "")} · ${s.units} CU · GPA ${s.gpa === null ? "—" : s.gpa.toFixed(2)}</span></div>
+          <table>
+            <thead><tr><th>Session</th><th>Semester</th><th>Course</th><th>Title</th><th>CU</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Status</th></tr></thead>
+            <tbody>
+              ${s.rows.map((r) => `<tr>
+                <td>${esc(r.session_name)}</td><td>${esc(r.semester_label)}</td>
+                <td>${esc(r.course_code)}</td><td>${esc(r.course_title)}</td>
+                <td class="n">${esc(r.credit_units)}</td>
+                <td class="n">${esc(r.ca_score)}</td><td class="n">${esc(r.exam_score)}</td>
+                <td class="n">${esc(r.total_score)}</td><td>${esc(r.grade)}</td><td>${esc(r.status_code)}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`).join("")}
+    `).join("")}
+  `).join("");
+
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8">
+  <title>AKCOE — Results by Student</title>
+  <style>
+    body{font-family:Georgia,'Times New Roman',serif;color:#111;margin:24px;}
+    h1{font-size:20px;margin:0 0 4px;} .meta{font-size:12px;color:#555;margin-bottom:16px;}
+    h2{font-size:15px;margin:22px 0 6px;border-bottom:2px solid #0b1f3a;padding-bottom:3px;}
+    h3{font-size:13px;margin:14px 0 4px;color:#444;}
+    .course{margin:0 0 12px;page-break-inside:avoid;}
+    .chead{font-size:12px;margin-bottom:3px;} .chead span{color:#666;margin-left:6px;font-size:11px;}
+    table{border-collapse:collapse;width:100%;font-size:11px;font-family:Arial,Helvetica,sans-serif;}
+    th,td{border:1px solid #bbb;padding:3px 5px;text-align:left;} th{background:#f1f3f6;}
+    td.n{text-align:right;}
+    @media print{ body{margin:10mm;} }
+  </style></head><body>
+  <h1>Aminu Kano College of Education — Results by Student</h1>
+  <div class="meta">${total.toLocaleString()} result records · generated ${new Date().toLocaleString()}</div>
+  ${body}
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
+
 /* ---------- graduating cohorts handed over as summary-only records ---------- */
 
 function SummaryOnlySection() {
