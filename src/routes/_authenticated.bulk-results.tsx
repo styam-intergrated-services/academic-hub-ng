@@ -323,9 +323,21 @@ function Report({ title, report, done }: { title: string; report: ImportReport; 
 
 /* ---------- sheet parsing (CSV / Excel / Word tables) ---------- */
 
-function parseSheet(input: string[][]): { rows: ImportRow[]; errors: string[] } {
+/**
+ * Tolerant score-sheet parser.
+ *
+ * Only matric number and course code are strictly required — every other
+ * column is optional. Anything missing is reported back as a *warning* so the
+ * operator is notified, but the rows still import (missing scores land as INC
+ * so nothing is silently graded zero).
+ */
+export function parseSheet(input: string[][]): {
+  rows: ImportRow[];
+  errors: string[];
+  warnings: string[];
+} {
   const table = input.filter((r) => r.some((c) => (c ?? "").trim() !== ""));
-  if (table.length < 2) return { rows: [], errors: ["File has no data rows"] };
+  if (table.length < 2) return { rows: [], errors: ["File has no data rows"], warnings: [] };
 
   const header = table[0].map((h) => (h ?? "").trim().toLowerCase().replace(/\s+/g, "_"));
 
@@ -347,9 +359,19 @@ function parseSheet(input: string[][]): { rows: ImportRow[]; errors: string[] } 
   };
 
   const errors: string[] = [];
-  if (cols.matric < 0) errors.push("Missing a matric_number column");
-  if (cols.code < 0) errors.push("Missing a course_code column");
-  if (errors.length) return { rows: [], errors };
+  const warnings: string[] = [];
+  if (cols.matric < 0) errors.push("Missing a matric_number column — rows cannot be matched to students");
+  if (cols.code < 0) errors.push("Missing a course_code column — rows cannot be matched to courses");
+  if (errors.length) return { rows: [], errors, warnings };
+
+  if (cols.title < 0) warnings.push("No course_title column — existing course titles are kept, new courses use the code as title");
+  if (cols.units < 0) warnings.push("No credit_units column — new courses default to 2 credit units");
+  if (cols.category < 0) warnings.push("No category column — courses default to the general category");
+  if (cols.contact < 0) warnings.push("No contact_no / semester column — every row is treated as contact 1");
+  if (cols.score < 0 && (cols.ca < 0 || cols.exam < 0)) {
+    warnings.push("No score column and no ca/exam pair — rows without scores import as INC (incomplete)");
+  }
+  if (cols.status < 0) warnings.push("No status_code column — scored rows default to OK");
 
   const num = (v: string | undefined) => {
     const s = (v ?? "").trim();
@@ -359,24 +381,48 @@ function parseSheet(input: string[][]): { rows: ImportRow[]; errors: string[] } 
   };
 
   const rows: ImportRow[] = [];
+  let missingScores = 0;
+  let missingUnits = 0;
   for (let i = 1; i < table.length; i++) {
     const r = table[i];
     const matric = (r[cols.matric] ?? "").trim();
     const code = (r[cols.code] ?? "").trim();
     if (!matric && !code) continue;
     if (!matric || !code) { errors.push(`Line ${i + 1}: matric number and course code are both required`); continue; }
+
+    const score = cols.score >= 0 ? num(r[cols.score]) : null;
+    const ca = cols.ca >= 0 ? num(r[cols.ca]) : null;
+    const exam = cols.exam >= 0 ? num(r[cols.exam]) : null;
+    const units = cols.units >= 0 ? num(r[cols.units]) : null;
+    let status = cols.status >= 0 ? (r[cols.status] ?? "").trim().toUpperCase() || null : null;
+
+    const hasScore = score !== null || ca !== null || exam !== null;
+    if (!hasScore) {
+      missingScores++;
+      if (!status) status = "INC";
+    }
+    if (units === null) missingUnits++;
+
     rows.push({
       matric_number: matric,
       course_code: code,
       course_title: cols.title >= 0 ? (r[cols.title] ?? "").trim() || null : null,
-      credit_units: cols.units >= 0 ? num(r[cols.units]) : null,
+      credit_units: units,
       category: cols.category >= 0 ? (r[cols.category] ?? "").trim() || null : null,
       contact_no: cols.contact >= 0 ? num(r[cols.contact]) : null,
-      score: cols.score >= 0 ? num(r[cols.score]) : null,
-      ca: cols.ca >= 0 ? num(r[cols.ca]) : null,
-      exam: cols.exam >= 0 ? num(r[cols.exam]) : null,
-      status_code: cols.status >= 0 ? (r[cols.status] ?? "").trim().toUpperCase() || null : null,
+      score,
+      ca,
+      exam,
+      status_code: status,
     });
   }
-  return { rows, errors };
+
+  if (missingScores) {
+    warnings.push(`${missingScores} row${missingScores === 1 ? "" : "s"} have no CA, exam or total score — imported as INC (incomplete) and can be edited later in the Results Archive`);
+  }
+  if (missingUnits && cols.units >= 0) {
+    warnings.push(`${missingUnits} row${missingUnits === 1 ? "" : "s"} have a blank credit_units cell — the existing course value (or 2) is used`);
+  }
+
+  return { rows, errors, warnings };
 }
