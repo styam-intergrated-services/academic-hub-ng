@@ -21,7 +21,7 @@ import { toCsv, downloadCsv } from "@/lib/csv";
 import { readTabularFile } from "@/lib/sheet-import";
 
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2, Play, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Info, Loader2, Play, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bulk-results")({
   head: () => ({
