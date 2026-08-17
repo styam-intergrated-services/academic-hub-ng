@@ -388,6 +388,76 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string; icon
 
 /* ---------- grouping + stats ---------- */
 
+/* Department → level → student, with each student's full course list. */
+export type StudentBlock = {
+  key: string;
+  matric_number: string;
+  student_name: string;
+  programme_name: string | null;
+  rows: ArchiveRow[];
+  units: number;
+  points: number;
+  gpa: number | null;
+};
+type StudentLevelGroup = { id: string; name: string; order: number; students: StudentBlock[]; count: number };
+type StudentDeptGroup = { id: string; name: string; count: number; levels: StudentLevelGroup[] };
+
+function groupByStudent(rows: ArchiveRow[]): StudentDeptGroup[] {
+  const depts = new Map<string, StudentDeptGroup>();
+  const buckets = new Map<string, StudentBlock>();
+
+  for (const r of rows) {
+    const dKey = r.department_id || r.department_name;
+    let d = depts.get(dKey);
+    if (!d) { d = { id: dKey, name: r.department_name, count: 0, levels: [] }; depts.set(dKey, d); }
+    d.count++;
+
+    const lKey = r.level_id || r.level_name;
+    let l = d.levels.find((x) => x.id === lKey);
+    if (!l) { l = { id: lKey, name: r.level_name, order: r.level_order, students: [], count: 0 }; d.levels.push(l); }
+    l.count++;
+
+    const sKey = `${dKey}|${lKey}|${r.student_id || r.matric_number}`;
+    let s = buckets.get(sKey);
+    if (!s) {
+      s = {
+        key: sKey,
+        matric_number: r.matric_number,
+        student_name: r.student_name,
+        programme_name: r.programme_name,
+        rows: [], units: 0, points: 0, gpa: null,
+      };
+      buckets.set(sKey, s);
+      l.students.push(s);
+    }
+    s.rows.push(r);
+  }
+
+  for (const s of buckets.values()) {
+    s.rows.sort((a, b) =>
+      a.session_name.localeCompare(b.session_name) ||
+      a.semester_label.localeCompare(b.semester_label) ||
+      a.course_code.localeCompare(b.course_code),
+    );
+    for (const r of s.rows) {
+      const gp = r.grade_point;
+      const cu = r.credit_units;
+      if (gp == null || !cu) continue;
+      s.units += cu;
+      s.points += gp * cu;
+    }
+    s.gpa = s.units > 0 ? s.points / s.units : null;
+  }
+
+  const out = Array.from(depts.values());
+  for (const d of out) {
+    d.levels.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    for (const l of d.levels) l.students.sort((a, b) => a.matric_number.localeCompare(b.matric_number));
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 type CourseGroup = {
   id: string; code: string; title: string; credit_units: number;
   session_name: string; semester_label: string;
