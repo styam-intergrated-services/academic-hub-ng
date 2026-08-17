@@ -78,19 +78,29 @@ function BulkResultsPage() {
       }
       const all: ImportRow[] = [];
       const errs: string[] = [];
+      const warns: string[] = [];
       for (const t of tables) {
-        const { rows: parsed, errors } = parseSheet(t.table);
+        const { rows: parsed, errors, warnings } = parseSheet(t.table);
         if (parsed.length === 0 && tables.length > 1) continue; // skip non-score sheets
         all.push(...parsed);
-        errs.push(...errors.map((e) => (tables.length > 1 ? `${t.name}: ${e}` : e)));
+        const tag = (m: string) => (tables.length > 1 ? `${t.name}: ${m}` : m);
+        errs.push(...errors.map(tag));
+        warns.push(...warnings.map(tag));
       }
       setRows(all);
       setParseErrors(errs);
+      setParseWarnings(warns);
       setFileName(file.name);
       setPreview(null);
       setCommitted(null);
-      if (all.length) toast.success(`${all.length} rows read from ${file.name}`);
-      else toast.error("No usable rows found in that file");
+      if (all.length) {
+        toast.success(`${all.length} rows read from ${file.name}`);
+        if (warns.length) {
+          toast.warning(
+            `${warns.length} piece${warns.length === 1 ? "" : "s"} of information missing — the rows will still import, see the notice below`,
+          );
+        }
+      } else toast.error("No usable rows found in that file");
     } catch (e) {
       toast.error((e as Error).message);
     }
