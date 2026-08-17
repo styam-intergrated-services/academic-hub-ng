@@ -50,6 +50,7 @@ function BulkResultsPage() {
   const [publish, setPublish] = useState(true);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<ImportReport | null>(null);
   const [committed, setCommitted] = useState<ImportReport | null>(null);
