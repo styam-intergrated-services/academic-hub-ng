@@ -100,7 +100,9 @@ function ResultsArchivePage() {
   }, [rows, session, dept, level, programme, status, q]);
 
   const grouped = useMemo(() => groupRows(filtered), [filtered]);
+  const byStudent = useMemo(() => groupByStudent(filtered), [filtered]);
   const summary = useMemo(() => summarise(filtered), [filtered]);
+  const [view, setView] = useState<"student" | "course">("student");
 
   function handleCsv() {
     const header = [
@@ -117,7 +119,8 @@ function ResultsArchivePage() {
   }
 
   function handlePrint() {
-    printArchive(grouped, summary.total);
+    if (view === "student") printStudents(byStudent, summary.total);
+    else printArchive(grouped, summary.total);
   }
 
   const [exporting, setExporting] = useState<string | null>(null);
@@ -258,6 +261,33 @@ function ResultsArchivePage() {
         </CardContent>
       </Card>
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Grouped by department and level —{" "}
+          {view === "student"
+            ? "each student's complete result set is shown together before the next student."
+            : "each course sheet lists every registered student."}
+        </p>
+        <div className="inline-flex rounded-md border bg-card p-0.5">
+          <Button
+            size="sm"
+            variant={view === "student" ? "default" : "ghost"}
+            className="h-8"
+            onClick={() => setView("student")}
+          >
+            <GraduationCap className="mr-2 size-4" /> By student
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "course" ? "default" : "ghost"}
+            className="h-8"
+            onClick={() => setView("course")}
+          >
+            <Layers className="mr-2 size-4" /> By course
+          </Button>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -266,6 +296,98 @@ function ResultsArchivePage() {
         <Card><CardContent className="p-10 text-center text-sm text-muted-foreground">
           No result records match these filters.
         </CardContent></Card>
+      ) : view === "student" ? (
+        <Accordion type="multiple" className="space-y-3">
+          {byStudent.map((d) => (
+            <AccordionItem key={d.id} value={d.id} className="rounded-lg border bg-card px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                  <span className="truncate font-serif text-base font-semibold text-primary">{d.name}</span>
+                  <Badge variant="secondary" className="shrink-0">{d.count.toLocaleString()} results</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <Accordion type="multiple" className="space-y-2">
+                  {d.levels.map((l) => (
+                    <AccordionItem key={l.id} value={`${d.id}:${l.id}`} className="rounded-md border bg-muted/30 px-3">
+                      <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                          <span className="truncate font-medium">{l.name}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {l.students.length} students · {l.count.toLocaleString()} results
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-3">
+                        {l.students.map((s) => (
+                          <div key={s.key} className="rounded-md border bg-background">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold">{s.student_name}</div>
+                                <div className="font-mono text-xs text-muted-foreground">
+                                  {s.matric_number}
+                                  {s.programme_name ? ` · ${s.programme_name}` : ""}
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                <Badge variant="outline">{s.rows.length} courses</Badge>
+                                <Badge variant="outline">{s.units} CU</Badge>
+                                <Badge variant="secondary">
+                                  GPA {s.gpa === null ? "—" : s.gpa.toFixed(2)}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Session</TableHead>
+                                    <TableHead>Semester</TableHead>
+                                    <TableHead>Course</TableHead>
+                                    <TableHead className="text-right">CU</TableHead>
+                                    <TableHead className="text-right">CA</TableHead>
+                                    <TableHead className="text-right">Exam</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
+                                    <TableHead>Grade</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="w-10" />
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {s.rows.map((r) => (
+                                    <TableRow key={r.id}>
+                                      <TableCell className="whitespace-nowrap text-xs">{r.session_name}</TableCell>
+                                      <TableCell className="whitespace-nowrap text-xs">{r.semester_label}</TableCell>
+                                      <TableCell className="max-w-[260px]">
+                                        <div className="truncate text-sm font-medium">{r.course_code}</div>
+                                        <div className="truncate text-xs text-muted-foreground">{r.course_title}</div>
+                                      </TableCell>
+                                      <TableCell className="text-right">{r.credit_units || "—"}</TableCell>
+                                      <TableCell className="text-right">{r.ca_score ?? "—"}</TableCell>
+                                      <TableCell className="text-right">{r.exam_score ?? "—"}</TableCell>
+                                      <TableCell className="text-right font-medium">{r.total_score ?? "—"}</TableCell>
+                                      <TableCell><GradeBadge grade={r.grade} /></TableCell>
+                                      <TableCell>
+                                        <StatusBadge status={r.status_code === "OK" ? r.status : r.status_code} />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {canEdit ? <EditResultDialog row={r} onSaved={refetch} /> : null}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       ) : (
         <Accordion type="multiple" className="space-y-3">
           {grouped.map((d) => (
@@ -386,6 +508,76 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string; icon
 
 /* ---------- grouping + stats ---------- */
 
+/* Department → level → student, with each student's full course list. */
+export type StudentBlock = {
+  key: string;
+  matric_number: string;
+  student_name: string;
+  programme_name: string | null;
+  rows: ArchiveRow[];
+  units: number;
+  points: number;
+  gpa: number | null;
+};
+type StudentLevelGroup = { id: string; name: string; order: number; students: StudentBlock[]; count: number };
+type StudentDeptGroup = { id: string; name: string; count: number; levels: StudentLevelGroup[] };
+
+function groupByStudent(rows: ArchiveRow[]): StudentDeptGroup[] {
+  const depts = new Map<string, StudentDeptGroup>();
+  const buckets = new Map<string, StudentBlock>();
+
+  for (const r of rows) {
+    const dKey = r.department_id || r.department_name;
+    let d = depts.get(dKey);
+    if (!d) { d = { id: dKey, name: r.department_name, count: 0, levels: [] }; depts.set(dKey, d); }
+    d.count++;
+
+    const lKey = r.level_id || r.level_name;
+    let l = d.levels.find((x) => x.id === lKey);
+    if (!l) { l = { id: lKey, name: r.level_name, order: r.level_order, students: [], count: 0 }; d.levels.push(l); }
+    l.count++;
+
+    const sKey = `${dKey}|${lKey}|${r.student_id || r.matric_number}`;
+    let s = buckets.get(sKey);
+    if (!s) {
+      s = {
+        key: sKey,
+        matric_number: r.matric_number,
+        student_name: r.student_name,
+        programme_name: r.programme_name,
+        rows: [], units: 0, points: 0, gpa: null,
+      };
+      buckets.set(sKey, s);
+      l.students.push(s);
+    }
+    s.rows.push(r);
+  }
+
+  for (const s of buckets.values()) {
+    s.rows.sort((a, b) =>
+      a.session_name.localeCompare(b.session_name) ||
+      a.semester_label.localeCompare(b.semester_label) ||
+      a.course_code.localeCompare(b.course_code),
+    );
+    for (const r of s.rows) {
+      const gp = r.grade_point;
+      const cu = r.credit_units;
+      if (gp == null || !cu) continue;
+      s.units += cu;
+      s.points += gp * cu;
+    }
+    s.gpa = s.units > 0 ? s.points / s.units : null;
+  }
+
+  const out = Array.from(depts.values());
+  for (const d of out) {
+    d.levels.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    for (const l of d.levels) l.students.sort((a, b) => a.matric_number.localeCompare(b.matric_number));
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 type CourseGroup = {
   id: string; code: string; title: string; credit_units: number;
   session_name: string; semester_label: string;
@@ -505,6 +697,58 @@ function printArchive(groups: DeptGroup[], total: number) {
   win.focus();
   setTimeout(() => win.print(), 400);
 }
+
+/** Same sheet, but one block per student (all of that student's courses together). */
+function printStudents(groups: StudentDeptGroup[], total: number) {
+  const win = window.open("", "_blank", "width=1024,height=768");
+  if (!win) return;
+  const body = groups.map((d) => `
+    <h2>${esc(d.name)} <small>(${d.count} results)</small></h2>
+    ${d.levels.map((l) => `
+      <h3>${esc(l.name)} — ${l.students.length} students</h3>
+      ${l.students.map((s) => `
+        <div class="course">
+          <div class="chead"><strong>${esc(s.student_name)}</strong> — ${esc(s.matric_number)}
+            <span>${esc(s.programme_name ?? "")} · ${s.units} CU · GPA ${s.gpa === null ? "—" : s.gpa.toFixed(2)}</span></div>
+          <table>
+            <thead><tr><th>Session</th><th>Semester</th><th>Course</th><th>Title</th><th>CU</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Status</th></tr></thead>
+            <tbody>
+              ${s.rows.map((r) => `<tr>
+                <td>${esc(r.session_name)}</td><td>${esc(r.semester_label)}</td>
+                <td>${esc(r.course_code)}</td><td>${esc(r.course_title)}</td>
+                <td class="n">${esc(r.credit_units)}</td>
+                <td class="n">${esc(r.ca_score)}</td><td class="n">${esc(r.exam_score)}</td>
+                <td class="n">${esc(r.total_score)}</td><td>${esc(r.grade)}</td><td>${esc(r.status_code)}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`).join("")}
+    `).join("")}
+  `).join("");
+
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8">
+  <title>AKCOE — Results by Student</title>
+  <style>
+    body{font-family:Georgia,'Times New Roman',serif;color:#111;margin:24px;}
+    h1{font-size:20px;margin:0 0 4px;} .meta{font-size:12px;color:#555;margin-bottom:16px;}
+    h2{font-size:15px;margin:22px 0 6px;border-bottom:2px solid #0b1f3a;padding-bottom:3px;}
+    h3{font-size:13px;margin:14px 0 4px;color:#444;}
+    .course{margin:0 0 12px;page-break-inside:avoid;}
+    .chead{font-size:12px;margin-bottom:3px;} .chead span{color:#666;margin-left:6px;font-size:11px;}
+    table{border-collapse:collapse;width:100%;font-size:11px;font-family:Arial,Helvetica,sans-serif;}
+    th,td{border:1px solid #bbb;padding:3px 5px;text-align:left;} th{background:#f1f3f6;}
+    td.n{text-align:right;}
+    @media print{ body{margin:10mm;} }
+  </style></head><body>
+  <h1>Aminu Kano College of Education — Results by Student</h1>
+  <div class="meta">${total.toLocaleString()} result records · generated ${new Date().toLocaleString()}</div>
+  ${body}
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
 
 /* ---------- graduating cohorts handed over as summary-only records ---------- */
 
