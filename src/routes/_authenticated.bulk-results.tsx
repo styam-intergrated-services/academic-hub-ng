@@ -216,6 +216,21 @@ function BulkResultsPage() {
         </Alert>
       ) : null}
 
+      {parseWarnings.length > 0 ? (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Missing information — rows will still be imported</AlertTitle>
+          <AlertDescription className="space-y-1 text-xs">
+            <ul className="list-disc space-y-1 pl-4">
+              {parseWarnings.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+            <p className="pt-1 text-muted-foreground">
+              Anything left blank can be corrected later from the Results Archive without re-uploading.
+            </p>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       {sample.length > 0 ? (
         <Card>
           <CardHeader className="pb-3">
