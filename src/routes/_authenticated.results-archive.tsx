@@ -100,7 +100,9 @@ function ResultsArchivePage() {
   }, [rows, session, dept, level, programme, status, q]);
 
   const grouped = useMemo(() => groupRows(filtered), [filtered]);
+  const byStudent = useMemo(() => groupByStudent(filtered), [filtered]);
   const summary = useMemo(() => summarise(filtered), [filtered]);
+  const [view, setView] = useState<"student" | "course">("student");
 
   function handleCsv() {
     const header = [
