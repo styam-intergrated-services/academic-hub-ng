@@ -119,7 +119,8 @@ function ResultsArchivePage() {
   }
 
   function handlePrint() {
-    printArchive(grouped, summary.total);
+    if (view === "student") printStudents(byStudent, summary.total);
+    else printArchive(grouped, summary.total);
   }
 
   const [exporting, setExporting] = useState<string | null>(null);
