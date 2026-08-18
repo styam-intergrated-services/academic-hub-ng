@@ -1,0 +1,1 @@
+ALTER FUNCTION public.bulk_import_results(jsonb) SET search_path = public, pg_temp;
