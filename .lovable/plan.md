@@ -1,57 +1,46 @@
-# Email existing login details to each user
+# Results and Student Records Audit (findings first, no changes made)
 
-Yes — this is possible, and no passwords get changed. The emails simply state the credentials in the format already in use.
+## What I checked
 
-## Credential formats kept exactly as-is
+Live database counts for students, results, GPA records, plus the uploaded spreadsheets still sitting in the project uploads folder.
 
-- **Staff (Provost, Exam Director/Officers, HODs, Lecturers, admins)**
-  - Username: their email address
-  - Password: `Surname@2026`
-  - Still prompted to set a personal password at first sign-in (unchanged).
-- **Students**
-  - Username: their matric number
-  - Password: their year of entry
-  - Nothing about the matric login flow changes.
+## Confirmed findings
 
-Because the format is derived (surname / entry year), the email is generated from the record on file — no password reset, no new password, no change to `must_change_password`.
+**1. Student records exist, results do not.**
+- 1,638 student records, all with names.
+- Only 331 of them have any result row at all.
+- Departments with students but zero results: Educational Administration and Planning (469), Computer Science (259), Human Kinetics (67), Business Management (39), Sociology (25).
+- Only two sessions carry results: 2022/2023 (7,743 rows, 201 students) and 2024/2025 (1,407 rows, 130 students).
 
-## Prerequisite: sender domain
+So the earlier bulk imports created the student profiles but the score sheets for most departments were never imported.
 
-Emails must come from a domain you own. `akcoekano.com` is already connected, so a sending subdomain (e.g. `notify.akcoekano.com`) gets set up through the email setup dialog once, then sending activates after DNS verifies.
+**2. Uploaded score sheets that are still not in the database (13 xlsx files, ~50 MB):**
+- EGC 2025/2026 Contact One, EGC 2024/2025 complete result
+- English 2022/2023
+- Arabic 2022/2023, Arabic 2024/2025 (three variants incl. Level 400)
+- Hausa 2022/2023 DE (partially imported)
+- Computer Science 2024/2025 Level 3 (1st + 2nd)
+- Business Management 2024/2025 (plus duplicate copy)
+- Sociology and BSM graduation lists (2022/2023, 2024/2025)
 
-## Where the emails go
+Note: the EGC files have nowhere to land cleanly — the "Educational Guidance and Counselling" department does not exist as its own department row; those 272 students sit under Educational Psychology / B.Ed. Guidance and Counselling.
 
-- Staff: their real email address — ready to send immediately.
-- Students: student records currently hold **no personal email address** (their login identity is a matric number), so there is nowhere to deliver to yet. The build therefore adds:
-  - an optional personal email field on the student record,
-  - a CSV import ("matric number, email") so you can load the addresses you have,
-  - and the send action skips any student with no address, reporting them in a "no email on file" list.
+**3. GPA/CGPA is stale where results do exist.**
+- 73 students have published results but CGPA still 0.
+- 1,323 students have `total_credit_units` = 0.
+- `gpa_records` holds only 122 rows, so the semester GPA history table is nearly empty across the college.
 
-## What will be built
+**4. 143 results are stuck before publication** — 44 draft, 99 submitted. Those are invisible to students until they pass the approval cycle.
 
-1. **Two branded email templates** (AKCOE navy/gold)
-   - *Staff login details*: name, portal link, username = email, password = `Surname@2026`, note to change it at first sign-in.
-   - *Student login details*: name, portal link, username = matric number, password = entry year, short "how to sign in" steps.
+**5. Login coverage:** 1,390 of 1,638 students have no auth account, so they cannot sign in to view results even once imported.
 
-2. **Send actions, admin-only** (Registry / ICT admin / Super admin)
-   - Send to one recipient, or bulk send to a filtered set (all staff, a department, a programme/level cohort).
-   - Read-only with respect to credentials: nothing in the auth system is modified.
+## Suggested order of work (for your approval later)
 
-3. **UI**
-   - `/users`: "Email login details" per staff row, plus a bulk "Email all staff" action with a confirmation dialog.
-   - `/students`: same per-student action and a bulk "Email login details" for the current filtered list, with counts of sent / skipped (no email) / failed.
-   - Student email import screen for the CSV of addresses.
+1. Per-file mapping pass: parse each pending spreadsheet, map columns to matric / course / contact / CA / exam, and produce a validation report before writing anything.
+2. Decide the EGC question: create a real Educational Guidance and Counselling department and move those students, or keep them under Educational Psychology.
+3. Import department by department, dry-run first, review the report, then commit.
+4. Backfill GPA: run the chunked semester-GPA and CGPA recalculation across all students with published results.
+5. Decide what to do with the 44 draft / 99 submitted results (publish or route through the approval cycle).
+6. Bulk-create auth accounts for the 1,390 students without logins, following the existing matric/`AKCOE@<entry_year>` convention.
 
-4. **Audit trail**
-   - Every send recorded in `audit_logs` (who sent, to whom, when) and visible in `/audit-logs`.
-
-## Technical notes
-
-- Lovable-managed sending: React Email templates in `src/lib/email-templates/`, server-only send helper, one recipient per send, idempotency key per (recipient, send batch) so retries never duplicate.
-- Passwords are rendered from the existing derived rules (surname + `@2026`; entry year) inside the server function — never read from or written to auth.
-- Bulk sends are throttled to respect the hourly send allowance; a summary is returned when a batch is rate-limited so it can be resumed.
-- No changes to grading, results, approvals, graduation, or any academic data.
-
-## One thing to confirm
-
-Do you have a list of student email addresses to import, or should student emails be collected in-app later (e.g. asked at first sign-in) and sent then?
+No files or data were changed in this pass.
