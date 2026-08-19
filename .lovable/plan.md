@@ -65,3 +65,28 @@ The source sheets carry a **single** CA figure per course, so the split is a sch
 7. Run the chunked semester-GPA and CGPA recalculation across every student with published results.
 8. Decide on the 44 draft / 99 submitted results, and bulk-create logins for the 1,390 students without accounts.
 9. Surface CA1–CA4 in every results view and export.
+
+## F. Per-student layout: course codes as column headers
+
+Every per-student result block (results archive "By student" view, transcript, student results page, and the PDF/DOCX exports) renders as a matrix with the course codes across the top, mirroring the source sheets:
+
+```text
+              GCE101  GCE102  GCE103  FUDMA-GCE104
+C/UNIT           2       2       2        2
+CA1             24      24      27       30
+CA2 CA3 CA4      -       -       -        -
+CA TOTAL        24      24      27       30
+EXAM            26      20      23       50
+TOTAL           50      44      50       80
+GRADE            C       D       C        A
+```
+
+Per student, per semester: one such block, followed by that semester's credit units, grade points, GPA, and the running CGPA. Course codes always appear in the header row even when a score cell is empty (ABS/INC/WH), so nothing silently disappears.
+
+## G. GPA / CGPA accuracy
+
+- One shared calculator (`src/lib/gpa-calc.ts`) stays the single source of truth for the NCE 5-point scale: A 70–100 = 5, B 60–69 = 4, C 50–59 = 3, D 45–49 = 2, E 40–44 = 1, F below 40 = 0.
+- GPA = sum(credit unit x grade point) / sum(credit units) for that semester; CGPA = the same across all published, OK-status results. Non-OK codes (ABS/INC/WH) count 0 points and are excluded from earned credits, exactly as the current rules do.
+- Grades are recomputed from the stored total by the existing database trigger, so a grade can never drift from its score.
+- After each import and each edit, the chunked recalculation refreshes `gpa_records` per semester and the student CGPA, with a visible progress indicator.
+- Verification step after the imports: recompute a sample of students and compare against the `CONT.nR` / `100LF` result sheets already in the workbooks; any mismatch is reported rather than silently accepted.
